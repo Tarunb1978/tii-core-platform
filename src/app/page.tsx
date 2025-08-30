@@ -1,4 +1,4 @@
-import Image from "next/image";
+//import Image from "next/image";
 
 export default function Home() {
   return (
@@ -43,7 +43,7 @@ export default function Home() {
             Community
           </h2>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Join thousands of smart investors across India. Learn, share, and grow your wealth 
+            Join thousands of smart investors across India. Learn, share, and grow your wealth
             with our community of experienced traders and financial experts.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -80,7 +80,7 @@ export default function Home() {
             <h3 className="text-3xl font-bold text-gray-900 mb-4">Why Choose Our Community?</h3>
             <p className="text-xl text-gray-600">Expert insights, real-time discussions, and proven strategies</p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <div className="text-center p-6">
               <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -91,7 +91,7 @@ export default function Home() {
               <h4 className="text-xl font-semibold text-gray-900 mb-2">Expert Insights</h4>
               <p className="text-gray-600">Get daily market analysis and investment tips from financial experts</p>
             </div>
-            
+
             <div className="text-center p-6">
               <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -101,7 +101,7 @@ export default function Home() {
               <h4 className="text-xl font-semibold text-gray-900 mb-2">Community Support</h4>
               <p className="text-gray-600">Connect with like-minded investors and share experiences</p>
             </div>
-            
+
             <div className="text-center p-6">
               <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,8 +124,8 @@ export default function Home() {
             <button className="bg-white text-indigo-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg">
               Join Now - It&apos;s Free!
             </button>
-            <a 
-              href="/sign-in" 
+            <a
+              href="/sign-in"
               className="border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-indigo-600 transition-colors"
             >
               Sign In to Your Account
@@ -147,7 +147,7 @@ export default function Home() {
               </div>
               <p className="text-gray-400">Empowering Indian investors with knowledge and community support.</p>
             </div>
-            
+
             <div>
               <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
               <ul className="space-y-2 text-gray-400">
@@ -157,7 +157,7 @@ export default function Home() {
                 <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="text-lg font-semibold mb-4">Resources</h4>
               <ul className="space-y-2 text-gray-400">
@@ -167,7 +167,7 @@ export default function Home() {
                 <li><a href="#" className="hover:text-white transition-colors">Newsletter</a></li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="text-lg font-semibold mb-4">Connect</h4>
               <ul className="space-y-2 text-gray-400">
@@ -178,7 +178,7 @@ export default function Home() {
               </ul>
             </div>
           </div>
-          
+
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
             <p>&copy; 2024 Indian Investors Community. All rights reserved.</p>
           </div>
