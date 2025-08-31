@@ -3,16 +3,16 @@
 import { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
+import { signInWithEmail, signInWithOAuth, signOut } from '../auth/action';
+import { Provider } from '@supabase/supabase-js';
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSignIn = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle sign in logic here
-    console.log('Sign in:', { email, password });
+  const signInWithOauthClient = (provider: Provider) => {
+    signInWithOAuth(provider);
   };
 
   return (
@@ -34,7 +34,7 @@ export default function SignIn() {
           <div className="flex-1">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Sign In</h2>
             
-            <form onSubmit={handleSignIn} className="space-y-4">
+            <form action={signInWithEmail} className="space-y-4">
               {/* Email Input */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
@@ -43,6 +43,7 @@ export default function SignIn() {
                 <input
                   type="email"
                   id="email"
+                  name="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent transition-colors"
@@ -64,6 +65,7 @@ export default function SignIn() {
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent transition-colors"
                     placeholder="Enter your password"
+                    name='password'
                     required
                   />
                   <button
@@ -106,7 +108,7 @@ export default function SignIn() {
           <div className="flex-1 mt-8 lg:mt-20">
             <div className="space-y-4">
               {/* Google Sign In */}
-              <button className="w-full border border-gray-300 rounded-lg py-3 px-4 flex items-center justify-center space-x-3 hover:bg-gray-50 transition-colors">
+              <button onClick={() => signInWithOauthClient('google')} className="w-full border border-gray-300 rounded-lg py-3 px-4 flex items-center justify-center space-x-3 hover:bg-gray-50 transition-colors">
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -117,7 +119,7 @@ export default function SignIn() {
               </button>
 
               {/* X.com Sign In */}
-              <button className="w-full border border-gray-300 rounded-lg py-3 px-4 flex items-center justify-center space-x-3 hover:bg-gray-50 transition-colors">
+              <button onClick={() => signInWithOauthClient('twitter')} className="w-full border border-gray-300 rounded-lg py-3 px-4 flex items-center justify-center space-x-3 hover:bg-gray-50 transition-colors">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                 </svg>
