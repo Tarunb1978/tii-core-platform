@@ -50,12 +50,12 @@ export default function Navbar() {
             >
               Ideas Forum
             </a>
-            <a 
-              href="#topic-week" 
+            <Link 
+              href="/topic-of-the-week" 
               className="text-gray-600 hover:text-gray-800 transition-all duration-200 hover:-translate-y-0.5 text-sm font-medium"
             >
               Topic of the Week
-            </a>
+            </Link>
             <a 
               href="#resources" 
               className="text-gray-600 hover:text-gray-800 transition-all duration-200 hover:-translate-y-0.5 text-sm font-medium"
@@ -141,13 +141,13 @@ export default function Navbar() {
                 >
                   Ideas Forum
                 </a>
-                <a 
-                  href="#topic-week" 
+                <Link 
+                  href="/topic-of-the-week" 
                   className="block px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors duration-200 text-right"
                   onClick={closeMobileMenu}
                 >
                   Topic of the Week
-                </a>
+                </Link>
                 <a 
                   href="#resources" 
                   className="block px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors duration-200 text-right"
