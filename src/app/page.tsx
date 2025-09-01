@@ -1,6 +1,6 @@
-import Navbar from '@/components/Navbar';
+'use client';
 
-'use client'
+import Navbar from '@/components/Navbar';
 import { useAuth } from "@/context/authProvider";
 export default function Home() {
   const user = useAuth();
@@ -10,7 +10,7 @@ export default function Home() {
       <Navbar />
 
       {/* Hero Section */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 pt-36">
         <div className="text-center">
           <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
             Welcome to the{" "}

@@ -21,7 +21,7 @@ export default function SignIn() {
       <Navbar />
 
       {/* Main Content */}
-      <div className="flex flex-col items-center justify-center px-4 py-8 min-h-[calc(100vh-4rem)]">
+      <div className="flex flex-col items-center justify-center px-4 py-8 pt-24 min-h-[calc(100vh-4rem)]">
         {/* Avatar */}
         <div className="w-10 h-10 bg-black rounded-full mb-8"></div>
 
