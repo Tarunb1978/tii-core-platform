@@ -30,6 +30,9 @@ export default function SubmitIdeaPage() {
 
   const [wordCount, setWordCount] = useState(0);
   const maxWords = 500;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -50,10 +53,86 @@ export default function SubmitIdeaPage() {
     alert('Draft saved successfully!');
   };
 
-  const handleSubmitIdea = () => {
-    // Submit idea functionality
-    console.log('Submitting idea:', formData);
-    alert('Investment idea submitted successfully!');
+  const handleSubmitIdea = async () => {
+    if (wordCount > maxWords) {
+      alert(`Please reduce the description to ${maxWords} words or fewer.`);
+      return;
+    }
+
+    // Basic client-side validation for required fields since we are not using a native form submit
+    const requiredFields = [
+      'name',
+      'email',
+      'companyName',
+      'stockSymbol',
+      'positionType',
+      'investmentHorizon',
+      'currentStockPrice',
+      'week52High',
+      'week52Low',
+      'annualRevenue',
+      'eps',
+      'peRatio',
+      'investmentDescription'
+    ];
+    const missingFields = requiredFields.filter((field) => {
+      const value = (formData as any)[field];
+      return typeof value !== 'string' || value.trim().length === 0;
+    });
+    if (missingFields.length > 0) {
+      const message = `Please fill all required fields: ${missingFields.join(', ')}`;
+      setErrorMessage(message);
+      alert(message);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    try {
+      const response = await fetch('/api/submit-idea', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ idea: formData }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const baseMessage = (data && (data.error || data.message)) || 'Failed to submit idea.';
+        const details = (data && data.details && Array.isArray(data.details.errors)) ? `\n- ${data.details.errors.join('\n- ')}` : '';
+        const message = `${baseMessage}${details}`;
+        setErrorMessage(message);
+        alert(message);
+        return;
+      }
+
+      setSuccessMessage('Investment idea submitted successfully!');
+      alert('Investment idea submitted successfully!');
+      setFormData({
+        name: '',
+        email: '',
+        companyName: '',
+        stockSymbol: '',
+        positionType: '',
+        investmentHorizon: '',
+        currentStockPrice: '',
+        week52High: '',
+        week52Low: '',
+        annualRevenue: '',
+        eps: '',
+        peRatio: '',
+        investmentDescription: ''
+      });
+      setWordCount(0);
+    } catch (error: any) {
+      const message = error?.message ?? 'Unexpected error while submitting idea.';
+      setErrorMessage(message);
+      alert(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const positionTypes = [
@@ -366,10 +445,11 @@ export default function SubmitIdeaPage() {
             <button
               type="button"
               onClick={handleSubmitIdea}
+              disabled={isSubmitting}
               className="flex items-center justify-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200 shadow-md hover:shadow-lg"
             >
               <Send className="w-4 h-4" />
-              Submit Idea
+              {isSubmitting ? 'Submitting...' : 'Submit Idea'}
             </button>
           </div>
         </form>
