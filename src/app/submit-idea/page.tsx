@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import { Save, Send, Building2, TrendingUp, DollarSign, FileText } from 'lucide-react';
+import { useAuth } from '@/context/authProvider';
 
 export default function SubmitIdeaPage() {
+  const { currentUser } = useAuth();
   const [formData, setFormData] = useState({
     // Personal Information
     name: '',
@@ -59,6 +61,14 @@ export default function SubmitIdeaPage() {
       return;
     }
 
+    const userId = currentUser?.user?.id;
+    if (!userId) {
+      const message = 'Please sign in to submit an idea.';
+      setErrorMessage(message);
+      alert(message);
+      return;
+    }
+
     // Basic client-side validation for required fields since we are not using a native form submit
     const requiredFields = [
       'name',
@@ -90,12 +100,30 @@ export default function SubmitIdeaPage() {
     setErrorMessage(null);
     setSuccessMessage(null);
     try {
+      const ideaPayload: any = {
+        user_id: userId,
+        data: {
+          title: `${formData.companyName} (${formData.stockSymbol})`.trim(),
+          description: formData.investmentDescription,
+        },
+        stock_details: {
+          ticker: formData.stockSymbol,
+          current_price: parseFloat(formData.currentStockPrice),
+        },
+        status: 'pending',
+      };
+
+      // Optionally include fields if present and valid numbers/strings
+      if (formData.week52High && !Number.isNaN(parseFloat(formData.week52High))) {
+        ideaPayload.stock_details.target_price = parseFloat(formData.week52High);
+      }
+
       const response = await fetch('/api/submit-idea', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ idea: formData }),
+        body: JSON.stringify({ idea: ideaPayload }),
       });
 
       const data = await response.json().catch(() => ({}));

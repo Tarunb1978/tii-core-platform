@@ -1,19 +1,25 @@
 import { NextResponse } from 'next/server'
+import { createSupabaseServerClient } from '@/app/auth/action'
+
+type IdeaData = {
+  title: string
+  description: string
+  expected_return?: number
+  risk_level?: string
+}
+
+type StockDetails = {
+  ticker: string
+  exchange?: string
+  current_price: number
+  target_price?: number
+}
 
 type IdeaPayload = {
-  name: string
-  email: string
-  companyName: string
-  stockSymbol: string
-  positionType: string
-  investmentHorizon: string
-  currentStockPrice: string
-  week52High: string
-  week52Low: string
-  annualRevenue: string
-  eps: string
-  peRatio: string
-  investmentDescription: string
+  user_id: string
+  data: IdeaData
+  stock_details: StockDetails
+  status: 'pending' | 'approved' | 'rejected'
 }
 
 type SubmitIdeaRequest = {
@@ -39,55 +45,44 @@ function logError(step: string, message: string, data?: unknown) {
   }
 }
 
-function isValidIdea(idea: any): idea is IdeaPayload {
-  if (!idea || typeof idea !== 'object') return false
-  const requiredFields: Array<keyof IdeaPayload> = [
-    'name',
-    'email',
-    'companyName',
-    'stockSymbol',
-    'positionType',
-    'investmentHorizon',
-    'currentStockPrice',
-    'week52High',
-    'week52Low',
-    'annualRevenue',
-    'eps',
-    'peRatio',
-    'investmentDescription',
-  ]
-  for (const field of requiredFields) {
-    if (typeof idea[field] !== 'string' || idea[field].trim().length === 0) {
-      return false
-    }
-  }
-  return true
-}
-
 function validateIdea(idea: any): { valid: boolean; errors: string[] } {
   const errors: string[] = []
   if (!idea || typeof idea !== 'object') {
     return { valid: false, errors: ['idea is missing or not an object'] }
   }
-  const requiredFields: Array<keyof IdeaPayload> = [
-    'name',
-    'email',
-    'companyName',
-    'stockSymbol',
-    'positionType',
-    'investmentHorizon',
-    'currentStockPrice',
-    'week52High',
-    'week52Low',
-    'annualRevenue',
-    'eps',
-    'peRatio',
-    'investmentDescription',
-  ]
-  for (const field of requiredFields) {
-    const value = idea[field]
-    if (typeof value !== 'string' || value.trim().length === 0) {
-      errors.push(`Field ${String(field)} is required and must be a non-empty string`)
+  if (typeof idea.status !== 'string' || idea.status.trim().length === 0) {
+    errors.push('status is required and must be a non-empty string')
+  }
+  if (!idea.data || typeof idea.data !== 'object') {
+    errors.push('data is required and must be an object')
+  } else {
+    if (typeof idea.data.title !== 'string' || idea.data.title.trim().length === 0) {
+      errors.push('data.title is required and must be a non-empty string')
+    }
+    if (typeof idea.data.description !== 'string' || idea.data.description.trim().length === 0) {
+      errors.push('data.description is required and must be a non-empty string')
+    }
+    if (idea.data.expected_return !== undefined && typeof idea.data.expected_return !== 'number') {
+      errors.push('data.expected_return must be a number if provided')
+    }
+    if (idea.data.risk_level !== undefined && typeof idea.data.risk_level !== 'string') {
+      errors.push('data.risk_level must be a string if provided')
+    }
+  }
+  if (!idea.stock_details || typeof idea.stock_details !== 'object') {
+    errors.push('stock_details is required and must be an object')
+  } else {
+    if (typeof idea.stock_details.ticker !== 'string' || idea.stock_details.ticker.trim().length === 0) {
+      errors.push('stock_details.ticker is required and must be a non-empty string')
+    }
+    if (typeof idea.stock_details.current_price !== 'number' || Number.isNaN(idea.stock_details.current_price)) {
+      errors.push('stock_details.current_price is required and must be a number')
+    }
+    if (idea.stock_details.target_price !== undefined && typeof idea.stock_details.target_price !== 'number') {
+      errors.push('stock_details.target_price must be a number if provided')
+    }
+    if (idea.stock_details.exchange !== undefined && typeof idea.stock_details.exchange !== 'string') {
+      errors.push('stock_details.exchange must be a string if provided')
     }
   }
   return { valid: errors.length === 0, errors }
@@ -114,6 +109,32 @@ export async function POST(request: Request) {
     }
     logDebug('validation.pass', 'Idea payload validated successfully')
 
+    // Authenticate request using server cookies-bound client and obtain verified user
+    // Note: createSupabaseServerClient uses next/headers cookies() which are request-scoped in route handlers
+    const supabase = await createSupabaseServerClient()
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    if (userError) {
+      logError('auth.user', 'Failed to get user', { message: userError.message })
+    }
+    const userId = userData?.user?.id
+    if (!userId) {
+      logError('auth', 'Unauthorized: missing session user id')
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
+
+    // Never trust client-sent user_id; enforce server-side user id
+    const statusValue = typeof idea.status === 'string' && ['pending', 'approved', 'rejected'].includes(idea.status)
+      ? idea.status
+      : 'pending'
+    const forwardPayload: SubmitIdeaRequest = {
+      idea: {
+        user_id: userId,
+        data: idea.data,
+        stock_details: idea.stock_details,
+        status: statusValue,
+      },
+    }
+
     const supabaseUrl =
       process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey =
@@ -135,7 +156,7 @@ export async function POST(request: Request) {
     logDebug('edgeFunction.request', 'Forwarding payload to Supabase Edge Function', {
       url: functionUrl,
       // Do not log Authorization or tokens
-      body: { idea },
+      body: forwardPayload,
     })
     const response = await fetch(functionUrl, {
       method: 'POST',
@@ -143,7 +164,7 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${supabaseKey}`,
       },
-      body: JSON.stringify({ idea }),
+      body: JSON.stringify(forwardPayload),
       // Ensure we don't reuse cached responses inadvertently
       cache: 'no-store',
     })
