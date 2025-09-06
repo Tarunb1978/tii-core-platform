@@ -1,10 +1,8 @@
-'use client';
-
-import { useEffect, useMemo, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import IdeaCard from '@/components/IdeaCard';
 import { Filter, ChevronDown } from 'lucide-react';
 
+// Define the type
 type Idea = {
   id: string;
   data: {
@@ -32,43 +30,26 @@ type Idea = {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
-export default function IdeasForumPage() {
-  const [ideas, setIdeas] = useState<Idea[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [sort, setSort] = useState<'recent' | 'popular'>('recent');
-  const [capsFilter, setCapsFilter] = useState<'all' | 'large' | 'mid' | 'small'>('all');
+async function getIdeas(): Promise<Idea[]> {
+  try {
+    const res = await fetch(API_URL, {
+      cache: 'no-store', // always fetch fresh data
+    });
 
-  useEffect(() => {
-    const fetchIdeas = async () => {
-      try {
-        setIsLoading(true);
-        const res = await fetch(API_URL, { cache: 'no-store' });
-        if (!res.ok) {
-          throw new Error('Failed to fetch ideas');
-        }
-        const json = await res.json();
-        const rawIdeas: Idea[] = Array.isArray(json?.ideas) ? json.ideas : [];
-        setIdeas(rawIdeas);
-      } catch (e: any) {
-        setError(e?.message ?? 'Unexpected error');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchIdeas();
-  }, []);
-
-  const displayedIdeas = useMemo(() => {
-    let list = [...ideas];
-    if (sort === 'popular') {
-      list.sort((a, b) => (b.likes_count ?? 0) - (a.likes_count ?? 0));
-    } else {
-      list.sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime());
+    if (!res.ok) {
+      throw new Error('Failed to fetch ideas');
     }
-    // capsFilter is currently a placeholder for future expansion
-    return list;
-  }, [ideas, sort, capsFilter]);
+
+    const json = await res.json();
+    return Array.isArray(json?.ideas) ? json.ideas : [];
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
+}
+
+export default async function IdeasForumPage() {
+  const ideas = await getIdeas();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -81,6 +62,8 @@ export default function IdeasForumPage() {
             <p className="text-gray-600 mt-1">Discover community-submitted investment ideas.</p>
           </div>
           <div className="flex items-center gap-3">
+            {/* These controls need to be client-side for interactivity */}
+            {/* So we will make them separate client components */}
             <div className="relative">
               <button className="flex items-center gap-2 bg-white border border-gray-200 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
                 <Filter className="w-4 h-4" />
@@ -88,36 +71,22 @@ export default function IdeasForumPage() {
                 <ChevronDown className="w-4 h-4" />
               </button>
             </div>
-            <div className="relative">
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value as any)}
-                className="bg-white border border-gray-200 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
-              >
-                <option value="recent">Most Recent</option>
-                <option value="popular">Most Popular</option>
-              </select>
-            </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            {isLoading && (
-              <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-gray-500">Loading ideas…</div>
+            {ideas.length === 0 ? (
+              <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-gray-500">
+                No ideas found.
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {ideas.map((idea) => (
+                  <IdeaCard key={idea.id} idea={idea} />
+                ))}
+              </div>
             )}
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-6">{error}</div>
-            )}
-            {!isLoading && !error && displayedIdeas.length === 0 && (
-              <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-gray-500">No ideas found.</div>
-            )}
-
-            <div className="space-y-6">
-              {displayedIdeas.map((idea) => (
-                <IdeaCard key={idea.id} idea={idea} />
-              ))}
-            </div>
           </div>
 
           <aside>
@@ -135,5 +104,3 @@ export default function IdeasForumPage() {
     </div>
   );
 }
-
-
