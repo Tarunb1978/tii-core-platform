@@ -6,6 +6,12 @@ type IdeaData = {
   description: string
   expected_return?: number
   risk_level?: string
+  // Additional optional metadata captured from flat inputs
+  name?: string
+  email?: string
+  company_name?: string
+  position_type?: string
+  investment_horizon?: string
 }
 
 type StockDetails = {
@@ -13,6 +19,12 @@ type StockDetails = {
   exchange?: string
   current_price: number
   target_price?: number
+  // Optional extended financial metrics captured from flat inputs
+  week52_high?: number
+  week52_low?: number
+  annual_revenue?: number
+  eps?: number
+  pe_ratio?: number
 }
 
 type IdeaPayload = {
@@ -84,8 +96,135 @@ function validateIdea(idea: any): { valid: boolean; errors: string[] } {
     if (idea.stock_details.exchange !== undefined && typeof idea.stock_details.exchange !== 'string') {
       errors.push('stock_details.exchange must be a string if provided')
     }
+    if (idea.stock_details.week52_high !== undefined && typeof idea.stock_details.week52_high !== 'number') {
+      errors.push('stock_details.week52_high must be a number if provided')
+    }
+    if (idea.stock_details.week52_low !== undefined && typeof idea.stock_details.week52_low !== 'number') {
+      errors.push('stock_details.week52_low must be a number if provided')
+    }
+    if (idea.stock_details.annual_revenue !== undefined && typeof idea.stock_details.annual_revenue !== 'number') {
+      errors.push('stock_details.annual_revenue must be a number if provided')
+    }
+    if (idea.stock_details.eps !== undefined && typeof idea.stock_details.eps !== 'number') {
+      errors.push('stock_details.eps must be a number if provided')
+    }
+    if (idea.stock_details.pe_ratio !== undefined && typeof idea.stock_details.pe_ratio !== 'number') {
+      errors.push('stock_details.pe_ratio must be a number if provided')
+    }
   }
   return { valid: errors.length === 0, errors }
+}
+
+// Accept both nested and flat inputs. Convert flat inputs into the nested JSON
+// structure expected by the database JSON columns.
+type FlatIdeaInput = {
+  name?: string
+  email?: string
+  companyName?: string
+  stockSymbol?: string
+  positionType?: string
+  investmentHorizon?: string
+  currentStockPrice?: string | number
+  week52High?: string | number
+  week52Low?: string | number
+  annualRevenue?: string | number
+  eps?: string | number
+  peRatio?: string | number
+  investmentDescription?: string
+  title?: string
+  description?: string
+  expected_return?: number | string
+  risk_level?: string
+  exchange?: string
+}
+
+function parseNumber(value: unknown): number | undefined {
+  if (typeof value === 'number') return Number.isNaN(value) ? undefined : value
+  if (typeof value === 'string') {
+    const n = parseFloat(value)
+    return Number.isNaN(n) ? undefined : n
+  }
+  return undefined
+}
+
+function normalizeToNestedIdea(input: any, userId: string): IdeaPayload {
+  // If already nested and typed reasonably, coerce numeric fields and return
+  if (input && typeof input === 'object' && input.data && input.stock_details) {
+    const statusValue = typeof input.status === 'string' && ['pending', 'approved', 'rejected'].includes(input.status)
+      ? input.status
+      : 'pending'
+    const currentPrice = parseNumber(input.stock_details.current_price)
+    const targetPrice = parseNumber(input.stock_details.target_price)
+    const nested: IdeaPayload = {
+      user_id: userId,
+      data: {
+        title: String(input.data.title ?? ''),
+        description: String(input.data.description ?? ''),
+        expected_return: parseNumber(input.data.expected_return),
+        risk_level: typeof input.data.risk_level === 'string' ? input.data.risk_level : undefined,
+        name: typeof input.data.name === 'string' ? input.data.name : undefined,
+        email: typeof input.data.email === 'string' ? input.data.email : undefined,
+        company_name: typeof input.data.company_name === 'string' ? input.data.company_name : undefined,
+        position_type: typeof input.data.position_type === 'string' ? input.data.position_type : undefined,
+        investment_horizon: typeof input.data.investment_horizon === 'string' ? input.data.investment_horizon : undefined,
+      },
+      stock_details: {
+        ticker: String(input.stock_details.ticker ?? ''),
+        exchange: typeof input.stock_details.exchange === 'string' ? input.stock_details.exchange : undefined,
+        current_price: currentPrice ?? NaN,
+        target_price: targetPrice,
+        week52_high: parseNumber(input.stock_details.week52_high),
+        week52_low: parseNumber(input.stock_details.week52_low),
+        annual_revenue: parseNumber(input.stock_details.annual_revenue),
+        eps: parseNumber(input.stock_details.eps),
+        pe_ratio: parseNumber(input.stock_details.pe_ratio),
+      },
+      status: statusValue,
+    }
+    return nested
+  }
+
+  // Treat as flat input and split into nested objects
+  const flat = input as FlatIdeaInput
+  const ticker = typeof flat.stockSymbol === 'string' && flat.stockSymbol.trim().length > 0
+    ? flat.stockSymbol
+    : typeof (flat as any).ticker === 'string' ? (flat as any).ticker : ''
+  const title = typeof flat.title === 'string' && flat.title.trim().length > 0
+    ? flat.title
+    : [flat.companyName, ticker].filter(Boolean).join(' ').trim() || 'Idea'
+  const description = typeof flat.description === 'string' && flat.description.trim().length > 0
+    ? flat.description
+    : (flat.investmentDescription ?? '')
+  const currentPrice = parseNumber(flat.currentStockPrice)
+  const targetPrice = parseNumber(flat.week52High)
+
+  const nested: IdeaPayload = {
+    user_id: userId,
+    data: {
+      title,
+      description: String(description ?? ''),
+      expected_return: parseNumber(flat.expected_return),
+      risk_level: typeof flat.risk_level === 'string' ? flat.risk_level : undefined,
+      name: flat.name,
+      email: flat.email,
+      company_name: flat.companyName,
+      position_type: flat.positionType,
+      investment_horizon: flat.investmentHorizon,
+    },
+    stock_details: {
+      ticker: String(ticker),
+      exchange: typeof flat.exchange === 'string' ? flat.exchange : undefined,
+      current_price: currentPrice ?? NaN,
+      target_price: targetPrice,
+      week52_high: parseNumber(flat.week52High),
+      week52_low: parseNumber(flat.week52Low),
+      annual_revenue: parseNumber(flat.annualRevenue),
+      eps: parseNumber(flat.eps),
+      pe_ratio: parseNumber(flat.peRatio),
+    },
+    status: 'pending',
+  }
+  return nested
 }
 
 export async function POST(request: Request) {
@@ -93,7 +232,22 @@ export async function POST(request: Request) {
     logDebug('request', 'Incoming POST /api/submit-idea received')
     const body = (await request.json()) as SubmitIdeaRequest
     logDebug('request.body', 'Parsed request payload', body)
-    const idea = body?.idea
+    const incoming = body?.idea
+    // Obtain authenticated user id before transformation
+    const supabase = await createSupabaseServerClient()
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    if (userError) {
+      logError('auth.user', 'Failed to get user', { message: userError.message })
+    }
+    const userId = userData?.user?.id
+    if (!userId) {
+      logError('auth', 'Unauthorized: missing session user id')
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
+
+    logDebug('transform.start', 'Normalizing incoming idea into nested structure')
+    const idea = normalizeToNestedIdea(incoming, userId)
+    logDebug('transform.result', 'Normalized idea payload', idea)
 
     logDebug('validation.start', 'Validating idea payload')
     const validation = validateIdea(idea)
@@ -109,31 +263,8 @@ export async function POST(request: Request) {
     }
     logDebug('validation.pass', 'Idea payload validated successfully')
 
-    // Authenticate request using server cookies-bound client and obtain verified user
-    // Note: createSupabaseServerClient uses next/headers cookies() which are request-scoped in route handlers
-    const supabase = await createSupabaseServerClient()
-    const { data: userData, error: userError } = await supabase.auth.getUser()
-    if (userError) {
-      logError('auth.user', 'Failed to get user', { message: userError.message })
-    }
-    const userId = userData?.user?.id
-    if (!userId) {
-      logError('auth', 'Unauthorized: missing session user id')
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-    }
-
-    // Never trust client-sent user_id; enforce server-side user id
-    const statusValue = typeof idea.status === 'string' && ['pending', 'approved', 'rejected'].includes(idea.status)
-      ? idea.status
-      : 'pending'
-    const forwardPayload: SubmitIdeaRequest = {
-      idea: {
-        user_id: userId,
-        data: idea.data,
-        stock_details: idea.stock_details,
-        status: statusValue,
-      },
-    }
+    // Never trust client-sent user_id; we already injected server user_id during normalization
+    const forwardPayload: SubmitIdeaRequest = { idea }
 
     const supabaseUrl =
       process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
