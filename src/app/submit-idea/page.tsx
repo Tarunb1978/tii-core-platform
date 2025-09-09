@@ -135,23 +135,59 @@ export default function SubmitIdeaPage() {
     setErrorMessage(null);
     setSuccessMessage(null);
     try {
+      // Helper function to safely parse numeric values
+      const parseNumericValue = (value: string): number | undefined => {
+        const parsed = parseFloat(value);
+        return !Number.isNaN(parsed) ? parsed : undefined;
+      };
+
+      // Helper function to safely get string values
+      const getStringValue = (value: string): string | undefined => {
+        return value && value.trim().length > 0 ? value.trim() : undefined;
+      };
+
+      // Build comprehensive payload with all form fields
       const ideaPayload: any = {
         user_id: userId,
+        // Data object: Contains all metadata and descriptive information
         data: {
+          // Required core fields
           title: `${formData.companyName} (${formData.stockSymbol})`.trim(),
           description: formData.investmentDescription,
+          
+          // Company and investment metadata (snake_case for database schema)
+          company_name: getStringValue(formData.companyName),
+          position_type: getStringValue(formData.positionType),
+          investment_horizon: getStringValue(formData.investmentHorizon),
+          
+          // Additional metadata that could be useful
+          word_count: wordCount,
+          submission_timestamp: new Date().toISOString(),
         },
+        // Stock details object: Contains all financial metrics and stock-specific data
         stock_details: {
+          // Required stock identifier
           ticker: formData.stockSymbol,
-          current_price: parseFloat(formData.currentStockPrice),
+          
+          // Price information (parsed as numbers with fallback to undefined)
+          current_price: parseNumericValue(formData.currentStockPrice),
+          target_price: parseNumericValue(formData.week52High), // Using week52High as target price
+          
+          // 52-week price range
+          week52_high: parseNumericValue(formData.week52High),
+          week52_low: parseNumericValue(formData.week52Low),
+          
+          // Financial metrics
+          annual_revenue: parseNumericValue(formData.annualRevenue),
+          eps: parseNumericValue(formData.eps),
+          pe_ratio: parseNumericValue(formData.peRatio),
+          
+          // Additional stock metadata
+          currency: 'INR', // Assuming Indian market
+          market: 'NSE/BSE', // Indian stock exchanges
         },
         status: 'pending',
       };
-
-      // Optionally include fields if present and valid numbers/strings
-      if (formData.week52High && !Number.isNaN(parseFloat(formData.week52High))) {
-        ideaPayload.stock_details.target_price = parseFloat(formData.week52High);
-      }
 
       const response = await fetch('/api/submit-idea', {
         method: 'POST',
