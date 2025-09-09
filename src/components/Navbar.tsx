@@ -1,15 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useAuth } from '@/context/authProvider';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
   // State for mobile menu toggle
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // Placeholder for authentication state (can be replaced with actual auth logic)
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // State for user dropdown menu
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  
+  // Refs for click outside detection
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Get authentication state from AuthProvider
+  const { currentUser } = useAuth();
+  
+  // Supabase client for sign out
+  const supabase = createClient();
+  const router = useRouter();
 
   // Toggle mobile menu
   const toggleMobileMenu = () => {
@@ -20,6 +33,40 @@ export default function Navbar() {
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
   };
+
+  // Extract initials from full name
+  const getInitials = (fullName: string): string => {
+    return fullName
+      .split(' ')
+      .map(name => name.charAt(0).toUpperCase())
+      .join('')
+      .slice(0, 2); // Limit to 2 characters
+  };
+
+  // Handle sign out
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      setIsUserDropdownOpen(false);
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsUserDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <nav className="fixed top-0 left-0 right-0 w-full bg-white shadow-sm border-b border-gray-200 font-sans z-50">
@@ -54,7 +101,7 @@ export default function Navbar() {
               href="/topic-of-the-week" 
               className="text-gray-600 hover:text-gray-800 transition-all duration-200 hover:-translate-y-0.5 text-sm font-medium"
             >
-              Topic of the Week
+              Trending Topics
             </Link>
             <a 
               href="#resources" 
@@ -77,21 +124,52 @@ export default function Navbar() {
               Submit Idea
             </Link>
             
-            {/* Sign In/Out Button */}
-            {isAuthenticated ? (
-              <button 
-                onClick={() => setIsAuthenticated(false)}
-                className="text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
-              >
-                Sign Out
-              </button>
+            {/* User Authentication Section */}
+            {currentUser ? (
+              // User is signed in - show initials button with dropdown
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                  className="w-10 h-10 bg-gray-100 hover:bg-gray-200 focus:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full flex items-center justify-center text-sm font-medium text-gray-700 transition-all duration-200"
+                  aria-label="User menu"
+                >
+                  {currentUser.user.user_metadata?.full_name 
+                    ? getInitials(currentUser.user.user_metadata.full_name)
+                    : 'U'
+                  }
+                </button>
+                
+                {/* Dropdown Menu */}
+                {isUserDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                    <Link
+                      href="/profile"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                      onClick={() => setIsUserDropdownOpen(false)}
+                    >
+                      Edit Profile
+                      <span className="block text-xs text-gray-400 mt-1">
+                        {/* TODO: Replace with real profile page URL */}
+                        Placeholder - replace with real profile page
+                      </span>
+                    </Link>
+                    <button
+                      onClick={handleSignOut}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
-              <a 
+              // User is not signed in - show sign in button
+              <Link 
                 href="/sign-in"
                 className="text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
               >
                 Sign In
-              </a>
+              </Link>
             )}
           </div>
 
@@ -149,7 +227,7 @@ export default function Navbar() {
                   className="block px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors duration-200 text-right"
                   onClick={closeMobileMenu}
                 >
-                  Topic of the Week
+                  Trending Topics
                 </Link>
                 <a 
                   href="#resources" 
@@ -170,25 +248,39 @@ export default function Navbar() {
                   </Link>
                 </div>
                 
-                {/* Mobile Sign In/Out Button */}
-                {isAuthenticated ? (
-                  <button 
-                    onClick={() => {
-                      setIsAuthenticated(false);
-                      closeMobileMenu();
-                    }}
-                    className="w-full text-right px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors duration-200"
-                  >
-                    Sign Out
-                  </button>
+                {/* Mobile User Authentication Section */}
+                {currentUser ? (
+                  // User is signed in - show user info and sign out
+                  <div className="space-y-1">
+                    <div className="px-3 py-2 text-sm text-gray-600 border-t border-gray-100 pt-3 text-right">
+                      Welcome, {currentUser.user.user_metadata?.full_name || 'User'}
+                    </div>
+                    <Link
+                      href="/profile"
+                      className="block px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors duration-200 text-right"
+                      onClick={closeMobileMenu}
+                    >
+                      Edit Profile
+                    </Link>
+                    <button 
+                      onClick={() => {
+                        handleSignOut();
+                        closeMobileMenu();
+                      }}
+                      className="w-full text-right px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors duration-200"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
                 ) : (
-                  <a 
+                  // User is not signed in - show sign in button
+                  <Link 
                     href="/sign-in"
                     className="block px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors duration-200 text-right"
                     onClick={closeMobileMenu}
                   >
                     Sign In
-                  </a>
+                  </Link>
                 )}
                 
                 {/* Mobile Info Text */}

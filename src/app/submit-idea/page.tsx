@@ -1,17 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { Save, Send, Building2, TrendingUp, DollarSign, FileText } from 'lucide-react';
+import { Save, Send, Building2, TrendingUp, DollarSign } from 'lucide-react';
 import { useAuth } from '@/context/authProvider';
 
 export default function SubmitIdeaPage() {
-  const { currentUser } = useAuth();
+  // ===== HOOKS DECLARATION (All hooks must be declared at the top level) =====
+  
+  // Authentication and routing hooks
+  const { currentUser, isLoading } = useAuth();
+  const router = useRouter();
+
+  // Form state hooks - all useState declarations at the top level
   const [formData, setFormData] = useState({
-    // Personal Information
-    name: '',
-    email: '',
-    
     // Company Information
     companyName: '',
     stockSymbol: '',
@@ -36,6 +39,39 @@ export default function SubmitIdeaPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // ===== AUTHENTICATION GATING LOGIC =====
+  
+  // Authentication gating - redirect unauthenticated users
+  useEffect(() => {
+    if (!isLoading && !currentUser) {
+      router.replace('/sign-in');
+    }
+  }, [currentUser, isLoading, router]);
+
+  // ===== CONDITIONAL RENDERING (After all hooks are declared) =====
+  
+  // Show loading state while authentication is being checked
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
+          <div className="text-center text-gray-500">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p>Loading...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Prevent rendering form if user is not authenticated
+  if (!currentUser) {
+    return null;
+  }
+
+  // ===== EVENT HANDLERS AND HELPER FUNCTIONS =====
+  
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -61,18 +97,17 @@ export default function SubmitIdeaPage() {
       return;
     }
 
+    // Get authenticated user ID - this should always exist due to auth gating
     const userId = currentUser?.user?.id;
     if (!userId) {
-      const message = 'Please sign in to submit an idea.';
+      const message = 'Authentication error. Please sign in again.';
       setErrorMessage(message);
       alert(message);
       return;
     }
 
-    // Basic client-side validation for required fields since we are not using a native form submit
+    // Basic client-side validation for required fields (excluding personal info)
     const requiredFields = [
-      'name',
-      'email',
       'companyName',
       'stockSymbol',
       'positionType',
@@ -138,9 +173,8 @@ export default function SubmitIdeaPage() {
 
       setSuccessMessage('Investment idea submitted successfully!');
       alert('Investment idea submitted successfully!');
+      // Reset form data (excluding personal info which is now handled by auth)
       setFormData({
-        name: '',
-        email: '',
         companyName: '',
         stockSymbol: '',
         positionType: '',
@@ -163,6 +197,8 @@ export default function SubmitIdeaPage() {
     }
   };
 
+  // ===== FORM OPTIONS AND CONSTANTS =====
+  
   const positionTypes = [
     'Long Position',
     'Short Position',
@@ -177,6 +213,8 @@ export default function SubmitIdeaPage() {
     '3-5 Years'
   ];
 
+  // ===== COMPONENT RENDER =====
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -193,48 +231,6 @@ export default function SubmitIdeaPage() {
         </div>
 
         <form className="space-y-8">
-          {/* Personal Information Section */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <FileText className="w-5 h-5 text-blue-600" />
-              </div>
-              <h2 className="text-xl font-semibold text-gray-900">Personal Information</h2>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Name *
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="Enter your full name"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                  Email *
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="Enter your email address"
-                  required
-                />
-              </div>
-            </div>
-          </div>
-
           {/* Company Information Section */}
           <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
             <div className="flex items-center gap-3 mb-6">

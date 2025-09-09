@@ -20,6 +20,7 @@ interface Topic {
   title: string;
   category: string;
   isHot: boolean;
+  trendingScore: number; // New trending metric
   author: string;
   role: string;
   summary: string;
@@ -27,6 +28,7 @@ interface Topic {
     comments: number;
     views: number;
     lastUpdated: string;
+    growthRate: number; // New growth rate metric
   };
   recentComments: Comment[];
   allComments: Comment[];
@@ -39,13 +41,15 @@ const mockTopics: Topic[] = [
     title: 'Global Trade Wars: Impact on Indian Markets',
     category: 'Global Trade',
     isHot: true,
+    trendingScore: 95,
     author: 'Rajesh Mehta',
     role: 'Trade Expert',
     summary: 'Analyzing the ripple effects of ongoing global trade tensions on Indian stock markets and export-oriented sectors.',
     stats: {
       comments: 12,
       views: 1200,
-      lastUpdated: '2 hours ago'
+      lastUpdated: '2 hours ago',
+      growthRate: 45
     },
     recentComments: [
       {
@@ -183,13 +187,15 @@ const mockTopics: Topic[] = [
     title: 'Market Volatility: Strategies for Uncertain Times',
     category: 'Market Volatility',
     isHot: false,
+    trendingScore: 78,
     author: 'Dr. Kavita Singh',
     role: 'Market Analyst',
     summary: 'Exploring defensive investment strategies and portfolio rebalancing approaches during high market volatility periods.',
     stats: {
       comments: 12,
       views: 890,
-      lastUpdated: '4 hours ago'
+      lastUpdated: '4 hours ago',
+      growthRate: 23
     },
     recentComments: [
       {
@@ -327,13 +333,15 @@ const mockTopics: Topic[] = [
     title: 'Tech Stock Valuations: Bubble or Opportunity?',
     category: 'Valuation',
     isHot: true,
+    trendingScore: 88,
     author: 'Vikram Malhotra',
     role: 'Tech Analyst',
     summary: 'Deep dive into current tech stock valuations and whether they represent sustainable growth or speculative bubbles.',
     stats: {
       comments: 12,
       views: 2100,
-      lastUpdated: '1 hour ago'
+      lastUpdated: '1 hour ago',
+      growthRate: 67
     },
     recentComments: [
       {
@@ -471,13 +479,15 @@ const mockTopics: Topic[] = [
     title: 'HDFC Bank: Post-Merger Analysis',
     category: 'Individual Stocks',
     isHot: false,
+    trendingScore: 65,
     author: 'Sanjay Gupta',
     role: 'Banking Analyst',
     summary: 'Comprehensive analysis of HDFC Bank\'s performance post-merger and future growth prospects.',
     stats: {
       comments: 12,
       views: 750,
-      lastUpdated: '6 hours ago'
+      lastUpdated: '6 hours ago',
+      growthRate: 12
     },
     recentComments: [
       {
@@ -615,13 +625,15 @@ const mockTopics: Topic[] = [
     title: 'SEBI Regulations: Impact on Retail Investors',
     category: 'Policy & Regulation',
     isHot: false,
+    trendingScore: 72,
     author: 'Adv. Ramesh Kumar',
     role: 'Legal Expert',
     summary: 'Understanding the latest SEBI regulations and how they affect retail investor rights and market participation.',
     stats: {
       comments: 12,
       views: 520,
-      lastUpdated: '8 hours ago'
+      lastUpdated: '8 hours ago',
+      growthRate: 18
     },
     recentComments: [
       {
@@ -777,6 +789,22 @@ const TopicFilterTabs = ({ activeFilter, onFilterChange }: { activeFilter: strin
   </div>
 );
 
+const SortDropdown = ({ sortBy, onSortChange }: { sortBy: string; onSortChange: (sort: string) => void }) => (
+  <div className="flex items-center gap-3 mb-6">
+    <span className="text-sm font-medium text-gray-700">Sort by:</span>
+    <select
+      value={sortBy}
+      onChange={(e) => onSortChange(e.target.value)}
+      className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+    >
+      <option value="trending">🔥 Trending Score</option>
+      <option value="growth">📈 Growth Rate</option>
+      <option value="comments">💬 Most Comments</option>
+      <option value="views">👀 Most Views</option>
+    </select>
+  </div>
+);
+
 const TopicCard = ({ topic }: { topic: Topic }) => {
   const [showAllComments, setShowAllComments] = useState(false);
 
@@ -788,8 +816,8 @@ const TopicCard = ({ topic }: { topic: Topic }) => {
           <div className="flex items-center gap-3 mb-2">
             <h3 className="text-xl font-semibold text-gray-900">{topic.title}</h3>
             {topic.isHot && (
-              <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                🔥 Hot
+              <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md animate-pulse">
+                🔥 TRENDING
               </span>
             )}
           </div>
@@ -799,6 +827,22 @@ const TopicCard = ({ topic }: { topic: Topic }) => {
             </span>
             <span className="text-sm text-gray-500">•</span>
             <span className="text-sm text-gray-600">{topic.author}, {topic.role}</span>
+            <span className="text-sm text-gray-500">•</span>
+            <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+              📈 +{topic.stats.growthRate}%
+            </span>
+          </div>
+        </div>
+        {/* Trending Score */}
+        <div className="flex flex-col items-end">
+          <div className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 text-xs font-bold px-3 py-1 rounded-full mb-1">
+            Trending Score: {topic.trendingScore}
+          </div>
+          <div className="w-16 bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${topic.trendingScore}%` }}
+            ></div>
           </div>
         </div>
       </div>
@@ -880,10 +924,28 @@ const TopicCard = ({ topic }: { topic: Topic }) => {
 
 export default function TopicOfTheWeekPage() {
   const [activeFilter, setActiveFilter] = useState('All');
+  const [sortBy, setSortBy] = useState('trending'); // New sorting state
 
+  // Filter topics by category
   const filteredTopics = activeFilter === 'All' 
     ? mockTopics 
     : mockTopics.filter(topic => topic.category === activeFilter);
+
+  // Sort topics based on selected criteria
+  const sortedTopics = [...filteredTopics].sort((a, b) => {
+    switch (sortBy) {
+      case 'trending':
+        return b.trendingScore - a.trendingScore;
+      case 'growth':
+        return b.stats.growthRate - a.stats.growthRate;
+      case 'comments':
+        return b.stats.comments - a.stats.comments;
+      case 'views':
+        return b.stats.views - a.stats.views;
+      default:
+        return b.trendingScore - a.trendingScore;
+    }
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -893,10 +955,10 @@ export default function TopicOfTheWeekPage() {
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Topic of the Week
+            Trending Topics
           </h1>
           <p className="text-lg text-gray-600 max-w-3xl">
-            Explore trending investment discussions and market insights from our community of experts and investors.
+            Discover the hottest investment discussions and market insights trending right now in our community of experts and investors.
           </p>
         </div>
 
@@ -906,10 +968,16 @@ export default function TopicOfTheWeekPage() {
           onFilterChange={setActiveFilter} 
         />
 
+        {/* Sort Dropdown */}
+        <SortDropdown 
+          sortBy={sortBy} 
+          onSortChange={setSortBy} 
+        />
+
         {/* Topics Grid */}
         <div className="space-y-6">
-          {filteredTopics.length > 0 ? (
-            filteredTopics.map((topic) => (
+          {sortedTopics.length > 0 ? (
+            sortedTopics.map((topic) => (
               <TopicCard key={topic.id} topic={topic} />
             ))
           ) : (
@@ -924,10 +992,10 @@ export default function TopicOfTheWeekPage() {
         </div>
 
         {/* Load More Button */}
-        {filteredTopics.length > 0 && (
+        {sortedTopics.length > 0 && (
           <div className="text-center mt-8">
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 shadow-md hover:shadow-lg">
-              Load More Topics
+            <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+              🔥 Load More Trending Topics
             </button>
           </div>
         )}
