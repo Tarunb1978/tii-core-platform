@@ -43,7 +43,9 @@ export default function AdminIdeaListPage() {
   
   const itemsPerPage = 10;
 
-  // Authentication check
+  // Authentication check - only check if user is logged in
+  // Authorization is handled by backend which returns 403 for non-super_admin users
+  // This approach ensures backend is the single source of truth for permissions
   useEffect(() => {
     if (!isLoading && !currentUser) {
       router.replace('/sign-in');
@@ -62,13 +64,24 @@ export default function AdminIdeaListPage() {
       setLoading(true);
       setError(null);
       
-      const response = await fetchIdeas(statusFilter, currentPage, itemsPerPage);
+      const accessToken = currentUser?.access_token;
+      const response = await fetchIdeas(statusFilter, currentPage, itemsPerPage, accessToken);
       setIdeas(response.ideas);
       setTotalIdeas(response.total);
       setTotalPages(Math.ceil(response.total / itemsPerPage));
     } catch (err: any) {
-      setError(err.message || 'Failed to load ideas');
       console.error('Error loading ideas:', err);
+      
+      // Handle specific error cases
+      if (err.message?.includes('401') || err.message?.includes('Unauthorized')) {
+        setError('Authentication required. Please sign in again.');
+        router.replace('/sign-in');
+      } else if (err.message?.includes('403') || err.message?.includes('Forbidden')) {
+        setError('Access denied. Super admin privileges required.');
+        router.replace('/unauthorized');
+      } else {
+        setError(err.message || 'Failed to load ideas. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -131,6 +144,8 @@ export default function AdminIdeaListPage() {
   }
 
   // Prevent rendering if user is not authenticated
+  // Authorization is handled by backend - if user doesn't have admin privileges,
+  // they'll get a 403 error and be redirected to unauthorized page
   if (!currentUser) {
     return null;
   }

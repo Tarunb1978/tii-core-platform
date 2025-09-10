@@ -1,7 +1,20 @@
 /**
  * Admin API utilities for managing investment ideas
- * These functions handle API calls for super_admin users
+ * 
+ * IMPORTANT: This module defers all authorization checks to the backend.
+ * The frontend only handles authentication (user login status) and relies on
+ * the backend to enforce role-based access control. This approach ensures:
+ * 
+ * 1. Security: Backend is the single source of truth for authorization
+ * 2. Consistency: No sync issues between frontend role state and backend reality
+ * 3. Simplicity: Frontend doesn't need to manage complex role state
+ * 
+ * When users without admin privileges attempt restricted operations, the backend
+ * returns HTTP 403 Forbidden, which the frontend handles by redirecting to
+ * the unauthorized page.
  */
+
+import { getAuthHeaders } from './userRole';
 
 export interface IdeaData {
   id: string;
@@ -48,7 +61,8 @@ export interface StatusUpdateRequest {
 export async function fetchIdeas(
   status?: string,
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
+  accessToken?: string
 ): Promise<IdeaListResponse> {
   try {
     const params = new URLSearchParams();
@@ -56,12 +70,13 @@ export async function fetchIdeas(
     params.append('page', page.toString());
     params.append('limit', limit.toString());
 
+    const headers = accessToken ? getAuthHeaders(accessToken) : {
+      'Content-Type': 'application/json',
+    };
+
     const response = await fetch(`/api/admin/ideas?${params.toString()}`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        // JWT token will be added by the auth provider
-      },
+      headers,
     });
 
     if (!response.ok) {
@@ -79,13 +94,15 @@ export async function fetchIdeas(
 /**
  * Fetch a single investment idea by ID
  */
-export async function fetchIdeaById(id: string): Promise<IdeaData> {
+export async function fetchIdeaById(id: string, accessToken?: string): Promise<IdeaData> {
   try {
+    const headers = accessToken ? getAuthHeaders(accessToken) : {
+      'Content-Type': 'application/json',
+    };
+
     const response = await fetch(`/api/admin/ideas/${id}`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
     });
 
     if (!response.ok) {
@@ -105,14 +122,17 @@ export async function fetchIdeaById(id: string): Promise<IdeaData> {
  */
 export async function updateIdeaStatus(
   id: string,
-  status: 'pending' | 'accepted' | 'rejected'
+  status: 'pending' | 'accepted' | 'rejected',
+  accessToken?: string
 ): Promise<IdeaData> {
   try {
+    const headers = accessToken ? getAuthHeaders(accessToken) : {
+      'Content-Type': 'application/json',
+    };
+
     const response = await fetch(`/api/admin/ideas/${id}/status`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({ status }),
     });
 

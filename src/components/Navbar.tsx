@@ -8,6 +8,8 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
+  console.log('=== NAVBAR COMPONENT RENDERING ===');
+  
   // State for mobile menu toggle
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
@@ -23,6 +25,8 @@ export default function Navbar() {
   // Supabase client for sign out
   const supabase = createClient();
   const router = useRouter();
+  
+  console.log('Navbar currentUser:', !!currentUser);
 
   // Toggle mobile menu
   const toggleMobileMenu = () => {
@@ -45,14 +49,33 @@ export default function Navbar() {
 
   // Handle sign out
   const handleSignOut = async () => {
+    console.log('=== SIGN OUT FUNCTION CALLED ===');
     try {
-      await supabase.auth.signOut();
+      console.log('Sign out initiated...');
       setIsUserDropdownOpen(false);
-      router.push('/');
+      
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Sign out error:', error);
+        return;
+      }
+      
+      console.log('Sign out successful');
+      
+      // Force redirect in case auth state change doesn't trigger
+      setTimeout(() => {
+        router.push('/');
+        window.location.reload(); // Force page reload to clear any cached state
+      }, 100);
+      
     } catch (error) {
       console.error('Error signing out:', error);
     }
   };
+
+  // Test if function is defined
+  console.log('handleSignOut function defined:', typeof handleSignOut);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -141,7 +164,13 @@ export default function Navbar() {
                 
                 {/* Dropdown Menu */}
                 {isUserDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                  <div 
+                    className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
+                    onClick={(e) => {
+                      console.log('=== DROPDOWN CLICKED ===');
+                      e.stopPropagation();
+                    }}
+                  >
                     <Link
                       href="/profile"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
@@ -153,8 +182,22 @@ export default function Navbar() {
                         Placeholder - replace with real profile page
                       </span>
                     </Link>
+                    <Link
+                      href="/admin/idea-list"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                      onClick={() => setIsUserDropdownOpen(false)}
+                    >
+                      Admin Panel
+                      <span className="block text-xs text-gray-400 mt-1">
+                        Manage investment ideas
+                      </span>
+                    </Link>
                     <button
-                      onClick={handleSignOut}
+                      onClick={(e) => {
+                        console.log('=== BUTTON CLICKED ===');
+                        e.preventDefault();
+                        handleSignOut();
+                      }}
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
                     >
                       Sign Out
@@ -262,8 +305,17 @@ export default function Navbar() {
                     >
                       Edit Profile
                     </Link>
+                    <Link
+                      href="/admin/idea-list"
+                      className="block px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors duration-200 text-right"
+                      onClick={closeMobileMenu}
+                    >
+                      Admin Panel
+                    </Link>
                     <button 
-                      onClick={() => {
+                      onClick={(e) => {
+                        console.log('=== MOBILE BUTTON CLICKED ===');
+                        e.preventDefault();
                         handleSignOut();
                         closeMobileMenu();
                       }}
