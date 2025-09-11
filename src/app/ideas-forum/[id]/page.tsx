@@ -1,7 +1,11 @@
+'use client';
+
 import Navbar from '@/components/Navbar';
 import IdeaCard from '@/components/IdeaCard';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { Toaster } from 'react-hot-toast';
 
 type Idea = {
   id: string;
@@ -30,24 +34,44 @@ type Idea = {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
-async function getIdea(id: string): Promise<Idea | null> {
-  try {
-    // Ideally call a single-idea endpoint, but here we fetch all and filter
-    const res = await fetch(API_URL, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch ideas');
+export default function IdeaDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const [idea, setIdea] = useState<Idea | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [id, setId] = useState<string>('');
 
-    const json = await res.json();
-    const ideas: Idea[] = Array.isArray(json?.ideas) ? json.ideas : [];
-    return ideas.find(i => i.id === id) || null;
-  } catch (e) {
-    console.error(e);
-    return null;
-  }
-}
+  useEffect(() => {
+    async function getParams() {
+      const resolvedParams = await params;
+      setId(resolvedParams.id);
+    }
+    getParams();
+  }, [params]);
 
-export default async function IdeaDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const idea = await getIdea(id);
+  useEffect(() => {
+    if (!id) return;
+    
+    async function getIdea() {
+      try {
+        const res = await fetch(API_URL, { cache: 'no-store' });
+        if (!res.ok) throw new Error('Failed to fetch ideas');
+
+        const json = await res.json();
+        const ideas: Idea[] = Array.isArray(json?.ideas) ? json.ideas : [];
+        const foundIdea = ideas.find(i => i.id === id) || null;
+        setIdea(foundIdea);
+      } catch (e) {
+        console.error(e);
+        setIdea(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+    getIdea();
+  }, [id]);
+
+  const handleIdeaUpdate = (updatedIdea: Idea) => {
+    setIdea(updatedIdea);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -66,14 +90,32 @@ export default async function IdeaDetailPage({ params }: { params: Promise<{ id:
           </Link>
         </div>
 
-        {!idea ? (
+        {loading ? (
+          <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-gray-500">
+            Loading idea...
+          </div>
+        ) : !idea ? (
           <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-8 text-center">
             Idea not found
           </div>
         ) : (
-          <IdeaCard idea={idea} showBreadcrumb={false} />
+          <IdeaCard 
+            idea={idea} 
+            showBreadcrumb={false} 
+            onIdeaUpdate={handleIdeaUpdate}
+          />
         )}
       </main>
+      <Toaster 
+        position="bottom-center"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+        }}
+      />
     </div>
   );
 }
