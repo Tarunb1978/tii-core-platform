@@ -3,7 +3,9 @@
 import { Heart, Bookmark, MessageSquare, ArrowUp, Send, ChevronRight, Home } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/context/authProvider';
+import toast from 'react-hot-toast';
 
 type Idea = {
   id: string;
@@ -35,28 +37,234 @@ interface IdeaCardProps {
   showBackButton?: boolean;
   onBackClick?: () => void;
   showBreadcrumb?: boolean;
+  disabledNavigate?: boolean;
+  onBlockedNavigate?: () => void;
+  onIdeaUpdate?: (updatedIdea: Idea) => void;
 }
 
-export default function IdeaCard({ idea, showBackButton = false, onBackClick, showBreadcrumb = false }: IdeaCardProps) {
+const API_URL_ACTIONS =
+  process.env.NEXT_PUBLIC_API_URL_ACTIONS || '';
+
+export default function IdeaCard({
+  idea,
+  showBackButton = false,
+  showBreadcrumb = false,
+  disabledNavigate = false,
+  onBlockedNavigate,
+  onIdeaUpdate
+}: IdeaCardProps) {
   const router = useRouter();
+  const user = useAuth();
   const d = idea.data || ({} as Idea['data']);
   const [showComments, setShowComments] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [isLiked, setIsLiked] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [likesCount, setLikesCount] = useState(idea.likes_count ?? d.number_of_likes ?? 0);
+  const [bookmarksCount, setBookmarksCount] = useState(idea.bookmarks_count ?? 0);
+  const [discussionsCount, setDiscussionsCount] = useState(idea.discussions_count ?? 0);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchUserActions = async () => {
+      if (!user || !user.currentUser?.access_token) return;
+
+      try {
+        const res = await fetch(`${API_URL_ACTIONS}/self`, {
+          headers: {
+            Authorization: `Bearer ${user.currentUser.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+
+          // check if this idea is in user's likes/bookmarks
+          if (data.likes?.includes(idea.id)) {
+            setIsLiked(true);
+          }
+          if (data.bookmarks?.includes(idea.id)) {
+            setIsBookmarked(true);
+          }
+        } else {
+          console.error('Failed to fetch user actions:', await res.text());
+        }
+      } catch (err) {
+        console.error('Error fetching user actions:', err);
+      }
+    };
+
+    fetchUserActions();
+  }, [idea.id, user?.currentUser?.access_token]);
 
   const handleCardClick = () => {
-    if (!showBackButton) {
-      router.push(`/ideas-forum/${idea.id}`);
+    if (showBackButton) return;
+    if (disabledNavigate) {
+      if (onBlockedNavigate) {
+        onBlockedNavigate();
+      }
+      return;
     }
+    router.push(`/ideas-forum/${idea.id}`);
   };
 
   const handleTitleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (disabledNavigate) {
+      if (onBlockedNavigate) {
+        onBlockedNavigate();
+      }
+      return;
+    }
     router.push(`/ideas-forum/${idea.id}`);
   };
 
   const handleCommentClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowComments(!showComments);
+  };
+
+  const handleLike = async () => {
+    if (!user || !user.currentUser?.access_token) {
+      toast.error('Please log in to interact with ideas.');
+      return;
+    }
+
+    if (isLoading) return;
+    setIsLoading(true);
+
+    // Debug: Log token info (remove in production)
+    console.log('Using access token:', user.currentUser.access_token.substring(0, 20) + '...');
+
+    try {
+      const method = isLiked ? 'DELETE' : 'POST';
+      const response = await fetch(`${API_URL_ACTIONS}/${idea.id}/like`, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${user.currentUser.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const newLikedState = !isLiked;
+        setIsLiked(newLikedState);
+        setLikesCount(prev => newLikedState ? prev + 1 : prev - 1);
+        
+        // Update parent component
+        if (onIdeaUpdate) {
+          onIdeaUpdate({
+            ...idea,
+            likes_count: newLikedState ? likesCount + 1 : likesCount - 1,
+          });
+        }
+        
+        toast.success(newLikedState ? 'Idea liked!' : 'Idea unliked!');
+      } else {
+        toast.error('Failed to update like status');
+      }
+    } catch (error) {
+      console.error('Error updating like:', error);
+      toast.error('Failed to update like status');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleBookmark = async () => {
+    if (!user || !user.currentUser?.access_token) {
+      toast.error('Please log in to interact with ideas.');
+      return;
+    }
+
+    if (isLoading) return;
+    setIsLoading(true);
+
+    try {
+      const method = isBookmarked ? 'DELETE' : 'POST';
+      const response = await fetch(`${API_URL_ACTIONS}/${idea.id}/bookmark`, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${user.currentUser.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const newBookmarkedState = !isBookmarked;
+        setIsBookmarked(newBookmarkedState);
+        setBookmarksCount(prev => newBookmarkedState ? prev + 1 : prev - 1);
+        
+        // Update parent component
+        if (onIdeaUpdate) {
+          onIdeaUpdate({
+            ...idea,
+            bookmarks_count: newBookmarkedState ? bookmarksCount + 1 : bookmarksCount - 1,
+          });
+        }
+        
+        toast.success(newBookmarkedState ? 'Idea bookmarked!' : 'Bookmark removed!');
+      } else {
+        toast.error('Failed to update bookmark status');
+      }
+    } catch (error) {
+      console.error('Error updating bookmark:', error);
+      toast.error('Failed to update bookmark status');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleComment = async () => {
+    if (!user || !user.currentUser?.access_token) {
+      toast.error('Please log in to interact with ideas.');
+      return;
+    }
+
+    if (!commentText.trim()) {
+      toast.error('Please enter a comment');
+      return;
+    }
+
+    if (isLoading) return;
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL_ACTIONS}/${idea.id}/comment`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${user.currentUser.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: commentText.trim(),
+        }),
+      });
+
+      if (response.ok) {
+        setCommentText('');
+        setDiscussionsCount(prev => prev + 1);
+        
+        // Update parent component
+        if (onIdeaUpdate) {
+          onIdeaUpdate({
+            ...idea,
+            discussions_count: discussionsCount + 1,
+          });
+        }
+        
+        toast.success('Comment added successfully!');
+      } else {
+        toast.error('Failed to add comment');
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast.error('Failed to add comment');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Truncate text for preview
@@ -94,8 +302,9 @@ export default function IdeaCard({ idea, showBackButton = false, onBackClick, sh
   };
 
   // Extract timeline from main idea (look for patterns like "3-5 years", "2-3 years", etc.)
-  const extractTimeline = (idea: string) => {
-    const timelineMatch = idea.match(/(\d+[-–]\d+)\s*years?/i);
+  const extractTimeline = (idea?: string) => {
+    if (!idea) return 'Long Term'; // guard clause if undefined/null
+    const timelineMatch = idea.match(/(\d+-\d+)\s*years?/i);
     return timelineMatch ? `${timelineMatch[1]} Years` : 'Long Term';
   };
 
@@ -129,10 +338,18 @@ export default function IdeaCard({ idea, showBackButton = false, onBackClick, sh
               {getMarketCapCategory()}
             </span>
             <button 
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              onClick={(e) => e.stopPropagation()}
+              className={`p-2 rounded-lg transition-colors ${
+                isBookmarked 
+                  ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' 
+                  : 'hover:bg-gray-100 text-gray-400'
+              }`}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleBookmark();
+              }}
+              disabled={isLoading}
             >
-              <Bookmark className="w-5 h-5 text-gray-400" />
+              <Bookmark className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -201,11 +418,19 @@ export default function IdeaCard({ idea, showBackButton = false, onBackClick, sh
         {/* Engagement Metrics */}
         <div className="flex items-center gap-6">
           <button 
-            className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors"
-            onClick={(e) => e.stopPropagation()}
+            className={`flex items-center gap-2 transition-colors ${
+              isLiked 
+                ? 'text-red-500 hover:text-red-600' 
+                : 'text-gray-600 hover:text-red-500'
+            }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleLike();
+            }}
+            disabled={isLoading}
           >
-            <Heart className="w-5 h-5" />
-            <span>{idea.likes_count ?? d.number_of_likes ?? 0}</span>
+            <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+            <span>{likesCount}</span>
           </button>
           <button 
             className={`flex items-center gap-2 transition-colors ${
@@ -216,7 +441,7 @@ export default function IdeaCard({ idea, showBackButton = false, onBackClick, sh
             onClick={handleCommentClick}
           >
             <MessageSquare className="w-5 h-5" />
-            <span>{idea.discussions_count ?? 0}</span>
+            <span>{discussionsCount}</span>
           </button>
           <button 
             className="flex items-center gap-2 text-gray-600 hover:text-green-500 transition-colors"
@@ -235,7 +460,7 @@ export default function IdeaCard({ idea, showBackButton = false, onBackClick, sh
               Discussion for {d.symbol}
             </h3>
             <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-              {idea.discussions_count ?? 0} messages
+              {discussionsCount} messages
             </span>
           </div>
 
@@ -263,12 +488,23 @@ export default function IdeaCard({ idea, showBackButton = false, onBackClick, sh
             <input
               type="text"
               placeholder={`Discuss ${d.symbol}...`}
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
               className="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               onClick={(e) => e.stopPropagation()}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleComment();
+                }
+              }}
             />
             <button 
-              className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              onClick={(e) => e.stopPropagation()}
+              className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleComment();
+              }}
+              disabled={isLoading || !commentText.trim()}
             >
               <Send className="w-5 h-5" />
             </button>
