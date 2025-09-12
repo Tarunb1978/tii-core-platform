@@ -28,12 +28,6 @@ export default function Home() {
             <button className="border-2 border-indigo-600 text-indigo-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-indigo-50 transition-colors">
               Learn More
             </button>
-            <a 
-              href="/admin/idea-list"
-              className="bg-red-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-red-700 transition-colors shadow-lg"
-            >
-              Admin Panel (Test)
-            </a>
           </div>
         </div>
 
