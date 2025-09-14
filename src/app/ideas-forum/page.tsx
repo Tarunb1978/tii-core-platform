@@ -1,12 +1,21 @@
-// app/ideas/page.tsx (Server Component by default in Next.js App Router)
+'use client';
 
 import Navbar from '@/components/Navbar';
 import IdeaCard from '@/components/IdeaCard';
 import { Filter, ChevronDown } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
-import { cookies } from 'next/headers'; // to access auth cookies (if any)
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/context/authProvider';
 
-// Define Idea type
+// Define Comment and Idea types
+type Comment = {
+  id: string;
+  content: string;
+  user_id: string;
+  created_at: string;
+  user_name?: string;
+};
+
 type Idea = {
   id: string;
   data: {
@@ -30,31 +39,109 @@ type Idea = {
   discussions_count?: number;
   created_at?: string;
   status?: string;
+  idea_discussion?: Comment[];
 };
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || '';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const API_URL_ACTIONS = process.env.NEXT_PUBLIC_API_URL_ACTIONS || '';
 
-// ✅ Server Component
-export default async function IdeasForumPage() {
-  let ideas: Idea[] = [];
-  let error = null;
+export default function IdeasForumPage() {
+  const [ideas, setIdeas] = useState<Idea[]>([]);
+  const [filteredIdeas, setFilteredIdeas] = useState<Idea[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState<'recent' | 'liked' | 'bookmarked' | 'commented'>('recent');
+  const [userActions, setUserActions] = useState<{
+    likes: string[];
+    bookmarks: string[];
+    comments: string[];
+  }>({ likes: [], bookmarks: [], comments: [] });
+  
+  const user = useAuth();
+  const isAuthenticated = !!user?.currentUser?.access_token;
 
-  try {
-    const res = await fetch(API_URL, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch ideas');
-    const json = await res.json();
-    ideas = Array.isArray(json?.ideas) ? json.ideas : [];
-  } catch (e) {
-    console.error(e);
-    error = 'Failed to load ideas';
-  }
+  // Fetch ideas
+  useEffect(() => {
+    async function fetchIdeas() {
+      try {
+        const res = await fetch(API_URL, { cache: 'no-store' });
+        if (!res.ok) throw new Error('Failed to fetch ideas');
+        const json = await res.json();
+        const fetchedIdeas = Array.isArray(json?.ideas) ? json.ideas : [];
+        setIdeas(fetchedIdeas);
+        setFilteredIdeas(fetchedIdeas);
+      } catch (e) {
+        console.error(e);
+        setError('Failed to load ideas');
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchIdeas();
+  }, []);
 
-  // Example authentication check (using cookies/session)
-  const cookieStore = await cookies();
-  const isAuthenticated = !!cookieStore.get('auth_token'); // adjust to your auth logic
+  // Fetch user actions
+  useEffect(() => {
+    async function fetchUserActions() {
+      if (!user?.currentUser?.access_token) return;
 
-  const displayIdeas = ideas;
+      try {
+        const res = await fetch(`${API_URL_ACTIONS}/self`, {
+          headers: {
+            Authorization: `Bearer ${user.currentUser.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setUserActions({
+            likes: data.likes || [],
+            bookmarks: data.bookmarks || [],
+            comments: data.comments || [],
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching user actions:', err);
+      }
+    }
+
+    fetchUserActions();
+  }, [user?.currentUser?.access_token]);
+
+  // Filter ideas based on selected filter
+  useEffect(() => {
+    if (!ideas.length) return;
+
+    let filtered: Idea[] = [];
+
+    switch (filterType) {
+      case 'recent':
+        filtered = [...ideas].sort((a, b) => {
+          const dateA = new Date(a.created_at || a.data.submitted_date || '');
+          const dateB = new Date(b.created_at || b.data.submitted_date || '');
+          return dateB.getTime() - dateA.getTime();
+        });
+        break;
+      case 'liked':
+        filtered = ideas.filter(idea => userActions.likes.includes(idea.id));
+        break;
+      case 'bookmarked':
+        filtered = ideas.filter(idea => userActions.bookmarks.includes(idea.id));
+        break;
+      case 'commented':
+        filtered = ideas.filter(idea => userActions.comments.includes(idea.id));
+        break;
+      default:
+        filtered = ideas;
+    }
+
+    setFilteredIdeas(filtered);
+  }, [ideas, filterType, userActions]);
+
+  const handleIdeaUpdate = (updatedIdea: Idea) => {
+    setIdeas(prev => prev.map(idea => idea.id === updatedIdea.id ? updatedIdea : idea));
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -79,29 +166,49 @@ export default async function IdeasForumPage() {
                 <ChevronDown className="w-4 h-4" />
               </button>
             </div>
+            <div className="relative">
+              <select 
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value as 'recent' | 'liked' | 'bookmarked' | 'commented')}
+                className="appearance-none flex items-center gap-2 bg-white border border-gray-200 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 pr-8 cursor-pointer"
+              >
+                <option value="recent">Recent</option>
+                <option value="liked">Liked</option>
+                <option value="bookmarked">Bookmarked</option>
+                <option value="commented">Commented</option>
+              </select>
+              <ChevronDown className="w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400" />
+            </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
 
-            {error ? (
+            {loading ? (
+              <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-gray-500">
+                Loading ideas...
+              </div>
+            ) : error ? (
               <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-red-500">
                 {error}
               </div>
-            ) : displayIdeas.length === 0 ? (
+            ) : filteredIdeas.length === 0 ? (
               <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-gray-500">
                 {!isAuthenticated
                   ? 'Login to see latest ideas'
-                  : 'No ideas found.'}
+                  : filterType === 'recent' 
+                    ? 'No ideas found.'
+                    : `No ${filterType} ideas found.`}
               </div>
             ) : (
               <div className="space-y-6">
-                {displayIdeas.map((idea) => (
+                {filteredIdeas.map((idea) => (
                   <IdeaCard
                     key={idea.id}
                     idea={idea}
-                    disabledNavigate={!isAuthenticated}
+                    disabledNavigate={false}
+                    onIdeaUpdate={handleIdeaUpdate}
                   />
                 ))}
               </div>

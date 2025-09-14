@@ -7,6 +7,14 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 
+type Comment = {
+  id: string;
+  content: string;
+  user_id: string;
+  created_at: string;
+  user_name?: string;
+};
+
 type Idea = {
   id: string;
   data: {
@@ -30,6 +38,7 @@ type Idea = {
   discussions_count?: number;
   created_at?: string;
   status?: string;
+  idea_discussion?: Comment[];
 };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';

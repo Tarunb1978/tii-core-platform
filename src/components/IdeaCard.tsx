@@ -7,6 +7,14 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/authProvider';
 import toast from 'react-hot-toast';
 
+type Comment = {
+  id: string;
+  content: string;
+  user_id: string;
+  created_at: string;
+  user_name?: string; // We'll fetch this separately
+};
+
 type Idea = {
   id: string;
   data: {
@@ -30,6 +38,7 @@ type Idea = {
   discussions_count?: number;
   created_at?: string;
   status?: string;
+  idea_discussion?: Comment[];
 };
 
 interface IdeaCardProps {
@@ -44,6 +53,8 @@ interface IdeaCardProps {
 
 const API_URL_ACTIONS =
   process.env.NEXT_PUBLIC_API_URL_ACTIONS || '';
+const API_URL_COMMENTS = 
+  process.env.NEXT_PUBLIC_API_URL_COMMENTS || 'https://acsobefarzmetevcseal.supabase.co/functions/v1/restful-investment-ideas';
 
 export default function IdeaCard({
   idea,
@@ -65,6 +76,8 @@ export default function IdeaCard({
   const [bookmarksCount, setBookmarksCount] = useState(idea.bookmarks_count ?? 0);
   const [discussionsCount, setDiscussionsCount] = useState(idea.discussions_count ?? 0);
   const [isLoading, setIsLoading] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
 
   useEffect(() => {
     const fetchUserActions = async () => {
@@ -97,7 +110,37 @@ export default function IdeaCard({
     };
 
     fetchUserActions();
-  }, [idea.id, user?.currentUser?.access_token]);
+  }, [idea.id, user?.currentUser?.access_token, user]);
+
+  // Fetch comments when showComments is true
+  useEffect(() => {
+    const fetchComments = async () => {
+      if (!showComments) return;
+      
+      setIsLoadingComments(true);
+      try {
+        const res = await fetch(`${API_URL_COMMENTS}/${idea.id}`, {
+          cache: 'no-store'
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const fetchedComments = data?.idea?.idea_discussion || [];
+          setComments(fetchedComments);
+        } else {
+          console.error('Failed to fetch comments:', await res.text());
+          setComments([]);
+        }
+      } catch (err) {
+        console.error('Error fetching comments:', err);
+        setComments([]);
+      } finally {
+        setIsLoadingComments(false);
+      }
+    };
+
+    fetchComments();
+  }, [showComments, idea.id]);
 
   const handleCardClick = () => {
     if (showBackButton) return;
@@ -255,6 +298,18 @@ export default function IdeaCard({
           });
         }
         
+        // Refresh comments to show the new one
+        if (showComments) {
+          const res = await fetch(`${API_URL_COMMENTS}/${idea.id}`, {
+            cache: 'no-store'
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const fetchedComments = data?.idea?.idea_discussion || [];
+            setComments(fetchedComments);
+          }
+        }
+        
         toast.success('Comment added successfully!');
       } else {
         toast.error('Failed to add comment');
@@ -306,6 +361,31 @@ export default function IdeaCard({
     if (!idea) return 'Long Term'; // guard clause if undefined/null
     const timelineMatch = idea.match(/(\d+-\d+)\s*years?/i);
     return timelineMatch ? `${timelineMatch[1]} Years` : 'Long Term';
+  };
+
+  // Format comment date
+  const formatCommentDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInHours / 24);
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    if (diffInDays < 7) return `${diffInDays}d ago`;
+    return date.toLocaleDateString();
+  };
+
+  // Get user initials for comments
+  const getCommentUserInitials = (userId: string) => {
+    // For now, we'll use a simple hash of the user ID to generate consistent initials
+    // In a real app, you'd fetch the actual user name
+    const hash = userId.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0);
+      return a & a;
+    }, 0);
+    const initials = ['AB', 'CD', 'EF', 'GH', 'IJ', 'KL', 'MN', 'OP', 'QR', 'ST'][Math.abs(hash) % 10];
+    return initials;
   };
 
   return (
@@ -477,11 +557,43 @@ export default function IdeaCard({
             ))}
           </div>
 
-          {/* Empty Discussion State */}
-          <div className="text-center py-8">
-            <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 mb-4">No messages yet. Start the conversation!</p>
-          </div>
+          {/* Comments Display */}
+          {isLoadingComments ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
+              <p className="text-gray-500">Loading comments...</p>
+            </div>
+          ) : comments.length === 0 ? (
+            <div className="text-center py-8">
+              <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500 mb-4">No messages yet. Start the conversation!</p>
+            </div>
+          ) : (
+            <div className="space-y-4 mb-6">
+              {comments.map((comment) => (
+                <div key={comment.id} className="flex gap-3 p-4 bg-gray-50 rounded-lg">
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-blue-600 font-semibold text-xs">
+                      {getCommentUserInitials(comment.user_id)}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium text-gray-900 text-sm">
+                        User {getCommentUserInitials(comment.user_id)}
+                      </span>
+                      <span className="text-gray-500 text-xs">
+                        {formatCommentDate(comment.created_at)}
+                      </span>
+                    </div>
+                    <p className="text-gray-700 text-sm leading-relaxed">
+                      {comment.content}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Comment Input */}
           <div className="flex items-center gap-3">

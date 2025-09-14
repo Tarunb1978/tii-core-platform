@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseServerClient } from '@/app/auth/action';
 
 const routeContext = 'api/admin/ideas/[id]';
 const timestamp = () => new Date().toISOString();
@@ -19,69 +18,42 @@ export async function GET(
 ) {
   try {
     const ideaId = params.id;
-    logDebug('start', 'Admin idea detail request received', { ideaId });
+    logDebug('start', 'Proxy admin idea detail to Edge Function', { ideaId });
 
-    // Create Supabase client
-    const supabase = await createSupabaseServerClient();
-    
-    // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !user) {
-      logDebug('auth', 'User not authenticated', userError);
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader) {
+      logDebug('auth', 'Missing Authorization header');
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    // Check if user has super_admin role
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError || !profile || profile.role !== 'super_admin') {
-      logDebug('auth', 'User does not have super_admin role', { profileError, profile });
-      return NextResponse.json(
-        { error: 'Insufficient permissions. Super admin access required.' },
-        { status: 403 }
-      );
+    // SUPABASE_EDGE_FUNCTION_DETAIL_URL optionally points to single-idea endpoint; fallback appends id to SUPABASE_EDGE_FUNCTION_URL
+    const baseUrl = process.env.SUPABASE_EDGE_FUNCTION_DETAIL_URL || process.env.SUPABASE_EDGE_FUNCTION_URL;
+    if (!baseUrl) {
+      logDebug('config', 'Missing SUPABASE_EDGE_FUNCTION_URL');
+      return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 });
     }
 
-    // Fetch the idea
-    const { data: idea, error: ideaError } = await supabase
-      .from('ideas_submitted')
-      .select('*')
-      .eq('id', ideaId)
-      .single();
+    // If single-detail endpoint differs, allow DETAIL_URL; otherwise append id to base
+    const url = baseUrl.includes('{id}') ? new URL(baseUrl.replace('{id}', encodeURIComponent(ideaId))) : new URL(`${baseUrl.replace(/\/$/, '')}/${encodeURIComponent(ideaId)}`);
 
-    if (ideaError) {
-      logDebug('query', 'Error fetching idea', ideaError);
-      if (ideaError.code === 'PGRST116') {
-        return NextResponse.json(
-          { error: 'Idea not found' },
-          { status: 404 }
-        );
-      }
-      return NextResponse.json(
-        { error: 'Failed to fetch idea' },
-        { status: 500 }
-      );
-    }
+    logDebug('proxy', 'Forwarding request to Edge Function', { url: url.toString() });
+    const efRes = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: authHeader,
+      },
+      cache: 'no-store',
+    });
 
-    if (!idea) {
-      logDebug('query', 'Idea not found', { ideaId });
-      return NextResponse.json(
-        { error: 'Idea not found' },
-        { status: 404 }
-      );
-    }
+    if (efRes.status === 401) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    if (efRes.status === 403) return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    if (efRes.status === 404) return NextResponse.json({ error: 'Idea not found' }, { status: 404 });
+    if (!efRes.ok) return NextResponse.json({ error: 'Failed to fetch idea' }, { status: 500 });
 
-    logDebug('success', 'Idea fetched successfully', { ideaId });
-
-    return NextResponse.json(idea);
+    const json = await efRes.json();
+    logDebug('success', 'Returning Edge Function payload');
+    return NextResponse.json(json);
 
   } catch (error) {
     logDebug('error', 'Unexpected error in admin idea detail', error);
