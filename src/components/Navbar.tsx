@@ -8,7 +8,6 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
-  console.log('=== NAVBAR COMPONENT RENDERING ===');
   
   // State for mobile menu toggle
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -26,7 +25,6 @@ export default function Navbar() {
   const supabase = createClient();
   const router = useRouter();
   
-  console.log('Navbar currentUser:', !!currentUser);
 
   // Toggle mobile menu
   const toggleMobileMenu = () => {
@@ -49,9 +47,7 @@ export default function Navbar() {
 
   // Handle sign out
   const handleSignOut = async () => {
-    console.log('=== SIGN OUT FUNCTION CALLED ===');
     try {
-      console.log('Sign out initiated...');
       setIsUserDropdownOpen(false);
       
       const { error } = await supabase.auth.signOut();
@@ -61,7 +57,6 @@ export default function Navbar() {
         return;
       }
       
-      console.log('Sign out successful');
       
       // Force redirect in case auth state change doesn't trigger
       setTimeout(() => {
@@ -74,8 +69,6 @@ export default function Navbar() {
     }
   };
 
-  // Test if function is defined
-  console.log('handleSignOut function defined:', typeof handleSignOut);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -167,7 +160,6 @@ export default function Navbar() {
                   <div 
                     className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
                     onClick={(e) => {
-                      console.log('=== DROPDOWN CLICKED ===');
                       e.stopPropagation();
                     }}
                   >
@@ -194,7 +186,6 @@ export default function Navbar() {
                     </Link>
                     <button
                       onClick={(e) => {
-                        console.log('=== BUTTON CLICKED ===');
                         e.preventDefault();
                         handleSignOut();
                       }}
@@ -314,7 +305,6 @@ export default function Navbar() {
                     </Link>
                     <button 
                       onClick={(e) => {
-                        console.log('=== MOBILE BUTTON CLICKED ===');
                         e.preventDefault();
                         handleSignOut();
                         closeMobileMenu();

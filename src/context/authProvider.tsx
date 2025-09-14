@@ -16,30 +16,71 @@ const AuthContext = createContext<AuthContextType>({
   isLoading: true,
 })
 
+type CurrentUser = (Session & { role?: string | null }) | null;
+
 // Create the Provider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
-  const [currentUser, setCurrentUser] = useState<Session | null>(null)
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setCurrentUser(session ?? null);
-      console.log('Initial session:', session);
-      setIsLoading(false);
-    };
+  const { data: { session } } = await supabase.auth.getSession();
+  console.log("Session data:", session);
 
-    getSession();
+  if (session?.user) {
+    // fetch role from app_user
+    const { data: userData, error } = await supabase
+      .from('app_user')
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setCurrentUser(session ?? null)
-        setIsLoading(false)
+    if (error) {
+      console.error("Error fetching role:", error);
+      setCurrentUser({ ...session, role: null });
+    } else {
+      setCurrentUser({ ...session, role: userData.role });
+    }
+  } else {
+    setCurrentUser(null);
+  }
+
+  setIsLoading(false);
+};
+
+getSession();
+console.log("Session data:", currentUser);
+
+// Subscribe to auth state changes
+const { data: { subscription } } = supabase.auth.onAuthStateChange(
+  async (_event, session) => {
+    console.log("Auth state changed:", session);
+    if (session?.user) {
+      const { data: userData, error } = await supabase
+        .from('app_user')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching role:", error);
+        setCurrentUser({ ...session, role: null });
+      } else {
+        setCurrentUser({ ...session, role: userData.role });
       }
-    )
+    } else {
+      setCurrentUser(null);
+    }
+
+    setIsLoading(false);
+  }
+);
+
 
     return () => {
+      console.log("Unsubscribing from auth state changes");
       subscription.unsubscribe()
     }
   }, [supabase.auth])
