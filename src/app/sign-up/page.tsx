@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
+import { signUpWithEmail } from '../auth/action';
 
 
 export default function SignUp() {
@@ -37,7 +38,7 @@ export default function SignUp() {
 
         {/* Sign Up Form Card */}
         <div className="w-full max-w-2xl bg-white rounded-xl shadow-lg border border-gray-100 p-8">
-          <form onSubmit={handleSignUp} className="space-y-6">
+          <form action={signUpWithEmail} className="space-y-6">
             {/* Name Fields Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* First Name */}
@@ -47,6 +48,7 @@ export default function SignUp() {
                 </label>
                 <input
                   type="text"
+                  name='firstName'
                   id="firstName"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
@@ -64,6 +66,7 @@ export default function SignUp() {
                 <input
                   type="text"
                   id="secondName"
+                  name='secondName'
                   value={secondName}
                   onChange={(e) => setSecondName(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent transition-colors"
@@ -81,14 +84,13 @@ export default function SignUp() {
                   Age *
                 </label>
                 <input
-                  type="number"
+                  type="date"
                   id="age"
+                  name='age'
                   value={age}
                   onChange={(e) => setAge(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent transition-colors"
-                  placeholder="Enter your age"
-                  min="13"
-                  max="120"
+                  placeholder="Enter your DOB"
                   required
                 />
               </div>
@@ -101,6 +103,7 @@ export default function SignUp() {
                 <select
                   id="sex"
                   value={sex}
+                  name='sex'
                   onChange={(e) => setSex(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent transition-colors"
                   required
@@ -124,6 +127,7 @@ export default function SignUp() {
               <input
                 type="email"
                 id="email"
+                name='email'
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent transition-colors"
@@ -142,6 +146,7 @@ export default function SignUp() {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   id="password"
+                  name='password'
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent transition-colors"
@@ -183,6 +188,7 @@ export default function SignUp() {
                 type="tel"
                 id="contactNumber"
                 value={contactNumber}
+                name='contactNumber'
                 onChange={(e) => setContactNumber(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent transition-colors"
                 placeholder="Enter your phone number"

@@ -3,8 +3,8 @@
 import Navbar from '@/components/Navbar';
 import { useAuth } from "@/context/authProvider";
 export default function Home() {
-  const user = useAuth();
-  console.log(user,'user NOice');
+  const { currentUser } = useAuth();
+  console.log(currentUser,'user NOice');
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <Navbar />

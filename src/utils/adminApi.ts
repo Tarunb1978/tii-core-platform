@@ -242,7 +242,9 @@ export async function updateIdeaStatus(
     })
 
     const requestBody = { status }
-    const url = `/api/admin/ideas/${id}/status`
+    const edgeFunctionUrl = process.env.SUPABASE_EDGE_FUNCTION_URL
+    const url = `${edgeFunctionUrl}/rest-idea-submitted/${id}/status`;
+    console.log(url,'url');
 
     // DEBUG: Log complete request details
     console.log('[updateIdeaStatus][request] Full request details:', {

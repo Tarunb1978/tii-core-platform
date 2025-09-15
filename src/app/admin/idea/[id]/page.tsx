@@ -22,15 +22,7 @@ import {
 } from '@/utils/adminApi'
 import IdeaDetailClient from './IdeaDetailClient'
 
-// DEBUG: Environment variable check at server component level
-// This will help determine if the env var is available during server-side execution
-console.log('[idea-detail][server-debug] Server component - SUPABASE_EDGE_FUNCTION_URL:', process.env.SUPABASE_EDGE_FUNCTION_URL);
-console.log('[idea-detail][server-debug] Server component - typeof window:', typeof window !== 'undefined' ? 'client' : 'server');
-console.log('[idea-detail][server-debug] Server component - NODE_ENV:', process.env.NODE_ENV);
-console.log('[idea-detail][server-debug] Server component - component type: SERVER COMPONENT (no "use client")');
-console.log('[idea-detail][server-debug] Server component - all SUPABASE env vars:', Object.keys(process.env).filter(key => key.includes('SUPABASE')));
 
-// Server component: fetches data server-side where env vars are available
 export default async function AdminIdeaDetailPage({
   params,
 }: {
@@ -63,18 +55,15 @@ export default async function AdminIdeaDetailPage({
     redirect('/sign-in')
   }
 
-  // Server-side data fetching
-  console.log('[idea-detail][server-debug] Fetching idea data server-side for ID:', ideaId)
   
   try {
     const idea = await fetchIdeaByIdServer(ideaId, accessToken, edgeFunctionUrl)
-    console.log('[idea-detail][server-debug] Successfully fetched idea:', { id: idea.id, title: idea.data?.title })
     
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
-          <IdeaDetailClient initialIdea={idea} ideaId={ideaId} />
+          <IdeaDetailClient initialIdea={idea} ideaId={ideaId} supabaseUrl={edgeFunctionUrl} />
         </main>
       </div>
     )
@@ -123,14 +112,10 @@ async function fetchIdeaByIdServer(
   const callId = Math.random().toString(36).slice(2, 8)
   const start = Date.now()
 
-  console.log('[idea-detail][server-fetch] Environment check - baseUrl:', baseUrl)
-  console.log('[idea-detail][server-fetch] Environment check - typeof window:', typeof window !== 'undefined' ? 'client' : 'server')
 
   // Construct the single idea endpoint URL
-  const url = `${baseUrl.replace(/\/$/, '')}/${encodeURIComponent(id)}`
+  const url = `${baseUrl.replace(/\/$/, '')}/rest-idea-submitted/${encodeURIComponent(id)}`
   
-  console.log('[idea-detail][server-fetch] Constructed URL:', url)
-  console.log('[idea-detail][server-fetch] About to make server-side fetch request')
 
   const response = await fetch(url, {
     method: 'GET',

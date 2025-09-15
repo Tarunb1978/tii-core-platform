@@ -46,6 +46,48 @@ export async function signInWithEmail(formData: FormData) {
   return redirect('/')
 }
 
+export async function signUpWithEmail(formData: FormData) {
+  const email = String(formData.get('email'))
+  const password = String(formData.get('password'))
+  const firstName = String(formData.get('firstName'))
+  const secondName = String(formData.get('secondName'))
+  const dob = String(formData.get('dob'))
+  const sex = String(formData.get('sex'))
+  const contactNumber = String(formData.get('contactNumber'))
+  const supabase = await createSupabaseServerClient() // This now works correctly
+
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+  })
+
+  if (error) {
+    console.error('Sign up error:', error.message)
+    return redirect('/sign-up?message=Could not create user')
+  }
+
+    // Update user profile
+  const { error: updateError } = await supabase
+    .from('app_user')
+    .update({
+      first_name: firstName,
+      last_name: secondName,
+      dob,
+      sex,
+      contact_number: contactNumber,
+    })
+    .eq('email', email)
+
+  if (updateError) {
+    console.error('Update error:', updateError.message)
+    return redirect('/sign-up?message=Could not save profile')
+  }
+
+  // Successful now store the data to app_user
+
+  return redirect('/')
+  }
+
 export async function signInWithOAuth(provider: Provider) {
 
   const supabase = await createSupabaseServerClient()

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { 
   ArrowLeft, 
@@ -23,13 +23,15 @@ import {
   type IdeaData 
 } from '@/utils/adminApi'
 import { createClient } from '@/lib/supabase/client'
+import { createSupabaseServerClient } from '@/app/auth/action'
 
 interface IdeaDetailClientProps {
   initialIdea: IdeaData
-  ideaId: string
+  ideaId: string,
+  supabaseUrl: string
 }
 
-export default function IdeaDetailClient({ initialIdea, ideaId }: IdeaDetailClientProps) {
+export default function IdeaDetailClient({ initialIdea, ideaId, supabaseUrl }: IdeaDetailClientProps) {
   const router = useRouter()
   const [idea, setIdea] = useState<IdeaData>(initialIdea)
   const [statusUpdateLoading, setStatusUpdateLoading] = useState(false)
@@ -43,91 +45,37 @@ export default function IdeaDetailClient({ initialIdea, ideaId }: IdeaDetailClie
       setStatusUpdateLoading(true)
       setStatusUpdateError(null)
       setStatusUpdateSuccess(false)
+      const supabase = await createClient()
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+    const accessToken = sessionData?.session?.access_token
 
-      console.log('[idea-detail-client][status-update-debug] Starting status update process:', {
-        ideaId,
-        newStatus,
-        currentStatus: idea.status,
-        timestamp: new Date().toISOString()
-      })
+      // const updatedIdea = await updateIdeaStatus(ideaId, newStatus, accessToken)
+       const edgeFunctionUrl = supabaseUrl
+       console.log('edgeFunctionUrl', edgeFunctionUrl);
+    const url = `${edgeFunctionUrl}/rest-idea-submitted/${ideaId}/status`;
+    const headers = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    };
+    const requestBody = {
+      status: newStatus,
+    };
+      const response = await fetch(url, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(requestBody),
+    });
 
-      // Get access token from Supabase client instead of localStorage
-      const supabase = createClient()
-      console.log('[idea-detail-client][status-update-debug] Created Supabase client, getting session...')
-      
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      
-      // DEBUG: Comprehensive session analysis
-      console.log('[idea-detail-client][status-update-debug] Session analysis:', {
-        hasSession: !!session,
-        hasSessionError: !!sessionError,
-        sessionError: sessionError?.message,
-        hasAccessToken: !!session?.access_token,
-        hasRefreshToken: !!session?.refresh_token,
-        tokenType: session?.token_type,
-        expiresAt: session?.expires_at,
-        user: session?.user ? {
-          id: session.user.id,
-          email: session.user.email,
-          role: session.user.user_metadata?.role || 'unknown'
-        } : null
-      })
-      
-      if (sessionError) {
-        console.error('[idea-detail-client][status-update-debug] Session error:', sessionError)
-        setStatusUpdateError('Authentication error. Please sign in again.')
-        router.replace('/sign-in')
-        return
-      }
-      
-      const accessToken = session?.access_token
-      if (!accessToken) {
-        console.log('[idea-detail-client][status-update-debug] No access token found, redirecting to sign-in')
-        router.replace('/sign-in')
-        return
+      if (!response.ok) {
+        throw new Error(`Failed to update status: ${response.statusText}`)
       }
 
-      // DEBUG: Token analysis before making request
-      console.log('[idea-detail-client][status-update-debug] Access token analysis:', {
-        tokenLength: accessToken.length,
-        tokenPrefix: accessToken.substring(0, 20) + '...',
-        tokenSuffix: '...' + accessToken.substring(accessToken.length - 10),
-        tokenType: typeof accessToken,
-        isJWT: accessToken.includes('.')
-      })
-
-      console.log('[idea-detail-client][status-update-debug] About to call updateIdeaStatus with:', {
-        ideaId,
-        newStatus,
-        hasAccessToken: !!accessToken
-      })
-
-      // DEBUG: Compare with working list-fetch pattern
-      console.log('[idea-detail-client][status-update-debug] Comparison with working list-fetch:', {
-        listFetchPattern: 'Direct Edge Function call with Authorization header',
-        statusUpdatePattern: 'API route proxy call with Authorization header',
-        listFetchUrl: 'SUPABASE_EDGE_FUNCTION_URL (server-side)',
-        statusUpdateUrl: '/api/admin/ideas/[id]/status (client-side)',
-        listFetchMethod: 'GET',
-        statusUpdateMethod: 'PATCH',
-        listFetchAuth: 'Bearer token in Authorization header',
-        statusUpdateAuth: 'Bearer token in Authorization header (same)',
-        note: 'Both use same auth pattern, but different endpoints'
-      })
-      
-      const updatedIdea = await updateIdeaStatus(ideaId, newStatus, accessToken)
-      
-      console.log('[idea-detail-client][status-update-debug] Status update completed successfully:', {
-        ideaId: updatedIdea?.id,
-        oldStatus: idea.status,
-        newStatus: updatedIdea?.status
-      })
-      
-      setIdea(updatedIdea)
       setStatusUpdateSuccess(true)
+      setTimeout(() => setStatusUpdateSuccess(false), 3000)
+      router.push('/admin/idea-list')
+
       
       // Clear success message after 3 seconds
-      setTimeout(() => setStatusUpdateSuccess(false), 3000)
     } catch (err: any) {
       console.error('[idea-detail-client][status-update-debug] Error updating status:', {
         error: err,
