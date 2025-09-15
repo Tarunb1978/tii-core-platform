@@ -198,16 +198,14 @@ export default async function AdminIdeaListPage({
 
     // Ensure the URL points to the rest-idea-submitted Edge Function endpoint.
     const url = new URL(edgeFunctionUrl.toString())
-    if (status) url.searchParams.set('status', status)
-    url.searchParams.set('page', String(page))
-    url.searchParams.set('limit', String(limit))
 
     console.debug('[admin/idea-list][fetch] requesting ideas', { url: url.toString() })
     const fetchStart = Date.now()
+    console.log(`${url.toString()}/rest-idea-submitted`);
     
     let response: Response
     try {
-      response = await fetch(url.toString(), {
+      response = await fetch(`${url.toString()}/rest-idea-submitted`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -257,10 +255,7 @@ export default async function AdminIdeaListPage({
     const buildQuery = (next: Partial<{ page: number; limit: number; status: string }>) => {
       const q = new URLSearchParams()
       const nextStatus = next.status !== undefined ? next.status : status
-      if (nextStatus) q.set('status', nextStatus)
-      q.set('page', String(next.page ?? currentPage))
-      q.set('limit', String(next.limit ?? perPage))
-      return `?${q.toString()}`
+      return `${q.toString()}`
     }
 
     return (
