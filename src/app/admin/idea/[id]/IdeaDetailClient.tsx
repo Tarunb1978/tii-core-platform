@@ -58,7 +58,7 @@ export default function IdeaDetailClient({ initialIdea, ideaId, supabaseUrl }: I
       Authorization: `Bearer ${accessToken}`,
     };
     const requestBody = {
-      status: newStatus,
+      status: newStatus === 'accepted' ? 'approved' : newStatus,
     };
       const response = await fetch(url, {
       method: 'PATCH',
