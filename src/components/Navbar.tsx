@@ -93,13 +93,13 @@ export default function Navbar() {
           <div className="flex items-center">
             <Link href="/" className="navbar-brand flex items-center">
               {/* Logo Image - Using Next.js Image component for optimization */}
-              <Image 
-                src="/assets/images/logo.svg" 
-                alt="The Indian Investors Logo" 
-                width={40} 
-                height={40} 
-                className="mr-3"
-              />
+               <Image 
+                 src="/assets/images/logo.svg" 
+                 alt="The Indian Investors Logo" 
+                 width={40} 
+                 height={40} 
+                 className="mr-3"
+               />
               {/* Company Name */}
               <span className="text-lg font-bold text-black">The Indian Investors</span>
             </Link>
@@ -174,16 +174,18 @@ export default function Navbar() {
                         Placeholder - replace with real profile page
                       </span>
                     </Link>
-                    <Link
-                      href="/admin/idea-list"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-                      onClick={() => setIsUserDropdownOpen(false)}
-                    >
-                      Admin Panel
-                      <span className="block text-xs text-gray-400 mt-1">
-                        Manage investment ideas
-                      </span>
-                    </Link>
+                    {currentUser?.role === "super_admin" && (
+                      <Link
+                        href="/admin/idea-list"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                        onClick={() => setIsUserDropdownOpen(false)}
+                      >
+                        Admin Panel
+                        <span className="block text-xs text-gray-400 mt-1">
+                          Manage investment ideas
+                        </span>
+                      </Link>
+                    )}
                     <button
                       onClick={(e) => {
                         e.preventDefault();
@@ -296,13 +298,15 @@ export default function Navbar() {
                     >
                       Edit Profile
                     </Link>
-                    <Link
-                      href="/admin/idea-list"
-                      className="block px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors duration-200 text-right"
-                      onClick={closeMobileMenu}
-                    >
-                      Admin Panel
-                    </Link>
+                    {currentUser?.role === "super_admin" && (
+                      <Link
+                        href="/admin/idea-list"
+                        className="block px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors duration-200 text-right"
+                        onClick={closeMobileMenu}
+                      >
+                        Admin Panel
+                      </Link>
+                    )}
                     <button 
                       onClick={(e) => {
                         e.preventDefault();

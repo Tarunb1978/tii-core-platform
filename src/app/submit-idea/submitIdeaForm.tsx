@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Save, Send, Building2, TrendingUp, DollarSign } from 'lucide-react';
 import { useAuth } from '@/context/authProvider';
 import { createClient } from '@/lib/supabase/client';
+import toast from 'react-hot-toast';
 
 // import { MockUploadAdapterPlugin } from '@/utils/mockUploadAdapter';
 import { SupabaseUploadAdapter } from '@/utils/supabaseUploadAdapter';
@@ -17,16 +18,32 @@ export default function SubmitIdeaForm() {
 
   // load CKEditor dynamically on client
   useEffect(() => {
+    let isMounted = true;
+    
     (async () => {
-      const CKEditor = dynamic(
-  () => import("@ckeditor/ckeditor5-react").then(mod => mod.CKEditor),
-  { ssr: false }
-);
-      const ClassicEditor = (await import('@ckeditor/ckeditor5-build-classic')).default;
-      setCKEditorComp(() => CKEditor);
-      setClassicEditorComp(() => ClassicEditor);
-      setEditorLoaded(true);
+      try {
+        const CKEditor = dynamic(
+          () => import("@ckeditor/ckeditor5-react").then(mod => mod.CKEditor),
+          { ssr: false }
+        );
+        const ClassicEditor = (await import('@ckeditor/ckeditor5-build-classic')).default;
+        
+        if (isMounted) {
+          setCKEditorComp(() => CKEditor);
+          setClassicEditorComp(() => ClassicEditor);
+          setEditorLoaded(true);
+        }
+      } catch (error) {
+        console.error('Error loading CKEditor:', error);
+        if (isMounted) {
+          setEditorLoaded(true); // Still set to true to show error state
+        }
+      }
     })();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   async function deleteImageFromUrl(publicUrl: string) {
@@ -80,6 +97,7 @@ export default function SubmitIdeaForm() {
     stockSymbol: '',
     positionType: '',
     investmentHorizon: '',
+    marketCap: '',
     
     // Financial Data
     currentStockPrice: '',
@@ -153,7 +171,14 @@ export default function SubmitIdeaForm() {
   
   // Prevent rendering form if user is loading
   if (isLoading) {
-    return <p>Loading...</p>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   // Prevent rendering form if user is not authenticated
@@ -208,7 +233,7 @@ export default function SubmitIdeaForm() {
   const handleSaveDraft = () => {
     // Save draft functionality
     console.log('Saving draft:', formData);
-    alert('Draft saved successfully!');
+    toast.success('Draft saved successfully!');
   };
 
   function SupabaseUploadAdapterPlugin(userId: string) {
@@ -222,7 +247,7 @@ export default function SubmitIdeaForm() {
 
   const handleSubmitIdea = async () => {
     if (wordCount > maxWords) {
-      alert(`Please reduce the description to ${maxWords} words or fewer.`);
+      toast.error(`Please reduce the description to ${maxWords} words or fewer.`);
       return;
     }
 
@@ -231,7 +256,7 @@ export default function SubmitIdeaForm() {
     if (!userId) {
       const message = 'Authentication error. Please sign in again.';
       setErrorMessage(message);
-      alert(message);
+      toast.error(message);
       return;
     }
 
@@ -241,6 +266,7 @@ export default function SubmitIdeaForm() {
       'stockSymbol',
       'positionType',
       'investmentHorizon',
+      'marketCap',
       'currentStockPrice',
       'week52High',
       'week52Low',
@@ -249,14 +275,33 @@ export default function SubmitIdeaForm() {
       'peRatio',
       'investmentDescription'
     ];
+
+    // Field name mapping for user-friendly error messages
+    const fieldLabels: { [key: string]: string } = {
+      'companyName': 'Company Name',
+      'stockSymbol': 'Stock Symbol',
+      'positionType': 'Position Type',
+      'investmentHorizon': 'Investment Horizon',
+      'marketCap': 'Market Cap',
+      'currentStockPrice': 'Current Stock Price',
+      'week52High': '52 Week High',
+      'week52Low': '52 Week Low',
+      'annualRevenue': 'Annual Revenue',
+      'eps': 'Earnings Per Share (EPS)',
+      'peRatio': 'PE Ratio',
+      'investmentDescription': 'Investment Idea Description'
+    };
+
     const missingFields = requiredFields.filter((field) => {
       const value = (formData as any)[field];
       return typeof value !== 'string' || value.trim().length === 0;
     });
+    
     if (missingFields.length > 0) {
-      const message = `Please fill all required fields: ${missingFields.join(', ')}`;
+      const missingFieldLabels = missingFields.map(field => fieldLabels[field] || field);
+      const message = `Please fill all required fields: ${missingFieldLabels.join(', ')}`;
       setErrorMessage(message);
-      alert(message);
+      toast.error(message);
       return;
     }
 
@@ -288,6 +333,7 @@ export default function SubmitIdeaForm() {
           company_name: getStringValue(formData.companyName),
           position_type: getStringValue(formData.positionType),
           investment_horizon: getStringValue(formData.investmentHorizon),
+          market_cap: getStringValue(formData.marketCap),
           
           // Additional metadata that could be useful
           word_count: wordCount,
@@ -318,6 +364,26 @@ export default function SubmitIdeaForm() {
         status: 'pending',
       };
 
+      // Debug logging: Output complete payload before API call
+      console.log('=== SUBMIT IDEA PAYLOAD DEBUG ===');
+      console.log('Complete idea payload:', JSON.stringify(ideaPayload, null, 2));
+      console.log('Payload structure validation:');
+      console.log('- User ID:', ideaPayload.user_id);
+      console.log('- Title:', ideaPayload.data.title);
+      console.log('- Company Name:', ideaPayload.data.company_name);
+      console.log('- Position Type:', ideaPayload.data.position_type);
+      console.log('- Investment Horizon:', ideaPayload.data.investment_horizon);
+      console.log('- Market Cap:', ideaPayload.data.market_cap);
+      console.log('- Current Price:', ideaPayload.data.current_price);
+      console.log('- Week 52 High:', ideaPayload.data.week52_high);
+      console.log('- Week 52 Low:', ideaPayload.data.week52_low);
+      console.log('- Annual Revenue:', ideaPayload.stock_details.annual_revenue);
+      console.log('- EPS:', ideaPayload.stock_details.eps);
+      console.log('- P/E Ratio:', ideaPayload.stock_details.pe_ratio);
+      console.log('- Word Count:', ideaPayload.data.word_count);
+      console.log('- Status:', ideaPayload.status);
+      console.log('=== END PAYLOAD DEBUG ===');
+
       const response = await fetch('https://acsobefarzmetevcseal.supabase.co/functions/v1/rest-idea-submitted', {
         method: 'POST',
         headers: {
@@ -333,18 +399,19 @@ export default function SubmitIdeaForm() {
         const details = (data && data.details && Array.isArray(data.details.errors)) ? `\n- ${data.details.errors.join('\n- ')}` : '';
         const message = `${baseMessage}${details}`;
         setErrorMessage(message);
-        alert(message);
+        toast.error(message);
         return;
       }
 
       setSuccessMessage('Investment idea submitted successfully!');
-      alert('Investment idea submitted successfully!');
+      toast.success('Investment idea submitted successfully!');
       // Reset form data (excluding personal info which is now handled by auth)
       setFormData({
         companyName: '',
         stockSymbol: '',
         positionType: '',
         investmentHorizon: '',
+        marketCap: '',
         currentStockPrice: '',
         week52High: '',
         week52Low: '',
@@ -362,7 +429,7 @@ export default function SubmitIdeaForm() {
     } catch (error: any) {
       const message = error?.message ?? 'Unexpected error while submitting idea.';
       setErrorMessage(message);
-      alert(message);
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -371,17 +438,21 @@ export default function SubmitIdeaForm() {
   // ===== FORM OPTIONS AND CONSTANTS =====
   
   const positionTypes = [
-    'Long Position',
-    'Short Position',
-    'Hold/Neutral',
-    'Buy on Dips',
-    'Sell on Rallies'
+    'Long',
+    'Hold',
+    'Buy on Dips'
   ];
 
   const investmentHorizons = [
     '6 Months',
     '1-2 Years',
     '3-5 Years'
+  ];
+
+  const marketCapOptions = [
+    'Small',
+    'Medium',
+    'Large'
   ];
 
   // ===== COMPONENT RENDER =====
@@ -418,28 +489,28 @@ export default function SubmitIdeaForm() {
         }
       `}</style>
       
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
         {/* Page Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+        <div className="mb-4">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
             Submit Your Investment Idea
           </h1>
-          <p className="text-lg text-gray-600 max-w-3xl">
+          <p className="text-lg text-gray-600 max-w-4xl">
             Share your investment thesis and analysis with our community of experienced investors and financial experts.
           </p>
         </div>
 
-        <form className="space-y-6">
+        <form className="space-y-4">
           {/* Company Information Section */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 p-5">
-            <div className="flex items-center gap-3 mb-5">
+          <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4">
+            <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                 <Building2 className="w-5 h-5 text-green-600" />
               </div>
               <h2 className="text-xl font-semibold text-gray-900">Company Information</h2>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-2">
                   Company Name *
@@ -471,7 +542,7 @@ export default function SubmitIdeaForm() {
               </div>
             </div>
             
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="positionType" className="block text-sm font-medium text-gray-700 mb-2">
                   Position Type *
@@ -512,18 +583,40 @@ export default function SubmitIdeaForm() {
                 </select>
               </div>
             </div>
+            
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="marketCap" className="block text-sm font-medium text-gray-700 mb-2">
+                  Market Cap *
+                </label>
+                <select
+                  id="marketCap"
+                  value={formData.marketCap}
+                  onChange={(e) => handleInputChange('marketCap', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  required
+                >
+                  <option value="">Select market cap</option>
+                  {marketCapOptions.map((cap) => (
+                    <option key={cap} value={cap}>
+                      {cap}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
 
           {/* Financial Data Section */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 p-5">
-            <div className="flex items-center gap-3 mb-5">
+          <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4">
+            <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-5 h-5 text-yellow-600" />
               </div>
               <h2 className="text-xl font-semibold text-gray-900">Financial Data</h2>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <label htmlFor="currentStockPrice" className="block text-sm font-medium text-gray-700 mb-2">
                   Current Stock Price (₹) *
@@ -622,8 +715,8 @@ export default function SubmitIdeaForm() {
           </div>
 
           {/* Investment Thesis Section */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 p-5">
-            <div className="flex items-center gap-3 mb-5">
+          <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4">
+            <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                 <DollarSign className="w-5 h-5 text-purple-600" />
               </div>
@@ -672,7 +765,10 @@ export default function SubmitIdeaForm() {
               }}
             />
           ) : (
-            <div className="p-4 text-gray-500">Editor loading...</div>
+            <div className="p-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-500">Loading editor...</p>
+            </div>
           )}
                 </div>
                 </div>
@@ -688,7 +784,7 @@ export default function SubmitIdeaForm() {
             </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row justify-between gap-4 pt-6 border-t border-gray-200">
+          <div className="flex flex-col sm:flex-row justify-between gap-4 pt-4 border-t border-gray-200">
             <button
               type="button"
               onClick={handleSaveDraft}

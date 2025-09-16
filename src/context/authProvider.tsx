@@ -5,8 +5,10 @@ import { createClient } from '@/lib/supabase/client'
 import type { Session } from '@supabase/supabase-js'
 
 // Define the type for our context
+type CurrentUser = (Session & { role?: string | null }) | null;
+
 type AuthContextType = {
-  currentUser: Session | null
+  currentUser: CurrentUser
   isLoading: boolean
 }
 
@@ -15,8 +17,6 @@ const AuthContext = createContext<AuthContextType>({
   currentUser: null,
   isLoading: true,
 })
-
-type CurrentUser = (Session & { role?: string | null }) | null;
 
 // Create the Provider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -55,26 +55,49 @@ console.log("Session data:", currentUser);
 
 // Subscribe to auth state changes
 const { data: { subscription } } = supabase.auth.onAuthStateChange(
-  async (_event, session) => {
-    console.log("Auth state changed:", session);
-    if (session?.user) {
-      const { data: userData, error } = await supabase
-        .from('app_user')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
+  async (event, session) => {
+    console.log("Auth state changed:", event, session);
+    
+    // Force a small delay to ensure session is fully established
+    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      setTimeout(async () => {
+        if (session?.user) {
+          const { data: userData, error } = await supabase
+            .from('app_user')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
 
-      if (error) {
-        console.error("Error fetching role:", error);
-        setCurrentUser({ ...session, role: null });
-      } else {
-        setCurrentUser({ ...session, role: userData.role });
-      }
+          if (error) {
+            console.error("Error fetching role:", error);
+            setCurrentUser({ ...session, role: null });
+          } else {
+            setCurrentUser({ ...session, role: userData.role });
+          }
+        } else {
+          setCurrentUser(null);
+        }
+        setIsLoading(false);
+      }, 100);
     } else {
-      setCurrentUser(null);
-    }
+      if (session?.user) {
+        const { data: userData, error } = await supabase
+          .from('app_user')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
 
-    setIsLoading(false);
+        if (error) {
+          console.error("Error fetching role:", error);
+          setCurrentUser({ ...session, role: null });
+        } else {
+          setCurrentUser({ ...session, role: userData.role });
+        }
+      } else {
+        setCurrentUser(null);
+      }
+      setIsLoading(false);
+    }
   }
 );
 
