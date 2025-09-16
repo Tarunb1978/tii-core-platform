@@ -3,41 +3,52 @@
 import { Heart, Bookmark, MessageSquare, ArrowUp, Send, ChevronRight, Home } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/authProvider';
 import toast from 'react-hot-toast';
+import { createClient } from '@/lib/supabase/client';
 
+// New data types based on updated schema
 type Comment = {
   id: string;
   content: string;
   user_id: string;
   created_at: string;
-  user_name?: string; // We'll fetch this separately
+  user_name?: string;
+};
+
+type StockDetails = {
+  eps?: number;
+  market?: string;
+  currency?: string;
+  pe_ratio?: number;
+  annual_revenue?: number;
 };
 
 type Idea = {
   id: string;
+  user_id: string;
   data: {
+    title: string;
+    ticker: string;
+    market_cap: string; // 'Large' | 'Mid' | 'Small' (string per API)
+    week52_low?: number;
+    week52_high?: number;
+    word_count?: number;
+    description: string; // HTML
     company_name: string;
-    symbol: string;
-    main_idea: string;
-    long_or_short?: string;
-    submitter_name?: string;
-    submitted_date?: string;
-    number_of_likes?: number;
-    stock_price_today?: number;
-    stock_price_at_submission?: number;
-    fifty_two_wk_high?: number;
-    fifty_two_wk_low?: number;
-    last_12_months_eps?: number;
-    last_12_months_revenues_m?: number;
-    long_term_debt_m?: number;
+    target_price?: number;
+    current_price?: number;
+    position_type?: string; // Long/Short
+    investment_horizon?: string; // e.g., '6 Months'
+    submission_timestamp?: string; // ISO
   };
+  stock_details?: StockDetails | null;
+  status?: string;
+  created_at?: string;
   likes_count?: number;
   bookmarks_count?: number;
   discussions_count?: number;
-  created_at?: string;
-  status?: string;
   idea_discussion?: Comment[];
 };
 
@@ -51,10 +62,8 @@ interface IdeaCardProps {
   onIdeaUpdate?: (updatedIdea: Idea) => void;
 }
 
-const API_URL_ACTIONS =
-  process.env.NEXT_PUBLIC_API_URL_ACTIONS || '';
-const API_URL_COMMENTS = 
-  process.env.NEXT_PUBLIC_API_URL_COMMENTS || 'https://acsobefarzmetevcseal.supabase.co/functions/v1/restful-investment-ideas';
+const API_URL_ACTIONS = process.env.NEXT_PUBLIC_API_URL_ACTIONS || '';
+const API_URL_COMMENTS = process.env.NEXT_PUBLIC_API_URL || '';
 
 export default function IdeaCard({
   idea,
@@ -66,23 +75,78 @@ export default function IdeaCard({
 }: IdeaCardProps) {
   const router = useRouter();
   const user = useAuth();
+  const supabase = useMemo(() => createClient(), []);
+
   const d = idea.data || ({} as Idea['data']);
   const [showComments, setShowComments] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const [likesCount, setLikesCount] = useState(idea.likes_count ?? d.number_of_likes ?? 0);
+  const [likesCount, setLikesCount] = useState(idea.likes_count ?? 0);
   const [bookmarksCount, setBookmarksCount] = useState(idea.bookmarks_count ?? 0);
   const [discussionsCount, setDiscussionsCount] = useState(idea.discussions_count ?? 0);
   const [isLoading, setIsLoading] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
 
+  const [authorName, setAuthorName] = useState<string | null>(null);
+  const [commentUserNames, setCommentUserNames] = useState<Record<string, string>>({});
+
+  // Helpers
+  const getInitials = (name?: string | null) => {
+    const n = (name || '').trim();
+    if (!n) return 'ME';
+    return n.split(' ').filter(Boolean).map(part => part[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  function formatISTDateTime(utcDate: string | undefined) {
+      if (!utcDate) return "";
+  
+      // Ensure UTC by appending Z if not present
+      const normalizedDate = utcDate.endsWith("Z") ? utcDate : utcDate + "Z";
+
+      return new Date(normalizedDate).toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata",
+        dateStyle: "medium",
+        timeStyle: "short",
+    });
+  }
+
+
+  // Fetch submitter profile name
+  useEffect(() => {
+  const fetchAuthor = async () => {
+    if (!idea.user_id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("app_user") // ✅ use app_user instead of profiles
+        .select("id, name, email") // check exact column names in app_user
+        .eq("id", idea.user_id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching author profile:", error);
+        setAuthorName(null);
+      } else {
+        setAuthorName(data?.name || data?.email || "Market Expert");
+      }
+    } catch (err) {
+      console.error("Author fetch error:", err);
+      setAuthorName(null);
+    }
+  };
+
+  fetchAuthor();
+}, [idea.user_id, supabase]);
+
+
+
+  // Fetch like/bookmark state for current user
   useEffect(() => {
     const fetchUserActions = async () => {
       if (!user || !user.currentUser?.access_token) return;
-
       try {
         const res = await fetch(`${API_URL_ACTIONS}/self`, {
           headers: {
@@ -90,17 +154,10 @@ export default function IdeaCard({
             'Content-Type': 'application/json',
           },
         });
-
         if (res.ok) {
           const data = await res.json();
-
-          // check if this idea is in user's likes/bookmarks
-          if (data.likes?.includes(idea.id)) {
-            setIsLiked(true);
-          }
-          if (data.bookmarks?.includes(idea.id)) {
-            setIsBookmarked(true);
-          }
+          if (data.likes?.includes(idea.id)) setIsLiked(true);
+          if (data.bookmarks?.includes(idea.id)) setIsBookmarked(true);
         } else {
           console.error('Failed to fetch user actions:', await res.text());
         }
@@ -108,46 +165,57 @@ export default function IdeaCard({
         console.error('Error fetching user actions:', err);
       }
     };
-
     fetchUserActions();
   }, [idea.id, user?.currentUser?.access_token, user]);
 
-  // Fetch comments when showComments is true
+  // Fetch comments and commenters' names when expanded
   useEffect(() => {
-    const fetchComments = async () => {
-      if (!showComments) return;
-      
-      setIsLoadingComments(true);
-      try {
-        const res = await fetch(`${API_URL_COMMENTS}/${idea.id}`, {
-          cache: 'no-store'
-        });
+  const fetchComments = async () => {
+    if (!showComments) return;
+    setIsLoadingComments(true);
 
-        if (res.ok) {
-          const data = await res.json();
-          const fetchedComments = data?.idea?.idea_discussion || [];
-          setComments(fetchedComments);
-        } else {
-          console.error('Failed to fetch comments:', await res.text());
-          setComments([]);
+    try {
+      const res = await fetch(`${API_URL_COMMENTS}/${idea.id}`, { cache: "no-store" });
+      if (!res.ok) throw new Error(await res.text());
+
+      const data = await res.json();
+      const fetchedComments: Comment[] = data?.idea?.idea_discussion || [];
+      setComments(fetchedComments);
+
+      // Collect unique IDs
+      const uniqueUserIds = [...new Set(fetchedComments.map(c => c.user_id).filter(Boolean))];
+
+      if (uniqueUserIds.length) {
+        const { data: users, error } = await supabase
+          .from("app_user") // ✅ use app_user
+          .select("id, name, email")
+          .in("id", uniqueUserIds);
+
+        if (!error && users) {
+          const map: Record<string, string> = {};
+          users.forEach(user => {
+            map[user.id] = user.name || user.email || "User";
+          });
+          setCommentUserNames(map);
         }
-      } catch (err) {
-        console.error('Error fetching comments:', err);
-        setComments([]);
-      } finally {
-        setIsLoadingComments(false);
       }
-    };
 
-    fetchComments();
-  }, [showComments, idea.id]);
+    } catch (err) {
+      console.error("Error fetching comments:", err);
+      setComments([]);
+    } finally {
+      setIsLoadingComments(false);
+    }
+  };
+
+  fetchComments();
+}, [showComments, idea.id, supabase]);
+
 
   const handleCardClick = () => {
     if (showBackButton) return;
     if (disabledNavigate) {
-      if (onBlockedNavigate) {
-        onBlockedNavigate();
-      }
+      if (onBlockedNavigate) onBlockedNavigate();
       return;
     }
     router.push(`/ideas-forum/${idea.id}`);
@@ -156,9 +224,7 @@ export default function IdeaCard({
   const handleTitleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (disabledNavigate) {
-      if (onBlockedNavigate) {
-        onBlockedNavigate();
-      }
+      if (onBlockedNavigate) onBlockedNavigate();
       return;
     }
     router.push(`/ideas-forum/${idea.id}`);
@@ -174,13 +240,8 @@ export default function IdeaCard({
       toast.error('Please log in to interact with ideas.');
       return;
     }
-
     if (isLoading) return;
     setIsLoading(true);
-
-    // Debug: Log token info (remove in production)
-    console.log('Using access token:', user.currentUser.access_token.substring(0, 20) + '...');
-
     try {
       const method = isLiked ? 'DELETE' : 'POST';
       const response = await fetch(`${API_URL_ACTIONS}/${idea.id}/like`, {
@@ -190,20 +251,16 @@ export default function IdeaCard({
           'Content-Type': 'application/json',
         },
       });
-
       if (response.ok) {
         const newLikedState = !isLiked;
         setIsLiked(newLikedState);
         setLikesCount(prev => newLikedState ? prev + 1 : prev - 1);
-        
-        // Update parent component
         if (onIdeaUpdate) {
           onIdeaUpdate({
             ...idea,
-            likes_count: newLikedState ? likesCount + 1 : likesCount - 1,
+            likes_count: newLikedState ? (likesCount + 1) : (likesCount - 1),
           });
         }
-        
         toast.success(newLikedState ? 'Idea liked!' : 'Idea unliked!');
       } else {
         toast.error('Failed to update like status');
@@ -221,10 +278,8 @@ export default function IdeaCard({
       toast.error('Please log in to interact with ideas.');
       return;
     }
-
     if (isLoading) return;
     setIsLoading(true);
-
     try {
       const method = isBookmarked ? 'DELETE' : 'POST';
       const response = await fetch(`${API_URL_ACTIONS}/${idea.id}/bookmark`, {
@@ -234,20 +289,16 @@ export default function IdeaCard({
           'Content-Type': 'application/json',
         },
       });
-
       if (response.ok) {
         const newBookmarkedState = !isBookmarked;
         setIsBookmarked(newBookmarkedState);
         setBookmarksCount(prev => newBookmarkedState ? prev + 1 : prev - 1);
-        
-        // Update parent component
         if (onIdeaUpdate) {
           onIdeaUpdate({
             ...idea,
-            bookmarks_count: newBookmarkedState ? bookmarksCount + 1 : bookmarksCount - 1,
+            bookmarks_count: newBookmarkedState ? (bookmarksCount + 1) : (bookmarksCount - 1),
           });
         }
-        
         toast.success(newBookmarkedState ? 'Idea bookmarked!' : 'Bookmark removed!');
       } else {
         toast.error('Failed to update bookmark status');
@@ -265,15 +316,12 @@ export default function IdeaCard({
       toast.error('Please log in to interact with ideas.');
       return;
     }
-
     if (!commentText.trim()) {
       toast.error('Please enter a comment');
       return;
     }
-
     if (isLoading) return;
     setIsLoading(true);
-
     try {
       const response = await fetch(`${API_URL_ACTIONS}/${idea.id}/comment`, {
         method: 'POST',
@@ -281,35 +329,25 @@ export default function IdeaCard({
           'Authorization': `Bearer ${user.currentUser.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          content: commentText.trim(),
-        }),
+        body: JSON.stringify({ content: commentText.trim() }),
       });
-
       if (response.ok) {
         setCommentText('');
         setDiscussionsCount(prev => prev + 1);
-        
-        // Update parent component
         if (onIdeaUpdate) {
           onIdeaUpdate({
             ...idea,
-            discussions_count: discussionsCount + 1,
+            discussions_count: (discussionsCount + 1),
           });
         }
-        
-        // Refresh comments to show the new one
         if (showComments) {
-          const res = await fetch(`${API_URL_COMMENTS}/${idea.id}`, {
-            cache: 'no-store'
-          });
+          const res = await fetch(`${API_URL_COMMENTS}/${idea.id}`, { cache: 'no-store' });
           if (res.ok) {
             const data = await res.json();
             const fetchedComments = data?.idea?.idea_discussion || [];
             setComments(fetchedComments);
           }
         }
-        
         toast.success('Comment added successfully!');
       } else {
         toast.error('Failed to add comment');
@@ -322,71 +360,7 @@ export default function IdeaCard({
     }
   };
 
-  // Truncate text for preview
-  const getTruncatedText = (text: string, maxLength: number = 300) => {
-    if (text.length <= maxLength) return text;
-    return text.slice(0, maxLength) + '...';
-  };
-
-  const shouldShowReadMore = d.main_idea && d.main_idea.length > 300;
-  
-  // Calculate market cap category based on stock price and other factors
-  const getMarketCapCategory = () => {
-    const price = d.stock_price_today || d.stock_price_at_submission || 0;
-    if (price > 500) return 'Large Cap';
-    if (price > 200) return 'Mid Cap';
-    return 'Small Cap';
-  };
-
-  // Format date for display
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Recently';
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMonths = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24 * 30));
-    
-    if (diffInMonths < 1) return 'Recently';
-    if (diffInMonths === 1) return '1 month ago';
-    return `${diffInMonths} months ago`;
-  };
-
-  // Get author initials
-  const getAuthorInitials = (name?: string) => {
-    if (!name) return 'ME';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
-
-  // Extract timeline from main idea (look for patterns like "3-5 years", "2-3 years", etc.)
-  const extractTimeline = (idea?: string) => {
-    if (!idea) return 'Long Term'; // guard clause if undefined/null
-    const timelineMatch = idea.match(/(\d+-\d+)\s*years?/i);
-    return timelineMatch ? `${timelineMatch[1]} Years` : 'Long Term';
-  };
-
-  // Format comment date
-  const formatCommentDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    const diffInDays = Math.floor(diffInHours / 24);
-    
-    if (diffInHours < 1) return 'Just now';
-    if (diffInHours < 24) return `${diffInHours}h ago`;
-    if (diffInDays < 7) return `${diffInDays}d ago`;
-    return date.toLocaleDateString();
-  };
-
-  // Get user initials for comments
-  const getCommentUserInitials = (userId: string) => {
-    // For now, we'll use a simple hash of the user ID to generate consistent initials
-    // In a real app, you'd fetch the actual user name
-    const hash = userId.split('').reduce((a, b) => {
-      a = ((a << 5) - a) + b.charCodeAt(0);
-      return a & a;
-    }, 0);
-    const initials = ['AB', 'CD', 'EF', 'GH', 'IJ', 'KL', 'MN', 'OP', 'QR', 'ST'][Math.abs(hash) % 10];
-    return initials;
-  };
+  const shouldShowReadMore = d.description && d.description.length > 300;
 
   return (
     <div 
@@ -401,21 +375,24 @@ export default function IdeaCard({
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
               <span className="text-blue-600 font-semibold text-sm">
-                {getAuthorInitials(d.submitter_name)}
+                {getInitials(authorName)}
               </span>
             </div>
             <div>
               <div className="font-medium text-gray-900">
-                {d.submitter_name || 'Market Expert'}
+                {authorName || 'Market Expert'}
               </div>
               <div className="text-sm text-gray-500">
-                {formatDate(d.submitted_date)}
+                {formatISTDateTime(d.submission_timestamp || idea.created_at)}
               </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-              {getMarketCapCategory()}
+              {d.position_type || 'Position Type'}
+            </span>
+            <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+              {d.market_cap || 'Market'} Cap
             </span>
             <button 
               className={`p-2 rounded-lg transition-colors ${
@@ -446,28 +423,28 @@ export default function IdeaCard({
               Ideas Forum
             </Link>
             <ChevronRight className="w-4 h-4" />
-            <span className="text-gray-900 font-medium">{d.symbol}</span>
+            <span className="text-gray-900 font-medium">{d.ticker}</span>
           </div>
         )}
 
         {/* Title */}
         <div className="mb-3">
           <h1 
-            className="text-2xl font-bold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+            className="text-xl font-bold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
             onClick={handleTitleClick}
           >
-            {d.company_name} - Wealth Creation Opportunity ({extractTimeline(d.main_idea)})
+            {d.company_name}
           </h1>
         </div>
 
-        {/* Main Idea */}
+        {/* Description (HTML) */}
         <div className="mb-4">
-          <p className="text-gray-700 leading-relaxed">
-            {shouldShowReadMore && !isExpanded 
-              ? getTruncatedText(d.main_idea) 
-              : d.main_idea
-            }
-          </p>
+          <div
+            className={`prose max-w-none prose-img:rounded-lg prose-img:border prose-img:border-gray-100 ${!isExpanded ? 'overflow-hidden relative' : ''}`}
+            style={!isExpanded ? { maxHeight: 300 } : undefined}
+            onClick={(e) => e.stopPropagation()}
+            dangerouslySetInnerHTML={{ __html: d.description || '' }}
+          />
           {shouldShowReadMore && (
             <button
               onClick={(e) => {
@@ -484,14 +461,14 @@ export default function IdeaCard({
         {/* Stock Details */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-gray-900">{d.symbol}</span>
+            <span className="font-bold text-gray-900">{d.ticker}</span>
             <span className="text-lg font-semibold text-gray-900">
-              ₹{d.stock_price_today || d.stock_price_at_submission || 'N/A'}
+              ₹{d.current_price ?? 'N/A'}
             </span>
           </div>
           <div className="text-right">
             <div className="text-sm text-gray-500">Timeline Horizon</div>
-            <div className="font-medium text-gray-900">{extractTimeline(d.main_idea)}</div>
+            <div className="font-medium text-gray-900">{d.investment_horizon || 'Long Term'}</div>
           </div>
         </div>
 
@@ -537,7 +514,7 @@ export default function IdeaCard({
         <div className="p-6 border-t border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">
-              Discussion for {d.symbol}
+              Discussion for {d.ticker}
             </h3>
             <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
               {discussionsCount} messages
@@ -570,28 +547,31 @@ export default function IdeaCard({
             </div>
           ) : (
             <div className="space-y-4 mb-6">
-              {comments.map((comment) => (
-                <div key={comment.id} className="flex gap-3 p-4 bg-gray-50 rounded-lg">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-blue-600 font-semibold text-xs">
-                      {getCommentUserInitials(comment.user_id)}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-gray-900 text-sm">
-                        User {getCommentUserInitials(comment.user_id)}
-                      </span>
-                      <span className="text-gray-500 text-xs">
-                        {formatCommentDate(comment.created_at)}
+              {comments.map((comment) => {
+                const displayName = commentUserNames[comment.user_id] || 'User';
+                return (
+                  <div key={comment.id} className="flex gap-3 p-4 bg-gray-50 rounded-lg">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-blue-600 font-semibold text-xs">
+                        {getInitials(displayName)}
                       </span>
                     </div>
-                    <p className="text-gray-700 text-sm leading-relaxed">
-                      {comment.content}
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium text-gray-900 text-sm">
+                          {displayName}
+                        </span>
+                        <span className="text-gray-500 text-xs">
+                          {formatISTDateTime(comment.created_at)}
+                        </span>
+                      </div>
+                      <p className="text-gray-700 text-sm leading-relaxed">
+                        {comment.content}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
@@ -599,7 +579,7 @@ export default function IdeaCard({
           <div className="flex items-center gap-3">
             <input
               type="text"
-              placeholder={`Discuss ${d.symbol}...`}
+              placeholder={`Discuss ${d.ticker}...`}
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               className="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"

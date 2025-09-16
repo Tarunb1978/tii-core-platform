@@ -2,7 +2,7 @@
 
 import Navbar from '@/components/Navbar';
 import IdeaCard from '@/components/IdeaCard';
-import { Filter, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/authProvider';
@@ -18,21 +18,17 @@ type Comment = {
 
 type Idea = {
   id: string;
+  user_id: string;
   data: {
     company_name: string;
-    symbol: string;
-    main_idea: string;
-    long_or_short?: string;
-    submitter_name?: string;
-    submitted_date?: string;
-    number_of_likes?: number;
-    stock_price_today?: number;
-    stock_price_at_submission?: number;
-    fifty_two_wk_high?: number;
-    fifty_two_wk_low?: number;
-    last_12_months_eps?: number;
-    last_12_months_revenues_m?: number;
-    long_term_debt_m?: number;
+    title: string;
+    ticker: string;
+    description: string;
+    market_cap: string; // Large | Mid | Small
+    position_type?: string;
+    investment_horizon?: string;
+    current_price?: number;
+    submission_timestamp?: string; // ISO
   };
   likes_count?: number;
   bookmarks_count?: number;
@@ -50,7 +46,8 @@ export default function IdeasForumPage() {
   const [filteredIdeas, setFilteredIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filterType, setFilterType] = useState<'recent' | 'liked' | 'bookmarked' | 'commented'>('recent');
+  const [filterType, setFilterType] = useState<'most_recent' | 'most_liked' | 'most_bookmarked' | 'most_commented'>('most_recent');
+  const [marketCapFilter, setMarketCapFilter] = useState<'all' | 'Large' | 'Medium' | 'Small'>('all');
   const [userActions, setUserActions] = useState<{
     likes: string[];
     bookmarks: string[];
@@ -109,35 +106,45 @@ export default function IdeasForumPage() {
     fetchUserActions();
   }, [user?.currentUser?.access_token]);
 
-  // Filter ideas based on selected filter
+  // Filter + sort ideas based on selected filters
   useEffect(() => {
     if (!ideas.length) return;
 
-    let filtered: Idea[] = [];
+    // Market cap filtering
+    let filtered: Idea[] = ideas.filter((idea) => {
+      if (marketCapFilter === 'all') return true;
+      const mc = (idea.data.market_cap || '').toLowerCase();
+      if (marketCapFilter === 'Large') return mc.includes('large');
+      if (marketCapFilter === 'Medium') return mc.includes('medium');
+      if (marketCapFilter === 'Small') return mc.includes('small');
+      return true;
+    });
 
     switch (filterType) {
-      case 'recent':
-        filtered = [...ideas].sort((a, b) => {
-          const dateA = new Date(a.created_at || a.data.submitted_date || '');
-          const dateB = new Date(b.created_at || b.data.submitted_date || '');
-          return dateB.getTime() - dateA.getTime();
+      case 'most_recent':
+        filtered = [...filtered].sort((a, b) => {
+          const dateA = new Date(a.created_at || a.data.submission_timestamp || '').getTime();
+          const dateB = new Date(b.created_at || b.data.submission_timestamp || '').getTime();
+          return dateB - dateA;
         });
         break;
-      case 'liked':
-        filtered = ideas.filter(idea => userActions.likes.includes(idea.id));
+      case 'most_liked':
+        filtered = [...filtered].sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0));
         break;
-      case 'bookmarked':
-        filtered = ideas.filter(idea => userActions.bookmarks.includes(idea.id));
+      case 'most_bookmarked':
+        // Only ideas the user bookmarked, then sort by bookmarks_count desc
+        filtered = filtered.filter(idea => userActions.bookmarks.includes(idea.id))
+          .sort((a, b) => (b.bookmarks_count || 0) - (a.bookmarks_count || 0));
         break;
-      case 'commented':
-        filtered = ideas.filter(idea => userActions.comments.includes(idea.id));
+      case 'most_commented':
+        filtered = [...filtered].sort((a, b) => (b.discussions_count || 0) - (a.discussions_count || 0));
         break;
       default:
-        filtered = ideas;
+        filtered = filtered;
     }
 
     setFilteredIdeas(filtered);
-  }, [ideas, filterType, userActions]);
+  }, [ideas, marketCapFilter, filterType, userActions]);
 
   const handleIdeaUpdate = (updatedIdea: Idea) => {
     setIdeas(prev => prev.map(idea => idea.id === updatedIdea.id ? updatedIdea : idea));
@@ -160,22 +167,28 @@ export default function IdeasForumPage() {
           </div>
           <div className="flex items-center gap-3">
             <div className="relative">
-              <button className="flex items-center gap-2 bg-white border border-gray-200 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
-                <Filter className="w-4 h-4" />
-                All Market Caps
-                <ChevronDown className="w-4 h-4" />
-              </button>
+              <select 
+                value={marketCapFilter}
+                onChange={(e) => setMarketCapFilter(e.target.value as 'all' | 'Large' | 'Medium' | 'Small')}
+                className="appearance-none flex items-center gap-2 bg-white border border-gray-200 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 pr-10 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Market Caps</option>
+                <option value="Large">Large Cap</option>
+                <option value="Medium">Medium Cap</option>
+                <option value="Small">Small Cap</option>
+              </select>
+              <ChevronDown className="w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400" />
             </div>
             <div className="relative">
               <select 
                 value={filterType}
-                onChange={(e) => setFilterType(e.target.value as 'recent' | 'liked' | 'bookmarked' | 'commented')}
-                className="appearance-none flex items-center gap-2 bg-white border border-gray-200 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 pr-8 cursor-pointer"
+                onChange={(e) => setFilterType(e.target.value as 'most_recent' | 'most_liked' | 'most_bookmarked' | 'most_commented')}
+                className="appearance-none flex items-center gap-2 bg-white border border-gray-200 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 pr-10 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="recent">Recent</option>
-                <option value="liked">Liked</option>
-                <option value="bookmarked">Bookmarked</option>
-                <option value="commented">Commented</option>
+                <option value="most_recent">Most Recent</option>
+                <option value="most_liked">Most Liked</option>
+                <option value="most_commented">Most Commented</option>
+                <option value="most_bookmarked">Most Bookmarked</option>
               </select>
               <ChevronDown className="w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400" />
             </div>
@@ -197,7 +210,7 @@ export default function IdeasForumPage() {
               <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-gray-500">
                 {!isAuthenticated
                   ? 'Login to see latest ideas'
-                  : filterType === 'recent' 
+                  : filterType === 'most_recent' 
                     ? 'No ideas found.'
                     : `No ${filterType} ideas found.`}
               </div>
