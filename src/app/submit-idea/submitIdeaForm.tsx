@@ -15,6 +15,7 @@ export default function SubmitIdeaForm() {
   const [editorLoaded, setEditorLoaded] = useState(false);
   const [CKEditorComp, setCKEditorComp] = useState<any>(null);
   const [ClassicEditorComp, setClassicEditorComp] = useState<any>(null);
+  const isResetting = useRef(false);
 
   // load CKEditor dynamically on client
   useEffect(() => {
@@ -68,7 +69,9 @@ export default function SubmitIdeaForm() {
 
  useEffect(() => {
     if (editorRef.current) {
+
       editorRef.current.model.document.on("change:data", () => {
+    if (isResetting.current) return; // skip auto-delete on reset
         const removedItems = Array.from(
           editorRef.current.model.document.differ.getChanges()
         ).filter((change) => change.type === "remove")
@@ -423,9 +426,17 @@ export default function SubmitIdeaForm() {
       setWordCount(0);
       
       // Reset CKEditor content
-      if (editorRef.current) {
-        editorRef.current.setData('');
-      }
+      const resetEditor = () => {
+  if (editorRef.current) {
+    isResetting.current = true;
+    editorRef.current.setData('');
+    // allow CKEditor to fire change:data first
+    setTimeout(() => {
+      isResetting.current = false;
+    }, 0);
+  }
+};
+    resetEditor();
     } catch (error: any) {
       const message = error?.message ?? 'Unexpected error while submitting idea.';
       setErrorMessage(message);
