@@ -130,11 +130,11 @@ export default function Navbar() {
           {/* Right Section - Info Text and Submit Button (Hidden on mobile) */}
           <div className="hidden md:flex items-center space-x-4">
             {/* Informational Text */}
-            <span className="text-sm text-gray-400">Showing 30-day old ideas</span>
+            <span className="text-sm text-gray-400">Showing 45-day old ideas</span>
             
             {/* Submit Idea Button */}
             <Link 
-              href="/submit-idea"
+              href="/submit-idea-guidelines"
               className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
             >
               Submit Idea
@@ -276,7 +276,7 @@ export default function Navbar() {
                 {/* Mobile Submit Idea Button */}
                 <div className="flex justify-end">
                   <Link 
-                    href="/submit-idea"
+                    href="/submit-idea-guidelines"
                     className="w-auto px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors duration-200"
                     onClick={closeMobileMenu}
                   >
@@ -331,7 +331,7 @@ export default function Navbar() {
                 
                 {/* Mobile Info Text */}
                 <div className="px-3 py-2 text-xs text-gray-400 border-t border-gray-100 pt-3 text-right">
-                  Showing 30-day old ideas
+                  Showing 45-day old ideas
                 </div>
               </div>
             </div>

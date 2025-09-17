@@ -2,158 +2,207 @@
 
 import Navbar from '@/components/Navbar';
 import { useAuth } from "@/context/authProvider";
+
 export default function Home() {
   const { currentUser } = useAuth();
   console.log(currentUser,'user NOice');
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen" style={{ backgroundColor: '#FAFAFA', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <Navbar />
 
       {/* Hero Section */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 pt-36">
+      <main className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-24 pt-40">
         <div className="text-center">
-          <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold mb-8" style={{ color: '#222' }}>
             Building India's{" "}
-            <span className="text-indigo-600">Research-Driven</span>{" "}
+            <span style={{ color: '#4A90E2' }}>Research-Driven</span>{" "}
             Investment Community
           </h2>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl mb-12 max-w-4xl mx-auto leading-relaxed" style={{ color: '#444' }}>
             Join thoughtful, long-term investors who share research, build conviction together, 
             and grow wealth through collective wisdom—not speculation.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <a
-              href="/sign-up"
-              className="bg-indigo-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-indigo-700 transition-colors shadow-lg"
+              href={currentUser ? "/ideas-forum" : "/sign-up"}
+              className="px-10 py-4 text-lg font-medium transition-colors border"
+              style={{ 
+                backgroundColor: '#4A90E2', 
+                color: 'white', 
+                borderColor: '#4A90E2',
+                borderRadius: '4px'
+              }}
             >
-              Join the Community
+              {currentUser ? "Go to Ideas Forum" : "Join the Community"}
             </a>
             <a
-              href="/submit-idea"
-              className="border-2 border-indigo-600 text-indigo-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-indigo-50 transition-colors"
+              href="/submit-idea-guidelines"
+              className="px-10 py-4 text-lg font-medium transition-colors border"
+              style={{ 
+                backgroundColor: 'transparent', 
+                color: '#4A90E2', 
+                borderColor: '#4A90E2',
+                borderRadius: '4px'
+              }}
             >
               Share Your Investment Conviction
             </a>
           </div>
+          <p className="mt-6 text-sm text-center" style={{ color: '#666' }}>
+            Members who share a quality investment idea gain full, real-time access to all new research and discussions.<br />
+            Without a submission, you can browse ideas that are 45 days old.
+          </p>
         </div>
 
         {/* Mission Section */}
-        <div className="mt-16 max-w-4xl mx-auto text-center">
-          <div className="bg-white rounded-xl shadow-md p-8">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">Our Mission</h3>
-            <p className="text-lg text-gray-600 leading-relaxed">
-              Inspired by Napoleon Hill's mastermind principle, we've created a collaborative alliance 
-              where serious investors share research, challenge assumptions, and build conviction together. 
-              This isn't about quick tips or market speculation—it's about systematic, research-backed 
-              investing through collective intelligence.
+        <div className="mt-12 max-w-5xl mx-auto text-center">
+          <div className="p-12" style={{ backgroundColor: 'white', borderRadius: '8px' }}>
+            <h3 className="text-3xl font-bold mb-6" style={{ color: '#222' }}>Our Mission</h3>
+            <p className="text-lg leading-relaxed" style={{ color: '#444' }}>
+              We believe lasting wealth is built through patient, research-driven investing in India's growing economy. Guided by the 'mastermind' principle—that collective insight exceeds individual thinking—we invite passionate investors who seek to deeply understand businesses and build conviction together. India's journey mirrors the rise of global capitalism, offering exceptional opportunities for those committed to thoughtful, long-term investing—not speculation.
             </p>
           </div>
         </div>
 
-        {/* Stats Section */}
-        <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="text-center p-6 bg-white rounded-xl shadow-md">
-            <div className="text-4xl font-bold text-indigo-600 mb-2">50K+</div>
-            <div className="text-gray-600">Active Members</div>
+        {/* Buddha Image Section */}
+        <div className="mt-12 mb-2 flex flex-col items-center">
+          <div className="w-full max-w-md" style={{ maxWidth: '400px' }}>
+            <img 
+              src="/assets/images/Final.jpeg" 
+              alt="Buddha in golden lotus mandala representing mindful investing"
+              className="w-full h-auto"
+              style={{ maxWidth: '400px', width: '30vw', minWidth: '280px' }}
+            />
           </div>
-          <div className="text-center p-6 bg-white rounded-xl shadow-md">
-            <div className="text-4xl font-bold text-indigo-600 mb-2">₹100Cr+</div>
-            <div className="text-gray-600">Portfolio Value</div>
+        </div>
+
+        {/* Research Value Section */}
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-12">
+          <div className="p-8" style={{ backgroundColor: 'white', borderRadius: '8px' }}>
+            <div className="w-12 h-12 flex items-center justify-center mb-6" style={{ backgroundColor: '#F5F5F5', borderRadius: '6px' }}>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#666' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold mb-3" style={{ color: '#222' }}>Featured Investment Thesis</h3>
+            <p className="text-sm mb-4" style={{ color: '#444' }}>D-Mart's Edge in Indian Retail</p>
+            <p className="text-xs mb-4" style={{ color: '#888' }}>Deep dive into how D-Mart's operational efficiency creates sustainable competitive advantages in India's fragmented retail market.</p>
+            <a href="/ideas-forum" className="text-sm font-medium" style={{ color: '#4A90E2' }}>→ Read Research</a>
           </div>
-          <div className="text-center p-6 bg-white rounded-xl shadow-md">
-            <div className="text-4xl font-bold text-indigo-600 mb-2">95%</div>
-            <div className="text-gray-600">Success Rate</div>
+
+          <div className="p-8" style={{ backgroundColor: 'white', borderRadius: '8px' }}>
+            <div className="w-12 h-12 flex items-center justify-center mb-6" style={{ backgroundColor: '#F5F5F5', borderRadius: '6px' }}>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#666' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold mb-3" style={{ color: '#222' }}>Investment Principle of the Week</h3>
+            <p className="text-sm mb-4" style={{ color: '#444' }}>Margin of Safety—Why it Matters Most</p>
+            <p className="text-xs mb-4" style={{ color: '#888' }}>Understanding how Benjamin Graham's margin of safety principle protects capital and creates opportunities in volatile markets.</p>
+            <a href="/topic-of-the-week" className="text-sm font-medium" style={{ color: '#4A90E2' }}>→ Learn More</a>
+          </div>
+
+          <div className="p-8" style={{ backgroundColor: 'white', borderRadius: '8px' }}>
+            <div className="w-12 h-12 flex items-center justify-center mb-6" style={{ backgroundColor: '#F5F5F5', borderRadius: '6px' }}>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#666' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold mb-3" style={{ color: '#222' }}>Editor's Pick</h3>
+            <p className="text-sm mb-4" style={{ color: '#444' }}>Dr. Lal Pathlabs' Business Model Analysis</p>
+            <p className="text-xs mb-4" style={{ color: '#888' }}>Comprehensive analysis of how Dr. Lal Pathlabs built a defensible moat in India's diagnostic services sector.</p>
+            <a href="/ideas-forum" className="text-sm font-medium" style={{ color: '#4A90E2' }}>→ Explore Analysis</a>
           </div>
         </div>
       </main>
 
       {/* Features Section */}
-      <section className="bg-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h3 className="text-3xl font-bold text-gray-900 mb-4">Why Join Our Research Community?</h3>
-            <p className="text-xl text-gray-600">Collaborative analysis, shared research, and collective conviction building</p>
+      <section className="py-12" style={{ backgroundColor: 'white' }}>
+        <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
+          <div className="text-center mb-8">
+            <h3 className="text-3xl font-bold mb-3" style={{ color: '#222' }}>Why Join Our Research Community?</h3>
+            <p className="text-xl" style={{ color: '#888' }}>Collaborative analysis, shared research, and collective conviction building</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="text-center p-5">
+              <div className="w-12 h-12 flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: '#F5F5F5', borderRadius: '6px' }}>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#666' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h4 className="text-xl font-semibold text-gray-900 mb-2">Research Sharing</h4>
-              <p className="text-gray-600">Share your investment research and analysis with fellow investors who value deep, fundamental thinking</p>
+              <h4 className="text-xl font-semibold mb-2" style={{ color: '#222' }}>Research Sharing</h4>
+              <p style={{ color: '#444' }}>Share your investment research and analysis with fellow investors who value deep, fundamental thinking</p>
             </div>
 
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            <div className="text-center p-5">
+              <div className="w-12 h-12 flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: '#F5F5F5', borderRadius: '6px' }}>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#666' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
-              <h4 className="text-xl font-semibold text-gray-900 mb-2">Collaborative Analysis</h4>
-              <p className="text-gray-600">Engage in thoughtful discussions that challenge assumptions and strengthen your investment thesis</p>
+              <h4 className="text-xl font-semibold mb-2" style={{ color: '#222' }}>Collaborative Analysis</h4>
+              <p style={{ color: '#444' }}>Engage in thoughtful discussions that challenge assumptions and strengthen your investment thesis</p>
             </div>
 
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            <div className="text-center p-5">
+              <div className="w-12 h-12 flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: '#F5F5F5', borderRadius: '6px' }}>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#666' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
               </div>
-              <h4 className="text-xl font-semibold text-gray-900 mb-2">Collective Wisdom</h4>
-              <p className="text-gray-600">Build conviction through shared knowledge and learn from diverse perspectives on long-term value creation</p>
+              <h4 className="text-xl font-semibold mb-2" style={{ color: '#222' }}>Collective Wisdom</h4>
+              <p style={{ color: '#444' }}>Build conviction through shared knowledge and learn from diverse perspectives on long-term value creation</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Testimonials Placeholder */}
-      <section className="bg-gray-50 py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h3 className="text-3xl font-bold text-gray-900 mb-4">What Our Community Members Say</h3>
-            <p className="text-xl text-gray-600">Stories from investors who've found value in collaborative research</p>
+      {/* Research Value Testimonials */}
+      <section className="py-12" style={{ backgroundColor: '#FAFAFA' }}>
+        <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
+          <div className="text-center mb-8">
+            <h3 className="text-3xl font-bold mb-3" style={{ color: '#222' }}>Research That Drives Results</h3>
+            <p className="text-xl" style={{ color: '#888' }}>How our community's research approach creates real investment value</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="p-5" style={{ backgroundColor: 'white', borderRadius: '8px' }}>
               <div className="text-center">
-                <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl font-bold text-indigo-600">A</span>
+                <div className="w-12 h-12 flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: '#F5F5F5', borderRadius: '6px' }}>
+                  <span className="text-lg font-medium" style={{ color: '#666' }}>A</span>
                 </div>
-                <p className="text-gray-600 italic mb-4">
-                  "The collaborative analysis here has completely changed how I approach investment research. 
-                  Having my assumptions challenged by thoughtful investors has made me a better analyst."
+                <p className="italic mb-4" style={{ color: '#444' }}>
+                  "The D-Mart analysis here helped me understand retail moats better than any brokerage report. 
+                  The community's deep-dive approach is unmatched."
                 </p>
-                <div className="text-sm text-gray-500">- Early Member, Mumbai</div>
+                <div className="text-sm" style={{ color: '#888' }}>- Arjun, Portfolio Manager, Mumbai</div>
               </div>
             </div>
             
-            <div className="bg-white rounded-xl shadow-md p-6">
+            <div className="p-5" style={{ backgroundColor: 'white', borderRadius: '8px' }}>
               <div className="text-center">
-                <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl font-bold text-indigo-600">R</span>
+                <div className="w-12 h-12 flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: '#F5F5F5', borderRadius: '6px' }}>
+                  <span className="text-lg font-medium" style={{ color: '#666' }}>R</span>
                 </div>
-                <p className="text-gray-600 italic mb-4">
-                  "This isn't about quick tips or speculation. It's about building conviction through 
-                  shared research and collective wisdom. Exactly what I was looking for."
+                <p className="italic mb-4" style={{ color: '#444' }}>
+                  "Margin of safety discussions here saved me from three potential value traps. 
+                  The principle-focused approach works."
                 </p>
-                <div className="text-sm text-gray-500">- Research Analyst, Bangalore</div>
+                <div className="text-sm" style={{ color: '#888' }}>- Rajesh, Research Analyst, Bangalore</div>
               </div>
             </div>
             
-            <div className="bg-white rounded-xl shadow-md p-6">
+            <div className="p-5" style={{ backgroundColor: 'white', borderRadius: '8px' }}>
               <div className="text-center">
-                <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl font-bold text-indigo-600">S</span>
+                <div className="w-12 h-12 flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: '#F5F5F5', borderRadius: '6px' }}>
+                  <span className="text-lg font-medium" style={{ color: '#666' }}>S</span>
                 </div>
-                <p className="text-gray-600 italic mb-4">
-                  "The quality of research shared here is exceptional. It's refreshing to find a community 
-                  focused on long-term value creation rather than short-term gains."
+                <p className="italic mb-4" style={{ color: '#444' }}>
+                  "Dr. Lal Pathlabs analysis here was more thorough than my own research. 
+                  This community's standards are exceptional."
                 </p>
-                <div className="text-sm text-gray-500">- Portfolio Manager, Delhi</div>
+                <div className="text-sm" style={{ color: '#888' }}>- Suresh, Fund Manager, Delhi</div>
               </div>
             </div>
           </div>
@@ -161,74 +210,98 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-indigo-600 py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h3 className="text-3xl font-bold text-white mb-4">Ready to Join Our Research Community?</h3>
-          <p className="text-xl text-indigo-100 mb-8">Start sharing your investment research and learn from fellow thoughtful investors</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      <section className="py-24" style={{ backgroundColor: '#4A90E2' }}>
+        <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 text-center">
+          <h3 className="text-3xl font-bold mb-6" style={{ color: 'white' }}>Ready to Join Our Research Community?</h3>
+          <p className="text-xl mb-12" style={{ color: '#E8F4FD' }}>Start sharing your investment research and learn from fellow thoughtful investors</p>
+          <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <a
               href="/sign-up"
-              className="bg-white text-indigo-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg"
+              className="px-10 py-4 text-lg font-medium transition-colors border"
+              style={{ 
+                backgroundColor: 'white', 
+                color: '#4A90E2', 
+                borderColor: 'white',
+                borderRadius: '4px'
+              }}
             >
               Join the Community
             </a>
             <a
-              href="/submit-idea"
-              className="border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-indigo-600 transition-colors"
+              href="/submit-idea-guidelines"
+              className="px-10 py-4 text-lg font-medium transition-colors border"
+              style={{ 
+                backgroundColor: 'transparent', 
+                color: 'white', 
+                borderColor: 'white',
+                borderRadius: '4px'
+              }}
             >
-              Share Your Research
+              Share Your Investment Conviction
             </a>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center mb-4">
-                <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold">₹</span>
+      <footer className="py-16" style={{ backgroundColor: '#222' }}>
+        <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+            {/* Brand Column */}
+            <div className="lg:col-span-1">
+              <div className="flex items-center mb-6">
+                <div className="w-8 h-8 flex items-center justify-center" style={{ backgroundColor: '#4A90E2', borderRadius: '4px' }}>
+                  <span className="font-bold" style={{ color: 'white' }}>₹</span>
                 </div>
-                <span className="ml-2 text-xl font-bold">Indian Investors</span>
+                <span className="ml-3 text-xl font-bold" style={{ color: 'white' }}>Indian Investors</span>
               </div>
-              <p className="text-gray-400">Building India's research-driven investment community through collaborative wisdom and shared conviction.</p>
+              <p className="text-sm leading-relaxed" style={{ color: '#888' }}>Building India's research-driven investment community through collaborative wisdom and shared conviction.</p>
             </div>
 
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Our Mission</a></li>
-                <li><a href="/topic-of-the-week" className="hover:text-white transition-colors">Research Topics</a></li>
-                <li><a href="/ideas-forum" className="hover:text-white transition-colors">Ideas Forum</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+            {/* Quick Links Column */}
+            <div className="lg:col-span-1">
+              <h4 className="text-lg font-semibold mb-6" style={{ color: 'white' }}>Quick Links</h4>
+              <ul className="space-y-3" style={{ color: '#888' }}>
+                <li><a href="#" className="text-sm transition-colors hover:text-white">Our Mission</a></li>
+                <li><a href="/topic-of-the-week" className="text-sm transition-colors hover:text-white">Trending Topics</a></li>
+                <li><a href="/ideas-forum" className="text-sm transition-colors hover:text-white">Ideas Forum</a></li>
+                <li><a href="#" className="text-sm transition-colors hover:text-white">Contact</a></li>
               </ul>
             </div>
 
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Resources</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Research Library</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Investment Methodology</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Community Guidelines</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Research Newsletter</a></li>
+            {/* Resources Column */}
+            <div className="lg:col-span-1">
+              <h4 className="text-lg font-semibold mb-6" style={{ color: 'white' }}>Resources</h4>
+              <ul className="space-y-3" style={{ color: '#888' }}>
+                <li><a href="#" className="text-sm transition-colors hover:text-white">Research Library <span className="text-xs" style={{ color: '#666' }}>(Coming Soon)</span></a></li>
+                <li><a href="#" className="text-sm transition-colors hover:text-white">Investment Methodology <span className="text-xs" style={{ color: '#666' }}>(Coming Soon)</span></a></li>
+                <li><a href="#" className="text-sm transition-colors hover:text-white">Community Guidelines <span className="text-xs" style={{ color: '#666' }}>(Coming Soon)</span></a></li>
+                <li><a href="#" className="text-sm transition-colors hover:text-white">Research Newsletter <span className="text-xs" style={{ color: '#666' }}>(Coming Soon)</span></a></li>
               </ul>
             </div>
 
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Connect</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Twitter</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">LinkedIn</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">YouTube</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Telegram</a></li>
-              </ul>
+            {/* Connect/Contact Column */}
+            <div className="lg:col-span-1">
+              <h4 className="text-lg font-semibold mb-6" style={{ color: 'white' }}>Connect</h4>
+              
+              {/* Twitter Section */}
+              <div className="mb-6">
+                <a href="#" className="text-sm transition-colors hover:text-white" style={{ color: '#888' }}>Twitter</a>
+                <p className="text-xs mt-1" style={{ color: '#666' }}>Follow us on Twitter for news and insights.</p>
+              </div>
+
+              {/* Contact Section */}
+              <div>
+                <h5 className="text-sm font-semibold mb-3" style={{ color: 'white' }}>Contact</h5>
+                <p className="text-xs leading-relaxed" style={{ color: '#888' }}>
+                  For feedback or suggestions, email us at contact@indianinvestors.com. We read every message and value your input.
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Indian Investors Community. All rights reserved.</p>
+          <div className="mt-12 pt-8 text-center" style={{ borderTop: '1px solid #444' }}>
+            <p className="text-sm" style={{ color: '#888' }}>&copy; 2024 Indian Investors Community. All rights reserved.</p>
           </div>
         </div>
       </footer>
