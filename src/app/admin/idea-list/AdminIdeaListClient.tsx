@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
+import { createClient } from '@/lib/supabase/client';
 import {
   Eye,
   Calendar,
@@ -13,6 +14,7 @@ import {
   Clock,
   AlertTriangle,
   RefreshCw,
+  User,
 } from 'lucide-react'
 
 // Types for ideas list payload from Edge Function
@@ -100,15 +102,17 @@ function getStatusBadgeStyle(status: string): string {
   }
 }
 
-function formatDate(dateString: string): string {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+function formatDate(utcDate: string | undefined) {
+  if (!utcDate) return "";
+  
+      // Ensure UTC by appending Z if not present
+      const normalizedDate = utcDate.endsWith("Z") ? utcDate : utcDate + "Z";
+
+      return new Date(normalizedDate).toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata",
+        dateStyle: "medium",
+        timeStyle: "short",
+    });
 }
 
 function truncateText(text: string, maxLength: number = 100): string {
@@ -130,8 +134,10 @@ function getStatusIcon(status: string) {
 }
 
 export default function AdminIdeaListClient() {
+  const supabase = useMemo(() => createClient(), []);
   const [allIdeas, setAllIdeas] = useState<IdeaData[]>([])
   const [filteredIdeas, setFilteredIdeas] = useState<IdeaData[]>([])
+  const [authorMap, setAuthorMap] = useState<Record<string, string>>({}) // ✅ store user_id → name/email
   const [currentFilter, setCurrentFilter] = useState<FilterStatus>('all')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -164,6 +170,24 @@ export default function AdminIdeaListClient() {
       const data: IdeaListResponse = await response.json()
       setAllIdeas(data.ideas || [])
       setFilteredIdeas(data.ideas || [])
+
+      // ✅ Fetch all authors in one go
+      const userIds = (data.ideas || []).map(i => i.user_id)
+      if (userIds.length > 0) {
+        const { data: users, error: userError } = await supabase
+          .from("app_user")
+          .select("id, name, email")
+          .in("id", userIds)
+
+        if (!userError && users) {
+          const map: Record<string, string> = {}
+          users.forEach(u => {
+            map[u.id] = u.name || u.email || "Market Expert"
+          })
+          setAuthorMap(map)
+        }
+      }
+
     } catch (err) {
       console.error('Error fetching ideas:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch ideas')
@@ -171,6 +195,9 @@ export default function AdminIdeaListClient() {
       setIsLoading(false)
     }
   }
+  useEffect(() => {
+    fetchIdeas()
+  }, [])
 
   // Filter ideas based on current filter
   const filterIdeas = (filter: FilterStatus) => {
@@ -295,8 +322,9 @@ export default function AdminIdeaListClient() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
+                      <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Idea</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticker</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -318,6 +346,12 @@ export default function AdminIdeaListClient() {
                               </Link>
                               <div className="text-xs text-gray-500 line-clamp-1">{truncateText(idea.data.description, 100)}</div>
                             </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2 text-gray-700">
+                            <User className="w-4 h-4 text-gray-400" />
+                            <span className="text-sm">{authorMap[idea.user_id] || "—"}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

@@ -7,6 +7,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/authProvider';
 import toast from 'react-hot-toast';
 import { createClient } from '@/lib/supabase/client';
+import { Building2 } from 'lucide-react'
 
 // New data types based on updated schema
 type Comment = {
@@ -433,7 +434,10 @@ export default function IdeaCard({
             className="text-xl font-bold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
             onClick={handleTitleClick}
           >
-            {d.company_name}
+            <div className="flex items-center gap-2 text-gray-700">
+              <Building2 className="w-4 h-4 text-gray-400" />
+              <span className="text-sm">{d.company_name}</span>
+            </div>
           </h1>
         </div>
 
