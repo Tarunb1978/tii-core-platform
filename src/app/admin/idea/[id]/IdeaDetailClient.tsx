@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { redirect, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { 
@@ -18,12 +18,10 @@ import {
 } from 'lucide-react'
 import { 
   updateIdeaStatus, 
-  getStatusBadgeStyle, 
-  formatDate,
+  getStatusBadgeStyle,
   type IdeaData 
 } from '@/utils/adminApi'
 import { createClient } from '@/lib/supabase/client'
-import { createSupabaseServerClient } from '@/app/auth/action'
 
 interface IdeaDetailClientProps {
   initialIdea: IdeaData
@@ -38,6 +36,46 @@ export default function IdeaDetailClient({ initialIdea, ideaId, supabaseUrl }: I
   const [statusUpdateError, setStatusUpdateError] = useState<string | null>(null)
   const [statusUpdateSuccess, setStatusUpdateSuccess] = useState(false)
 
+  const supabase = useMemo(() => createClient(), [])
+  const [authorName, setAuthorName] = useState<string | null>(null)
+
+  // ✅ Format UTC -> IST
+  function formatISTDateTime(utcDate: string | undefined) {
+    if (!utcDate) return ""
+    const normalizedDate = utcDate.endsWith("Z") ? utcDate : utcDate + "Z"
+    return new Date(normalizedDate).toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      dateStyle: "medium",
+      timeStyle: "short",
+    })
+  }
+
+  // ✅ Fetch username from app_user using idea.user_id
+  useEffect(() => {
+    const fetchAuthor = async () => {
+      if (!idea?.user_id) return
+      try {
+        const { data, error } = await supabase
+          .from("app_user")
+          .select("id, name, email")
+          .eq("id", idea.user_id)
+          .single()
+
+        if (error) {
+          console.error("Error fetching author:", error)
+          setAuthorName(null)
+        } else {
+          setAuthorName(data?.name || data?.email || "Market Expert")
+        }
+      } catch (err) {
+        console.error("Author fetch error:", err)
+        setAuthorName(null)
+      }
+    }
+
+    fetchAuthor()
+  }, [idea?.user_id, supabase])
+
   const handleStatusUpdate = async (newStatus: 'pending' | 'accepted' | 'rejected') => {
     if (!idea) return
     
@@ -45,26 +83,26 @@ export default function IdeaDetailClient({ initialIdea, ideaId, supabaseUrl }: I
       setStatusUpdateLoading(true)
       setStatusUpdateError(null)
       setStatusUpdateSuccess(false)
-      const supabase = await createClient()
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
-    const accessToken = sessionData?.session?.access_token
 
-      // const updatedIdea = await updateIdeaStatus(ideaId, newStatus, accessToken)
-       const edgeFunctionUrl = supabaseUrl
-       console.log('edgeFunctionUrl', edgeFunctionUrl);
-    const url = `${edgeFunctionUrl}/rest-idea-submitted/${ideaId}/status`;
-    const headers = {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    };
-    const requestBody = {
-      status: newStatus === 'accepted' ? 'approved' : newStatus,
-    };
+      const supabaseClient = await createClient()
+      const { data: sessionData } = await supabaseClient.auth.getSession()
+      const accessToken = sessionData?.session?.access_token
+
+      const edgeFunctionUrl = supabaseUrl
+      const url = `${edgeFunctionUrl}/rest-idea-submitted/${ideaId}/status`
+      const headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      }
+      const requestBody = {
+        status: newStatus === 'accepted' ? 'approved' : newStatus,
+      }
+
       const response = await fetch(url, {
-      method: 'PATCH',
-      headers,
-      body: JSON.stringify(requestBody),
-    });
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify(requestBody),
+      })
 
       if (!response.ok) {
         throw new Error(`Failed to update status: ${response.statusText}`)
@@ -74,21 +112,12 @@ export default function IdeaDetailClient({ initialIdea, ideaId, supabaseUrl }: I
       setTimeout(() => setStatusUpdateSuccess(false), 3000)
       router.push('/admin/idea-list')
 
-      
-      // Clear success message after 3 seconds
     } catch (err: any) {
-      console.error('[idea-detail-client][status-update-debug] Error updating status:', {
-        error: err,
-        message: err.message,
-        stack: err.stack,
-        ideaId,
-        newStatus
-      })
-      
-      if (err.message?.includes('401') || err.message?.includes('Unauthorized')) {
+      console.error('[idea-detail-client][status-update-debug] Error updating status:', err)
+      if (err.message?.includes('401')) {
         setStatusUpdateError('Authentication required. Please sign in again.')
         router.replace('/sign-in')
-      } else if (err.message?.includes('403') || err.message?.includes('Forbidden')) {
+      } else if (err.message?.includes('403')) {
         setStatusUpdateError('Access denied. Super admin privileges required.')
         router.replace('/unauthorized')
       } else {
@@ -126,11 +155,11 @@ export default function IdeaDetailClient({ initialIdea, ideaId, supabaseUrl }: I
             <div className="flex items-center gap-4 text-sm text-gray-600">
               <span className="flex items-center gap-1">
                 <User className="w-4 h-4" />
-                User ID: {idea.user_id}
+                {authorName || "Market Expert"}
               </span>
               <span className="flex items-center gap-1">
                 <Calendar className="w-4 h-4" />
-                {formatDate(idea.created_at)}
+                {formatISTDateTime(idea.created_at)}
               </span>
             </div>
           </div>
