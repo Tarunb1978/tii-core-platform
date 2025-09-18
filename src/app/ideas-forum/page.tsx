@@ -18,17 +18,20 @@ type Comment = {
 
 type Idea = {
   id: string;
-  user_id: string;
+  user_id?: string;
   data: {
-    company_name: string;
     title: string;
     ticker: string;
-    description: string;
-    market_cap: string; // Large | Mid | Small
-    position_type?: string;
+    description: string; // HTML
+    company_name: string;
+    market_cap: string; // 'Large' | 'Mid' | 'Small'
+    position_type?: string; // Long/Short
     investment_horizon?: string;
     current_price?: number;
-    submission_timestamp?: string; // ISO
+    submission_timestamp?: string;
+    week52_low?: number;
+    week52_high?: number;
+    target_price?: number;
   };
   likes_count?: number;
   bookmarks_count?: number;
@@ -37,6 +40,7 @@ type Idea = {
   status?: string;
   idea_discussion?: Comment[];
 };
+
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 const API_URL_ACTIONS = process.env.NEXT_PUBLIC_API_URL_ACTIONS || '';

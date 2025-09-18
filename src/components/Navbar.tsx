@@ -170,8 +170,7 @@ export default function Navbar() {
                     >
                       Edit Profile
                       <span className="block text-xs text-gray-400 mt-1">
-                        {/* TODO: Replace with real profile page URL */}
-                        Placeholder - replace with real profile page
+                        Manage your profile settings
                       </span>
                     </Link>
                     {currentUser?.role === "super_admin" && (

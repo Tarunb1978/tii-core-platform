@@ -28,7 +28,7 @@ type StockDetails = {
 
 type Idea = {
   id: string;
-  user_id: string;
+  user_id?: string;
   data: {
     title: string;
     ticker: string;

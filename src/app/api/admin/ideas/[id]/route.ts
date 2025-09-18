@@ -14,10 +14,10 @@ function logDebug(step: string, message: string, data?: unknown) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: any }
 ) {
   try {
-    const ideaId = params.id;
+    const ideaId = context.params.id;
     logDebug('start', 'Proxy admin idea detail to Edge Function', { ideaId });
 
     const authHeader = request.headers.get('authorization');

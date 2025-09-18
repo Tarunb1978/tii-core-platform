@@ -2,6 +2,7 @@
 
 import Navbar from '@/components/Navbar';
 import { useAuth } from "@/context/authProvider";
+import Link from "next/link";
 
 export default function Home() {
   const { currentUser } = useAuth();
@@ -14,7 +15,7 @@ export default function Home() {
       <main className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-24 pt-40">
         <div className="text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-8" style={{ color: '#222' }}>
-            Building India's{" "}
+            Building India&apos;s{" "}
             <span style={{ color: '#4A90E2' }}>Research-Driven</span>{" "}
             Investment Community
           </h2>
@@ -59,8 +60,11 @@ export default function Home() {
           <div className="p-12" style={{ backgroundColor: 'white', borderRadius: '8px' }}>
             <h3 className="text-3xl font-bold mb-6" style={{ color: '#222' }}>Our Mission</h3>
             <p className="text-lg leading-relaxed" style={{ color: '#444' }}>
-              We believe lasting wealth is built through patient, research-driven investing in India's growing economy. Guided by the 'mastermind' principle—that collective insight exceeds individual thinking—we invite passionate investors who seek to deeply understand businesses and build conviction together. India's journey mirrors the rise of global capitalism, offering exceptional opportunities for those committed to thoughtful, long-term investing—not speculation.
+              We believe lasting wealth is built through patient, research-driven investing in India&apos;s growing economy. 
+              Guided by the &apos;mastermind&apos; principle—that collective insight exceeds individual thinking—we invite passionate investors who seek to deeply understand businesses and build conviction together. 
+              India&apos;s journey mirrors the rise of global capitalism, offering exceptional opportunities for those committed to thoughtful, long-term investing—not speculation.
             </p>
+
           </div>
         </div>
 
@@ -85,9 +89,9 @@ export default function Home() {
               </svg>
             </div>
             <h3 className="text-lg font-semibold mb-3" style={{ color: '#222' }}>Featured Investment Thesis</h3>
-            <p className="text-sm mb-4" style={{ color: '#444' }}>D-Mart's Edge in Indian Retail</p>
-            <p className="text-xs mb-4" style={{ color: '#888' }}>Deep dive into how D-Mart's operational efficiency creates sustainable competitive advantages in India's fragmented retail market.</p>
-            <a href="/ideas-forum" className="text-sm font-medium" style={{ color: '#4A90E2' }}>→ Read Research</a>
+            <p className="text-sm mb-4" style={{ color: '#444' }}>D-Mart&apos;s Edge in Indian Retail</p>
+            <p className="text-xs mb-4" style={{ color: '#888' }}>Deep dive into how D-Mart&apos;s operational efficiency creates sustainable competitive advantages in India&apos;s fragmented retail market.</p>
+            <Link href="/ideas-forum" className="text-sm font-medium" style={{ color: "#4A90E2" }}> → Read Research </Link>
           </div>
 
           <div className="p-8" style={{ backgroundColor: 'white', borderRadius: '8px' }}>
@@ -98,8 +102,8 @@ export default function Home() {
             </div>
             <h3 className="text-lg font-semibold mb-3" style={{ color: '#222' }}>Investment Principle of the Week</h3>
             <p className="text-sm mb-4" style={{ color: '#444' }}>Margin of Safety—Why it Matters Most</p>
-            <p className="text-xs mb-4" style={{ color: '#888' }}>Understanding how Benjamin Graham's margin of safety principle protects capital and creates opportunities in volatile markets.</p>
-            <a href="/topic-of-the-week" className="text-sm font-medium" style={{ color: '#4A90E2' }}>→ Learn More</a>
+            <p className="text-xs mb-4" style={{ color: '#888' }}>Understanding how Benjamin Graham&apos;s margin of safety principle protects capital and creates opportunities in volatile markets.</p>
+            <Link href="/topic-of-the-week" className="text-sm font-medium" style={{ color: '#4A90E2' }}>→ Learn More</Link>
           </div>
 
           <div className="p-8" style={{ backgroundColor: 'white', borderRadius: '8px' }}>
@@ -108,10 +112,10 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold mb-3" style={{ color: '#222' }}>Editor's Pick</h3>
-            <p className="text-sm mb-4" style={{ color: '#444' }}>Dr. Lal Pathlabs' Business Model Analysis</p>
-            <p className="text-xs mb-4" style={{ color: '#888' }}>Comprehensive analysis of how Dr. Lal Pathlabs built a defensible moat in India's diagnostic services sector.</p>
-            <a href="/ideas-forum" className="text-sm font-medium" style={{ color: '#4A90E2' }}>→ Explore Analysis</a>
+            <h3 className="text-lg font-semibold mb-3" style={{ color: '#222' }}>Editor&apos;s Pick</h3>
+            <p className="text-sm mb-4" style={{ color: '#444' }}>Dr. Lal Pathlabs&apos; Business Model Analysis</p>
+            <p className="text-xs mb-4" style={{ color: '#888' }}>Comprehensive analysis of how Dr. Lal Pathlabs built a defensible moat in India&apos;s diagnostic services sector.</p>
+            <Link href="/ideas-forum" className="text-sm font-medium" style={{ color: '#4A90E2' }}>→ Explore Analysis</Link>
           </div>
         </div>
       </main>
@@ -163,7 +167,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
           <div className="text-center mb-8">
             <h3 className="text-3xl font-bold mb-3" style={{ color: '#222' }}>Research That Drives Results</h3>
-            <p className="text-xl" style={{ color: '#888' }}>How our community's research approach creates real investment value</p>
+            <p className="text-xl" style={{ color: '#888' }}>How our community&apos;s research approach creates real investment value</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -173,8 +177,8 @@ export default function Home() {
                   <span className="text-lg font-medium" style={{ color: '#666' }}>A</span>
                 </div>
                 <p className="italic mb-4" style={{ color: '#444' }}>
-                  "The D-Mart analysis here helped me understand retail moats better than any brokerage report. 
-                  The community's deep-dive approach is unmatched."
+                  &quot;The D-Mart analysis here helped me understand retail moats better than any brokerage report. 
+                  The community&apos;s deep-dive approach is unmatched.&quot;
                 </p>
                 <div className="text-sm" style={{ color: '#888' }}>- Arjun, Portfolio Manager, Mumbai</div>
               </div>
@@ -186,8 +190,8 @@ export default function Home() {
                   <span className="text-lg font-medium" style={{ color: '#666' }}>R</span>
                 </div>
                 <p className="italic mb-4" style={{ color: '#444' }}>
-                  "Margin of safety discussions here saved me from three potential value traps. 
-                  The principle-focused approach works."
+                  &quot;Margin of safety discussions here saved me from three potential value traps. 
+                  The principle-focused approach works.&quot;
                 </p>
                 <div className="text-sm" style={{ color: '#888' }}>- Rajesh, Research Analyst, Bangalore</div>
               </div>
@@ -199,8 +203,8 @@ export default function Home() {
                   <span className="text-lg font-medium" style={{ color: '#666' }}>S</span>
                 </div>
                 <p className="italic mb-4" style={{ color: '#444' }}>
-                  "Dr. Lal Pathlabs analysis here was more thorough than my own research. 
-                  This community's standards are exceptional."
+                  &quot;Dr. Lal Pathlabs analysis here was more thorough than my own research. 
+                  This community&apos;s standards are exceptional.&quot;
                 </p>
                 <div className="text-sm" style={{ color: '#888' }}>- Suresh, Fund Manager, Delhi</div>
               </div>
@@ -255,17 +259,17 @@ export default function Home() {
                 </div>
                 <span className="ml-3 text-xl font-bold" style={{ color: 'white' }}>Indian Investors</span>
               </div>
-              <p className="text-sm leading-relaxed" style={{ color: '#888' }}>Building India's research-driven investment community through collaborative wisdom and shared conviction.</p>
+              <p className="text-sm leading-relaxed" style={{ color: '#888' }}>Building India&apos;s research-driven investment community through collaborative wisdom and shared conviction.</p>
             </div>
 
             {/* Quick Links Column */}
             <div className="lg:col-span-1">
               <h4 className="text-lg font-semibold mb-6" style={{ color: 'white' }}>Quick Links</h4>
               <ul className="space-y-3" style={{ color: '#888' }}>
-                <li><a href="#" className="text-sm transition-colors hover:text-white">Our Mission</a></li>
-                <li><a href="/topic-of-the-week" className="text-sm transition-colors hover:text-white">Trending Topics</a></li>
-                <li><a href="/ideas-forum" className="text-sm transition-colors hover:text-white">Ideas Forum</a></li>
-                <li><a href="#" className="text-sm transition-colors hover:text-white">Contact</a></li>
+                <li><Link href="#" className="text-sm transition-colors hover:text-white">Our Mission</Link></li>
+                <li><Link href="/topic-of-the-week" className="text-sm transition-colors hover:text-white">Trending Topics</Link></li>
+                <li><Link href="/ideas-forum" className="text-sm transition-colors hover:text-white">Ideas Forum</Link></li>
+                <li><Link href="#" className="text-sm transition-colors hover:text-white">Contact</Link></li>
               </ul>
             </div>
 

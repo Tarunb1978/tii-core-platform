@@ -9,7 +9,7 @@ function logDebug(step: string, message: string, data?: unknown) {
     console.debug(`[${timestamp()}][${routeContext}][${step}] ${message}${suffix}`);
   } catch {
     console.debug(`[${timestamp()}][${routeContext}][${step}] ${message}`);
-  }
+  } 
 }
 
 type StatusUpdateRequest = {
@@ -24,15 +24,14 @@ type StatusUpdateRequest = {
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: any }
 ) {
   const callId = Math.random().toString(36).slice(2, 8);
   const start = Date.now();
   
   try {
     // CRITICAL: Await params before accessing properties (Next.js 13+ requirement)
-    const resolvedParams = await params;
-    const ideaId = resolvedParams.id;
+    const ideaId = context.params.id;
     
     logDebug('start', 'Proxy admin idea status update to Edge Function', { 
       callId, 

@@ -10,8 +10,17 @@ import toast from 'react-hot-toast';
 // import { MockUploadAdapterPlugin } from '@/utils/mockUploadAdapter';
 import { SupabaseUploadAdapter } from '@/utils/supabaseUploadAdapter';
 import dynamic from 'next/dynamic';
+
+type ChangeRecord = {
+  type: string;
+  attributes?: Map<string, any>;
+  name?: string;
+  length?: number;
+  position?: any;
+};
+
 export default function SubmitIdeaForm() {
-   const editorRef = useRef<any>(null);
+  const editorRef = useRef<any>(null);
   const [editorLoaded, setEditorLoaded] = useState(false);
   const [CKEditorComp, setCKEditorComp] = useState<any>(null);
   const [ClassicEditorComp, setClassicEditorComp] = useState<any>(null);
@@ -67,25 +76,24 @@ export default function SubmitIdeaForm() {
 
 
 
- useEffect(() => {
-    if (editorRef.current) {
+useEffect(() => {
+  if (editorRef.current) {
+    editorRef.current.model.document.on("change:data", () => {
+      if (isResetting.current) return; // skip auto-delete on reset
 
-      editorRef.current.model.document.on("change:data", () => {
-    if (isResetting.current) return; // skip auto-delete on reset
-        const removedItems = Array.from(
-          editorRef.current.model.document.differ.getChanges()
-        ).filter((change) => change.type === "remove")
-        // console.log(removedItems)
-        removedItems.forEach((removedItem: any) => {
-          const src = removedItem.attributes.get("src")
-          if (src) {
-            deleteImageFromUrl(src)
-            // Perform any action required with the URL
-          }
-        })
-      })
-    }
-  }, [editorRef.current])
+      const removedItems: ChangeRecord[] = Array.from(
+        editorRef.current.model.document.differ.getChanges() as Iterable<ChangeRecord>
+      ).filter((change: ChangeRecord) => change.type === "remove");
+
+      removedItems.forEach((removedItem) => {
+        const src = removedItem.attributes?.get("src");
+        if (src) {
+          deleteImageFromUrl(src);
+        }
+      });
+    });
+  }
+}, [editorRef.current]);
   
   // Authentication and routing hooks
   const { currentUser, isLoading } = useAuth();
@@ -744,7 +752,7 @@ export default function SubmitIdeaForm() {
             <CKEditorComp
               editor={ClassicEditorComp}
               data={formData.investmentDescription}
-              onReady={editor => {
+              onReady={(editor: any) => {
                 editorRef.current = editor;
                 console.log('CKEditor is ready', editor);
               }}
