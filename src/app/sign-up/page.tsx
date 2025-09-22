@@ -81,7 +81,7 @@ export default function SignUp() {
               {/* Age */}
               <div>
                 <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-2">
-                  Age *
+                  Birth Date
                 </label>
                 <input
                   type="date"
@@ -91,14 +91,13 @@ export default function SignUp() {
                   onChange={(e) => setAge(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent transition-colors"
                   placeholder="Enter your DOB"
-                  required
                 />
               </div>
 
               {/* Sex */}
               <div>
                 <label htmlFor="sex" className="block text-sm font-medium text-gray-700 mb-2">
-                  Sex *
+                  Sex
                 </label>
                 <select
                   id="sex"
@@ -106,7 +105,6 @@ export default function SignUp() {
                   name='sex'
                   onChange={(e) => setSex(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent transition-colors"
-                  required
                 >
                   <option value="">Select your sex</option>
                   <option value="male">Male</option>

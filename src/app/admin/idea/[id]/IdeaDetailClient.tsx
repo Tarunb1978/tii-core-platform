@@ -140,10 +140,10 @@ export default function IdeaDetailClient({ initialIdea, ideaId, supabaseUrl }: I
   return (
     <>
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-4">
         <Link 
           href="/admin/idea-list" 
-          className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+          className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Ideas List
@@ -151,7 +151,7 @@ export default function IdeaDetailClient({ initialIdea, ideaId, supabaseUrl }: I
         
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{idea.data.title}</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-1">{idea.data.title}</h1>
             <div className="flex items-center gap-4 text-sm text-gray-600">
               <span className="flex items-center gap-1">
                 <User className="w-4 h-4" />
@@ -176,113 +176,246 @@ export default function IdeaDetailClient({ initialIdea, ideaId, supabaseUrl }: I
       </div>
 
       {/* Status Update Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Update Status</h2>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-gray-900">Update Status</h2>
+          
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleStatusUpdate('accepted')}
+              disabled={statusUpdateLoading || idea.status === 'accepted'}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                idea.status === 'accepted'
+                  ? 'bg-green-100 text-green-800 border border-green-200'
+                  : 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              {statusUpdateLoading ? 'Updating...' : 'Accept'}
+            </button>
+            
+            <button
+              onClick={() => handleStatusUpdate('rejected')}
+              disabled={statusUpdateLoading || idea.status === 'rejected'}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                idea.status === 'rejected'
+                  ? 'bg-red-100 text-red-800 border border-red-200'
+                  : 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              {statusUpdateLoading ? 'Updating...' : 'Reject'}
+            </button>
+          </div>
+        </div>
         
         {statusUpdateError && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-700 text-sm">{statusUpdateError}</p>
+          <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs">
+            <p className="text-red-700">{statusUpdateError}</p>
           </div>
         )}
         
         {statusUpdateSuccess && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-green-700 text-sm">Status updated successfully!</p>
+          <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs">
+            <p className="text-green-700">Status updated successfully!</p>
           </div>
         )}
-        
-        <div className="flex gap-3">
-          <button
-            onClick={() => handleStatusUpdate('pending')}
-            disabled={statusUpdateLoading || idea.status === 'pending'}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              idea.status === 'pending'
-                ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
-                : 'bg-yellow-50 text-yellow-700 border border-yellow-200 hover:bg-yellow-100'
-            } disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            {statusUpdateLoading ? 'Updating...' : 'Set Pending'}
-          </button>
-          
-          <button
-            onClick={() => handleStatusUpdate('accepted')}
-            disabled={statusUpdateLoading || idea.status === 'accepted'}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              idea.status === 'accepted'
-                ? 'bg-green-100 text-green-800 border border-green-200'
-                : 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100'
-            } disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            {statusUpdateLoading ? 'Updating...' : 'Accept'}
-          </button>
-          
-          <button
-            onClick={() => handleStatusUpdate('rejected')}
-            disabled={statusUpdateLoading || idea.status === 'rejected'}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              idea.status === 'rejected'
-                ? 'bg-red-100 text-red-800 border border-red-200'
-                : 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
-            } disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            {statusUpdateLoading ? 'Updating...' : 'Reject'}
-          </button>
-        </div>
       </div>
 
-      {/* Idea Details */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Investment Thesis */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Investment Thesis</h2>
-          <div 
-            className="prose prose-sm max-w-none text-gray-700"
-            dangerouslySetInnerHTML={{ __html: idea.data.description }}
-          />
+      {/* Main Content Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Investment Thesis - Takes 2 columns */}
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">Investment Thesis</h2>
+            <div 
+              className="prose prose-sm max-w-none text-gray-700"
+              dangerouslySetInnerHTML={{ __html: idea.data.description }}
+            />
+          </div>
         </div>
 
-        {/* Stock Details */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Stock Details</h2>
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Building2 className="w-5 h-5 text-gray-400" />
-              <div>
-                <p className="text-sm text-gray-500">Company</p>
-                <p className="font-medium text-gray-900">{idea.data.company_name || '—'}</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <TrendingUp className="w-5 h-5 text-gray-400" />
-              <div>
-                <p className="text-sm text-gray-500">Ticker</p>
-                <p className="font-medium text-gray-900">{idea.stock_details.ticker}</p>
-              </div>
-            </div>
-            
-            {idea.stock_details.current_price && (
+        {/* Right Sidebar - All Details Stacked */}
+        <div className="lg:col-span-1 space-y-4">
+          {/* Submission Details */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">Submission Details</h2>
+            <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <DollarSign className="w-5 h-5 text-gray-400" />
+                <User className="w-5 h-5 text-gray-400" />
                 <div>
-                  <p className="text-sm text-gray-500">Current Price</p>
-                  <p className="font-medium text-gray-900">${idea.stock_details.current_price}</p>
+                  <p className="text-sm text-gray-500">Submitted By</p>
+                  <p className="font-medium text-gray-900">{authorName || "Market Expert"}</p>
                 </div>
               </div>
-            )}
-            
-            {idea.stock_details.target_price && (
+
               <div className="flex items-center gap-3">
-                <DollarSign className="w-5 h-5 text-gray-400" />
+                <Calendar className="w-5 h-5 text-gray-400" />
                 <div>
-                  <p className="text-sm text-gray-500">Target Price</p>
-                  <p className="font-medium text-gray-900">${idea.stock_details.target_price}</p>
+                  <p className="text-sm text-gray-500">Submission Date</p>
+                  <p className="font-medium text-gray-900">{formatISTDateTime(idea.created_at)}</p>
                 </div>
               </div>
-            )}
+
+              {idea.data.submission_timestamp && (
+                <div className="flex items-center gap-3">
+                  <Clock className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500">Submission Timestamp</p>
+                    <p className="font-medium text-gray-900">{formatISTDateTime(idea.data.submission_timestamp)}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-gray-400" />
+                <div>
+                  <p className="text-sm text-gray-500">Idea ID</p>
+                  <p className="font-medium text-gray-900 font-mono text-sm">{idea.id}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Company & Investment Details */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">Company & Investment Details</h2>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Building2 className="w-5 h-5 text-gray-400" />
+                <div>
+                  <p className="text-sm text-gray-500">Company Name</p>
+                  <p className="font-medium text-gray-900">{idea.data.company_name || '—'}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <TrendingUp className="w-5 h-5 text-gray-400" />
+                <div>
+                  <p className="text-sm text-gray-500">Ticker Symbol</p>
+                  <p className="font-medium text-gray-900">{idea.stock_details.ticker || idea.data.ticker || '—'}</p>
+                </div>
+              </div>
+
+              {idea.data.position_type && (
+                <div className="flex items-center gap-3">
+                  <TrendingUp className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500">Position Type</p>
+                    <p className="font-medium text-gray-900">{idea.data.position_type}</p>
+                  </div>
+                </div>
+              )}
+
+              {idea.data.investment_horizon && (
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500">Investment Horizon</p>
+                    <p className="font-medium text-gray-900">{idea.data.investment_horizon}</p>
+                  </div>
+                </div>
+              )}
+
+              {idea.data.market_cap && (
+                <div className="flex items-center gap-3">
+                  <Building2 className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500">Market Cap</p>
+                    <p className="font-medium text-gray-900">{idea.data.market_cap}</p>
+                  </div>
+                </div>
+              )}
+
+              {idea.data.word_count && (
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500">Word Count</p>
+                    <p className="font-medium text-gray-900">{idea.data.word_count} words</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Financial Data */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">Financial Data</h2>
+            <div className="space-y-4">
+              {idea.stock_details.current_price && (
+                <div className="flex items-center gap-3">
+                  <DollarSign className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500">Current Price</p>
+                    <p className="font-medium text-gray-900">₹{idea.stock_details.current_price}</p>
+                  </div>
+                </div>
+              )}
+              
+              {idea.stock_details.target_price && (
+                <div className="flex items-center gap-3">
+                  <DollarSign className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500">Target Price</p>
+                    <p className="font-medium text-gray-900">₹{idea.stock_details.target_price}</p>
+                  </div>
+                </div>
+              )}
+
+              {idea.stock_details.week52_high && (
+                <div className="flex items-center gap-3">
+                  <TrendingUp className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500">52 Week High</p>
+                    <p className="font-medium text-gray-900">₹{idea.stock_details.week52_high}</p>
+                  </div>
+                </div>
+              )}
+
+              {idea.stock_details.week52_low && (
+                <div className="flex items-center gap-3">
+                  <TrendingUp className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500">52 Week Low</p>
+                    <p className="font-medium text-gray-900">₹{idea.stock_details.week52_low}</p>
+                  </div>
+                </div>
+              )}
+
+              {idea.stock_details.annual_revenue && (
+                <div className="flex items-center gap-3">
+                  <DollarSign className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500">Annual Revenue</p>
+                    <p className="font-medium text-gray-900">₹{idea.stock_details.annual_revenue} Cr</p>
+                  </div>
+                </div>
+              )}
+
+              {idea.stock_details.eps && (
+                <div className="flex items-center gap-3">
+                  <TrendingUp className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500">Earnings Per Share (EPS)</p>
+                    <p className="font-medium text-gray-900">₹{idea.stock_details.eps}</p>
+                  </div>
+                </div>
+              )}
+
+              {idea.stock_details.pe_ratio && (
+                <div className="flex items-center gap-3">
+                  <TrendingUp className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500">P/E Ratio</p>
+                    <p className="font-medium text-gray-900">{idea.stock_details.pe_ratio}</p>
+                  </div>
+                </div>
+              )}
+
+            </div>
           </div>
         </div>
       </div>
+
     </>
   )
 }

@@ -68,18 +68,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Buddha Image Section */}
-        <div className="mt-12 mb-2 flex flex-col items-center">
-          <div className="w-full max-w-md" style={{ maxWidth: '400px' }}>
-            <img 
-              src="/assets/images/Final.jpeg" 
-              alt="Buddha in golden lotus mandala representing mindful investing"
-              className="w-full h-auto"
-              style={{ maxWidth: '400px', width: '30vw', minWidth: '280px' }}
-            />
-          </div>
-        </div>
-
         {/* Research Value Section */}
         <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-12">
           <div className="p-8" style={{ backgroundColor: 'white', borderRadius: '8px' }}>
@@ -119,6 +107,59 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      {/* Buddha Image Section */}
+      <div className="buddha-container">
+        <img 
+          className="buddha-image"
+          src="/assets/images/Final.jpeg" 
+          alt="Buddha in golden lotus mandala representing mindful investing"
+        />
+      </div>
+
+      <style jsx global>{`
+        .buddha-container {
+          width: 100%;
+          min-height: 220px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          background-color: #FAFAFA;
+          padding: 0;
+          margin: 0;
+          box-sizing: border-box;
+        }
+
+        .buddha-image {
+          max-width: 320px;
+          width: 90%;
+          min-width: 180px;
+          height: auto;
+          display: block;
+          margin: 0 auto;
+        }
+
+        @media (max-width: 640px) {
+          .buddha-container {
+            width: 100% !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+            overflow-x: hidden !important;
+          }
+
+          .buddha-image {
+            width: 90% !important;
+            max-width: 320px !important;
+            min-width: 180px !important;
+            margin: 0 auto !important;
+            display: block !important;
+          }
+        }
+      `}</style>
 
       {/* Features Section */}
       <section className="py-12" style={{ backgroundColor: 'white' }}>
