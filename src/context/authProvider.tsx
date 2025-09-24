@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Session } from '@supabase/supabase-js'
 
 // Define the type for our context
-type CurrentUser = (Session & { role?: string | null }) | null;
+type CurrentUser = (Session & { role?: string | null } & { first_name?: string | null } & { last_name?: string | null }) | null;
 
 type AuthContextType = {
   currentUser: CurrentUser
@@ -27,7 +27,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const getSession = async () => {
   const { data: { session } } = await supabase.auth.getSession();
-  console.log("Session data:", session);
 
   if (session?.user) {
     // fetch role from app_user
@@ -51,7 +50,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 };
 
 getSession();
-console.log("Session data:", currentUser);
+//Please remove in production
+console.log("Current user:", currentUser);
 
 // Subscribe to auth state changes
 const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -64,7 +64,7 @@ const { data: { subscription } } = supabase.auth.onAuthStateChange(
         if (session?.user) {
           const { data: userData, error } = await supabase
             .from('app_user')
-            .select('role')
+            .select('role, first_name, last_name')
             .eq('id', session.user.id)
             .single();
 
@@ -72,7 +72,8 @@ const { data: { subscription } } = supabase.auth.onAuthStateChange(
             console.error("Error fetching role:", error);
             setCurrentUser({ ...session, role: null });
           } else {
-            setCurrentUser({ ...session, role: userData.role });
+            //Set role and other details
+            setCurrentUser({ ...session, role: userData.role, first_name: userData.first_name, last_name: userData.last_name });
           }
         } else {
           setCurrentUser(null);
@@ -83,7 +84,7 @@ const { data: { subscription } } = supabase.auth.onAuthStateChange(
       if (session?.user) {
         const { data: userData, error } = await supabase
           .from('app_user')
-          .select('role')
+          .select('role, first_name, last_name')
           .eq('id', session.user.id)
           .single();
 
@@ -91,7 +92,7 @@ const { data: { subscription } } = supabase.auth.onAuthStateChange(
           console.error("Error fetching role:", error);
           setCurrentUser({ ...session, role: null });
         } else {
-          setCurrentUser({ ...session, role: userData.role });
+          setCurrentUser({ ...session, role: userData.role, first_name: userData.first_name, last_name: userData.last_name });
         }
       } else {
         setCurrentUser(null);

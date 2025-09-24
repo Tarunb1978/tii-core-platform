@@ -13,7 +13,6 @@ export class SupabaseUploadAdapter {
 
   // CKEditor calls this method to upload the file
   upload() {
-  console.log("called");
 
   return this.loader.file.then(async (file: File) => {
     if (!file) throw new Error("No file from loader");
