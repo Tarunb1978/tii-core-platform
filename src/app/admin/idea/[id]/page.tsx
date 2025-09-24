@@ -43,7 +43,7 @@ export default async function AdminIdeaDetailPage({
   
   if (userError || !userData?.user) {
     console.log('[idea-detail][server-debug] No authenticated user, redirecting to sign-in')
-    redirect('/sign-in')
+    redirect('/')
   }
 
   // Get access token for Edge Function call

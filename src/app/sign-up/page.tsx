@@ -1,26 +1,46 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import Navbar from '@/components/Navbar';
-import Link from 'next/link';
-import { signUpWithEmail } from '../auth/action';
+import { useState, FormEvent } from 'react'
+import Navbar from '@/components/Navbar'
+import Link from 'next/link'
+import { signUpWithEmail } from '../auth/action'
+import toast from 'react-hot-toast'
+import { useRouter } from 'next/navigation'
 
 
 export default function SignUp() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [firstName, setFirstName] = useState('');
-  const [secondName, setSecondName] = useState('');
-  const [age, setAge] = useState('');
-  const [sex, setSex] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [contactNumber, setContactNumber] = useState('');
+  const [showPassword, setShowPassword] = useState(false)
+  const [firstName, setFirstName] = useState('')
+  const [secondName, setSecondName] = useState('')
+  const [age, setAge] = useState('')
+  const [sex, setSex] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [contactNumber, setContactNumber] = useState('')
 
-  const handleSignUp = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle sign up logic here
-    console.log('Sign up:', { firstName, secondName, age, sex, email, password, contactNumber });
-  };
+  const router = useRouter()
+
+  const handleSignUp = async (e: FormEvent) => {
+    e.preventDefault()
+
+    const formData = new FormData()
+    formData.append('firstName', firstName)
+    formData.append('secondName', secondName)
+    formData.append('dob', age)
+    formData.append('sex', sex)
+    formData.append('email', email)
+    formData.append('password', password)
+    formData.append('contactNumber', contactNumber)
+
+    try {
+      await signUpWithEmail(formData) // call server action manually
+      toast.success('Account created successfully 🎉')
+      router.push('/')
+    } catch (error: any) {
+      toast.error(error.message || 'Something went wrong')
+    }
+  }
+
 
   return (
     <div className="min-h-screen bg-white">
@@ -38,7 +58,7 @@ export default function SignUp() {
 
         {/* Sign Up Form Card */}
         <div className="w-full max-w-2xl bg-white rounded-xl shadow-lg border border-gray-100 p-8">
-          <form action={signUpWithEmail} className="space-y-6">
+          <form onSubmit={handleSignUp} className="space-y-6">
             {/* Name Fields Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* First Name */}
@@ -86,7 +106,7 @@ export default function SignUp() {
                 <input
                   type="date"
                   id="age"
-                  name='age'
+                  name='dob'
                   value={age}
                   onChange={(e) => setAge(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent transition-colors"

@@ -160,7 +160,7 @@ useEffect(() => {
   // Authentication gating - redirect unauthenticated users
   useEffect(() => {
     if (!isLoading && !currentUser) {
-      router.replace('/sign-in');
+      router.replace('/');
     }
   }, [currentUser, isLoading, router]);
 
