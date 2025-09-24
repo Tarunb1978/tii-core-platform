@@ -150,7 +150,7 @@ export default function Navbar() {
                   aria-label="User menu"
                 >
                   {currentUser.user.user_metadata?.full_name 
-                    ? getInitials(currentUser.user.user_metadata.full_name)
+                    ? getInitials(currentUser.user.user_metadata.full_name || currentUser.first_name+" "+currentUser.last_name)
                     : 'U'
                   }
                 </button>

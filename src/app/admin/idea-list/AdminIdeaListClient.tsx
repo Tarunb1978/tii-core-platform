@@ -16,6 +16,7 @@ import {
   RefreshCw,
   User,
 } from 'lucide-react'
+import { useAuth } from '@/context/authProvider';
 
 // Types for ideas list payload from Edge Function
 type IdeaData = {
@@ -142,6 +143,13 @@ export default function AdminIdeaListClient() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
+  const user = useAuth();
+
+  if(user?.currentUser?.role !== 'super_admin') {
+     window.location.href = '/';
+     return;
+     //Redirect to home if not super admin
+  }
 
   // Fetch all ideas from API
   const fetchIdeas = async () => {
