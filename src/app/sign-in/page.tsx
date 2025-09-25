@@ -1,19 +1,40 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import Navbar from '@/components/Navbar';
-import Link from 'next/link';
-import { signInWithEmail, signInWithOAuth, signOut } from '../auth/action';
-import { Provider } from '@supabase/supabase-js';
+import { useState, FormEvent } from 'react'
+import Navbar from '@/components/Navbar'
+import Link from 'next/link'
+import { signInWithEmail, signInWithOAuth } from '../auth/action'
+import { Provider } from '@supabase/supabase-js'
+import { useRouter } from 'next/navigation'
 
 export default function SignIn() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+
+  const router = useRouter()
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault()
+    setError(null)
+
+    const formData = new FormData()
+    formData.append('email', email)
+    formData.append('password', password)
+
+    const result = await signInWithEmail(formData)
+
+    if (result?.error) {
+      setError(result.error) // show error under password
+    } else {
+      router.push('/') // ✅ go to home on success
+    }
+  }
 
   const signInWithOauthClient = (provider: Provider) => {
-    signInWithOAuth(provider);
-  };
+    signInWithOAuth(provider)
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -34,7 +55,7 @@ export default function SignIn() {
           <div className="flex-1">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Sign In</h2>
             
-            <form action={signInWithEmail} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {/* Email Input */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
@@ -63,7 +84,9 @@ export default function SignIn() {
                     id="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent transition-colors"
+                    className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:border-transparent transition-colors ${
+                      error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-black'
+                    }`}
                     placeholder="Enter your password"
                     name='password'
                     required
@@ -85,6 +108,12 @@ export default function SignIn() {
                     )}
                   </button>
                 </div>
+                {/* Error Message */}
+                {error && (
+                  <p className="mt-2 text-sm text-red-600 font-medium">
+                    {error === 'Invalid login credentials' ? 'Wrong password. Please try again.' : error}
+                  </p>
+                )}
               </div>
 
               {/* Sign In Button */}

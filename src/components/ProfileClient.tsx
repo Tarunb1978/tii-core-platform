@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/authProvider';
 import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
 interface UserProfile {
@@ -12,6 +13,7 @@ interface UserProfile {
   last_name?: string;
   dob?: string;
   sex?: string;
+  contact_number?: string;
   investor_bio?: string;
   created_at: string;
   updated_at: string;
@@ -25,7 +27,6 @@ export default function ProfileClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [showDebug, setShowDebug] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -33,6 +34,7 @@ export default function ProfileClient() {
     last_name: '',
     dob: '',
     sex: '',
+    contact_number: '',
     investor_bio: ''
   });
 
@@ -86,6 +88,7 @@ export default function ProfileClient() {
         last_name: profileData.last_name || '',
         dob: profileData.dob || '',
         sex: profileData.sex || '',
+        contact_number: profileData.contact_number || '',
         investor_bio: profileData.investor_bio || '',
         created_at: profileData.created_at || new Date().toISOString(),
         updated_at: profileData.updated_at || new Date().toISOString()
@@ -99,6 +102,7 @@ export default function ProfileClient() {
         last_name: profileData.last_name || '',
         dob: profileData.dob || '',
         sex: profileData.sex || '',
+        contact_number: profileData.contact_number || '',
         investor_bio: profileData.investor_bio || ''
       };
       
@@ -117,6 +121,7 @@ export default function ProfileClient() {
         last_name: '',
         dob: '',
         sex: '',
+        contact_number: '',
         investor_bio: '',
         created_at: '',
         updated_at: ''
@@ -145,6 +150,7 @@ export default function ProfileClient() {
       if (formData.last_name !== undefined) updateFields.last_name = formData.last_name;
       if (formData.dob !== undefined) updateFields.dob = formData.dob;
       if (formData.sex !== undefined) updateFields.sex = formData.sex;
+      if (formData.contact_number !== undefined) updateFields.contact_number = formData.contact_number;
       if (formData.investor_bio !== undefined) updateFields.investor_bio = formData.investor_bio;
 
       // Update profile via API
@@ -175,6 +181,7 @@ export default function ProfileClient() {
         last_name: profileData.last_name || '',
         dob: profileData.dob || '',
         sex: profileData.sex || '',
+        contact_number: profileData.contact_number || '',
         investor_bio: profileData.investor_bio || '',
         created_at: profileData.created_at || new Date().toISOString(),
         updated_at: profileData.updated_at || new Date().toISOString()
@@ -210,28 +217,34 @@ export default function ProfileClient() {
         last_name: profile?.last_name || '',
         dob: profile?.dob || '',
         sex: profile?.sex || '',
+        contact_number: profile?.contact_number || '',
         investor_bio: profile?.investor_bio || ''
       });
     }
     setIsEditing(!isEditing);
   };
 
-  useEffect(() => {
-    if (currentUser) {
-      fetchProfile();
-    } else {
-      // Reset profile data when user is not available
-      setProfile(null);
-      setFormData({
-        first_name: '',
-        last_name: '',
-        dob: '',
-        sex: '',
-        investor_bio: ''
-      });
-      setIsLoading(false);
-    }
-  }, [currentUser, fetchProfile]);
+  const router = useRouter();
+
+useEffect(() => {
+  if (currentUser) {
+    fetchProfile();
+  } else {
+    // Reset profile data when user is not available
+    setProfile(null);
+    setFormData({
+      first_name: '',
+      last_name: '',
+      dob: '',
+      sex: '',
+      contact_number: '',
+      investor_bio: ''
+    });
+    setIsLoading(false);
+    router.push('/');
+  }
+}, [currentUser, fetchProfile, router]);
+
 
   if (isLoading) {
     return (
@@ -239,17 +252,6 @@ export default function ProfileClient() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
           <p className="text-gray-600">Loading profile...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!currentUser) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-6rem)]">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-          <p className="text-gray-600">Please sign in to view your profile.</p>
         </div>
       </div>
     );
@@ -264,28 +266,7 @@ export default function ProfileClient() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile</h1>
             <p className="text-gray-600">Manage your personal information and investor profile</p>
           </div>
-          <button
-            onClick={() => setShowDebug(!showDebug)}
-            className="px-3 py-1 text-xs font-medium text-gray-500 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200 transition-colors"
-          >
-            {showDebug ? 'Hide Debug' : 'Show Debug'}
-          </button>
         </div>
-        
-        {/* Debug Panel */}
-        {showDebug && (
-          <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg text-xs">
-            <h3 className="font-semibold text-gray-700 mb-2">Debug Information:</h3>
-            <div className="space-y-1 text-gray-600">
-              <p><strong>Current User:</strong> {currentUser ? currentUser.user.id : 'None'}</p>
-              <p><strong>API URL:</strong> {process.env.NEXT_PUBLIC_SUPABASE_EDGE_FUNCTION_URL}/app-user/me</p>
-              <p><strong>Profile Data:</strong> {profile ? 'Loaded' : 'Not loaded'}</p>
-              <p><strong>Form Data:</strong> {JSON.stringify(formData, null, 2)}</p>
-              <p><strong>Loading:</strong> {isLoading ? 'Yes' : 'No'}</p>
-              <p><strong>Editing:</strong> {isEditing ? 'Yes' : 'No'}</p>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Profile Card */}
@@ -406,6 +387,23 @@ export default function ProfileClient() {
                 <option value="other">Other</option>
                 <option value="prefer_not_to_say">Prefer not to say</option>
               </select>
+            </div>
+
+            {/* Contact Number */}
+            <div>
+              <label htmlFor="contact_number" className="block text-sm font-medium text-gray-700 mb-2">
+                Contact Number
+              </label>
+              <input
+                type="text"
+                id="contact_number"
+                name="contact_number"
+                value={formData.contact_number}
+                onChange={handleInputChange}
+                disabled={!isEditing}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent transition-colors disabled:bg-gray-50 disabled:text-gray-500"
+                placeholder={!isEditing && !formData.contact_number ? "Not provided" : "Enter your contact number"}
+              />
             </div>
 
             {/* Investor Bio */}

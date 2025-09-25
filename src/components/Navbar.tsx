@@ -58,11 +58,7 @@ export default function Navbar() {
       }
       
       
-      // Force redirect in case auth state change doesn't trigger
-      setTimeout(() => {
-        router.push('/');
-        window.location.reload(); // Force page reload to clear any cached state
-      }, 100);
+      router.replace('/');
       
     } catch (error) {
       console.error('Error signing out:', error);

@@ -39,11 +39,10 @@ export async function signInWithEmail(formData: FormData) {
   })
 
   if (error) {
-    console.error('Sign in error:', error.message)
-    return redirect('/login?message=Could not authenticate user')
+    return { error: error.message }
   }
 
-  return redirect('/')
+  return { success: true }
 }
 
 export async function signUpWithEmail(formData: FormData) {
@@ -56,36 +55,48 @@ export async function signUpWithEmail(formData: FormData) {
   const contactNumber = String(formData.get('contactNumber'))
   const supabase = await createSupabaseServerClient() // This now works correctly
 
-  const { error } = await supabase.auth.signUp({
+  const { data: user, signUpError } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      data: {
+        full_name: `${firstName} ${secondName}`,
+        dob,
+        sex,
+        contact_number: contactNumber,
+      },
+    },
   })
 
-  if (error) {
-    console.error('Sign up error:', error.message)
-    return redirect('/sign-up?message=Could not create user')
-  }
+    if (signUpError) {
+      console.error('Sign up error:', signUpError.message)
+      return redirect('/sign-up?message=Could not create user')
+    }
 
-    // Update user profile
-  const { error: updateError } = await supabase
+    // Insert into app_user
+    const { error: insertError } = await supabase
     .from('app_user')
-    .update({
-      first_name: firstName,
-      last_name: secondName,
-      dob,
-      sex,
-      contact_number: contactNumber,
-    })
-    .eq('email', email)
+    .upsert(
+      {
+        id: user?.user?.id,
+        email,
+        first_name: firstName,
+        last_name: secondName,
+        dob,
+        sex,
+        contact_number: contactNumber,
+        role: 'user',
+      },
+      { onConflict: 'id' } // ✅ use "id" as conflict target
+    )
 
-  if (updateError) {
-    console.error('Update error:', updateError.message)
-    return redirect('/sign-up?message=Could not save profile')
-  }
 
-  // Successful now store the data to app_user
+    if (insertError) {
+      console.error('Insert error:', insertError.message)
+      return redirect('/sign-up?message=Could not save profile')
+    }
 
-  return redirect('/')
+    return { user }
   }
 
 export async function signInWithOAuth(provider: Provider) {
