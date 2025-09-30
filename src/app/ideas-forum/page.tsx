@@ -6,6 +6,7 @@ import { ChevronDown } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/authProvider';
+import { createClient } from '@/lib/supabase/client';
 
 // Define Comment and Idea types
 type Comment = {
@@ -42,7 +43,6 @@ type Idea = {
 };
 
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 const API_URL_ACTIONS = process.env.NEXT_PUBLIC_API_URL_ACTIONS || '';
 
 export default function IdeasForumPage() {
@@ -59,27 +59,44 @@ export default function IdeasForumPage() {
   }>({ likes: [], bookmarks: [], comments: [] });
   
   const user = useAuth();
+  const supabase = createClient();
   const isAuthenticated = !!user?.currentUser?.access_token;
 
   // Fetch ideas
   useEffect(() => {
     async function fetchIdeas() {
-      try {
-        const res = await fetch(API_URL, { cache: 'no-store' });
-        if (!res.ok) throw new Error('Failed to fetch ideas');
-        const json = await res.json();
-        const fetchedIdeas = Array.isArray(json?.ideas) ? json.ideas : [];
-        setIdeas(fetchedIdeas);
-        setFilteredIdeas(fetchedIdeas);
-      } catch (e) {
-        console.error(e);
-        setError('Failed to load ideas');
-      } finally {
-        setLoading(false);
-      }
+    if (!user) {
+      console.log('No current user, skipping profile fetch');
+      return;
     }
-    fetchIdeas();
-  }, []);
+    setLoading(true);
+      try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session?.access_token) {
+            throw new Error('No access token available');
+          }
+          const res = await fetch('/api/fetchIdeas', {
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+            },
+          });
+          if (!res.ok) throw new Error('Failed to fetch ideas');
+
+          const json = await res.json();
+          const fetchedIdeas = Array.isArray(json.ideas) ? json.ideas : [];
+          setIdeas(fetchedIdeas);
+          setFilteredIdeas(fetchedIdeas);
+        } catch (err) {
+          console.error('Error fetching ideas:', err);
+          setError('Failed to load ideas');
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      fetchIdeas();
+    }, []);
+
 
   // Fetch user actions
   useEffect(() => {

@@ -6,6 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
+import { createClient } from '@/lib/supabase/client';
 
 type Comment = {
   id: string;
@@ -41,9 +42,11 @@ type Idea = {
 };
 
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const API_URL = process.env.SUPABASE_EDGE_FUNCTION_URL || '';
 
 export default function IdeaDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const supabase = createClient();
+  
   const [idea, setIdea] = useState<Idea | null>(null);
   const [loading, setLoading] = useState(true);
   const [id, setId] = useState<string>('');
@@ -57,26 +60,26 @@ export default function IdeaDetailPage({ params }: { params: Promise<{ id: strin
   }, [params]);
 
   useEffect(() => {
-    if (!id) return;
-    
-    async function getIdea() {
-      try {
-        const res = await fetch(API_URL, { cache: 'no-store' });
-        if (!res.ok) throw new Error('Failed to fetch ideas');
+  if (!id) return;
 
-        const json = await res.json();
-        const ideas: Idea[] = Array.isArray(json?.ideas) ? json.ideas : [];
-        const foundIdea = ideas.find(i => i.id === id) || null;
-        setIdea(foundIdea);
-      } catch (e) {
-        console.error(e);
-        setIdea(null);
-      } finally {
-        setLoading(false);
-      }
+  async function getIdea() {
+    try {
+      const res = await fetch(`/api/fetchIdeas?id=${id}`);
+      if (!res.ok) throw new Error("Failed to fetch idea");
+
+      const json = await res.json();
+      setIdea(json.idea || null);
+    } catch (e) {
+      console.error(e);
+      setIdea(null);
+    } finally {
+      setLoading(false);
     }
-    getIdea();
-  }, [id]);
+  }
+
+  getIdea();
+}, [id]);
+
 
   const handleIdeaUpdate = (updatedIdea: Idea) => {
     setIdea(updatedIdea);
