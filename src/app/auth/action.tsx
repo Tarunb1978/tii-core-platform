@@ -55,7 +55,7 @@ export async function signUpWithEmail(formData: FormData) {
   const contactNumber = String(formData.get('contactNumber'))
   const supabase = await createSupabaseServerClient() // This now works correctly
 
-  const { data: user, signUpError } = await supabase.auth.signUp({
+  const { data: user, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -68,8 +68,8 @@ export async function signUpWithEmail(formData: FormData) {
     },
   })
 
-    if (signUpError) {
-      console.error('Sign up error:', signUpError.message)
+    if (error) {
+      console.error('Sign up error:', error.message)
       return redirect('/sign-up?message=Could not create user')
     }
 

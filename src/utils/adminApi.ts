@@ -27,6 +27,8 @@ export interface IdeaData {
     investment_horizon?: string;
     word_count?: number;
     submission_timestamp?: string;
+    ticker?: string;
+    market_cap?: string;
   };
   stock_details: {
     ticker: string;

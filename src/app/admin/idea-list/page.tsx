@@ -2,6 +2,9 @@ import { redirect } from 'next/navigation'
 import { createSupabaseServerClient } from '@/app/auth/action'
 import AdminIdeaListClient from './AdminIdeaListClient'
 
+// Force dynamic rendering since this page uses cookies for authentication
+export const dynamic = 'force-dynamic'
+
 // Server component: handles authentication and redirects
 export default async function AdminIdeaListPage() {
   try {

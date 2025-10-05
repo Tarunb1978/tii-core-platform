@@ -2,6 +2,9 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import { createSupabaseServerClient } from '@/app/auth/action'
+
+// Force dynamic rendering since this page uses cookies for authentication
+export const dynamic = 'force-dynamic'
 import { 
   ArrowLeft, 
   Building2, 

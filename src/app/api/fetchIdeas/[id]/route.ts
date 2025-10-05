@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const authHeader = req.headers.get('authorization')
     if (!authHeader) {
       return NextResponse.json({ error: 'No auth token provided' }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = await params
     if (!id) {
       return NextResponse.json({ error: 'Missing idea id' }, { status: 400 })
     }
