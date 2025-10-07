@@ -6,6 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
+import { useAuth } from '@/context/authProvider';
 import { createClient } from '@/lib/supabase/client';
 
 type Comment = {
@@ -42,7 +43,7 @@ type Idea = {
 };
 
 
-const API_URL = process.env.SUPABASE_EDGE_FUNCTION_URL || '';
+const API_URL_ACTIONS = process.env.NEXT_PUBLIC_API_URL_ACTIONS || '';
 
 export default function IdeaDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = createClient();
@@ -50,6 +51,12 @@ export default function IdeaDetailPage({ params }: { params: Promise<{ id: strin
   const [idea, setIdea] = useState<Idea | null>(null);
   const [loading, setLoading] = useState(true);
   const [id, setId] = useState<string>('');
+  const [userActions, setUserActions] = useState<{
+    likes: string[];
+    bookmarks: string[];
+    comments: string[];
+  }>({ likes: [], bookmarks: [], comments: [] });
+  const user = useAuth();
 
   useEffect(() => {
     async function getParams() {
@@ -59,13 +66,31 @@ export default function IdeaDetailPage({ params }: { params: Promise<{ id: strin
     getParams();
   }, [params]);
 
-  useEffect(() => {
+useEffect(() => {
   if (!id) return;
 
   async function getIdea() {
     try {
-      const res = await fetch(`/api/fetchIdeas?id=${id}`);
-      if (!res.ok) throw new Error("Failed to fetch idea");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        console.warn("No access token found – user may not be signed in");
+        setIdea(null);
+        setLoading(false);
+        return;
+      }
+
+      // ✅ Use dynamic route instead of query param
+      const res = await fetch(`/api/fetchIdeas/${id}`, {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Error fetching idea:", errorText);
+        throw new Error("Failed to fetch idea");
+      }
 
       const json = await res.json();
       setIdea(json.idea || null);
@@ -80,6 +105,34 @@ export default function IdeaDetailPage({ params }: { params: Promise<{ id: strin
   getIdea();
 }, [id]);
 
+// Fetch user actions
+  useEffect(() => {
+    async function fetchUserActions() {
+      if (!user?.currentUser?.access_token) return;
+
+      try {
+        const res = await fetch(`${API_URL_ACTIONS}/self`, {
+          headers: {
+            Authorization: `Bearer ${user.currentUser.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setUserActions({
+            likes: data.likes || [],
+            bookmarks: data.bookmarks || [],
+            comments: data.comments || [],
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching user actions:', err);
+      }
+    }
+
+    fetchUserActions();
+  }, [user?.currentUser?.access_token]);
 
   const handleIdeaUpdate = (updatedIdea: Idea) => {
     setIdea(updatedIdea);
@@ -121,7 +174,7 @@ export default function IdeaDetailPage({ params }: { params: Promise<{ id: strin
       <Toaster 
         position="bottom-center"
         toastOptions={{
-          duration: 3000,
+          duration: 2000,
           style: {
             background: '#363636',
             color: '#fff',

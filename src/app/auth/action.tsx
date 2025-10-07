@@ -45,6 +45,30 @@ export async function signInWithEmail(formData: FormData) {
   return { success: true }
 }
 
+// Request a password reset email. Supabase will send a magic link to update the password.
+export async function requestPasswordReset(formData: FormData) {
+  const email = String(formData.get('email'))
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/update-password`,
+  })
+  if (error) {
+    return { error: error.message }
+  }
+  return { success: true }
+}
+
+// Complete the password update after user follows recovery link
+export async function updatePassword(formData: FormData) {
+  const newPassword = String(formData.get('password'))
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+  if (error) {
+    return { error: error.message }
+  }
+  return { success: true }
+}
+
 export async function signUpWithEmail(formData: FormData) {
   const email = String(formData.get('email'))
   const password = String(formData.get('password'))
