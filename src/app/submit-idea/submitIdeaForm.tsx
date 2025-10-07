@@ -25,6 +25,7 @@ export default function SubmitIdeaForm() {
   const [CKEditorComp, setCKEditorComp] = useState<any>(null);
   const [ClassicEditorComp, setClassicEditorComp] = useState<any>(null);
   const isResetting = useRef(false);
+  const user= useAuth();
 
   // load CKEditor dynamically on client
   useEffect(() => {
@@ -71,7 +72,6 @@ export default function SubmitIdeaForm() {
   console.log(error,'error');
   if (error) throw error
 
-  console.log("Deleted file:", filePath)
 }
 
 
@@ -121,6 +121,46 @@ useEffect(() => {
     // Investment Thesis
     investmentDescription: ''
   });
+
+    useEffect(() => {
+    const fetchDraft = async () => {
+      try {
+        if(!user?.currentUser?.access_token) return
+        const res = await fetch('https://acsobefarzmetevcseal.supabase.co/functions/v1/rest-idea-submitted/draft', {
+          headers: {
+            Authorization: `Bearer ${user?.currentUser?.access_token}`,
+          }
+        });
+        const json = await res.json();
+
+        // Check if draft exists
+        const draftData = json?.draft?.data;
+        const stockData = json?.draft?.stock_details;
+        if (draftData) {
+        setFormData(prev => ({
+             ...prev,
+            companyName: draftData.company_name || prev.companyName,
+            stockSymbol: draftData.ticker || prev.stockSymbol,
+    positionType: draftData.position_type || prev.positionType,
+    investmentHorizon: draftData.investment_horizon || prev.investmentHorizon,
+    marketCap: draftData.market_cap || prev.marketCap,
+    currentStockPrice: draftData.current_price || prev.currentStockPrice,
+    week52High: draftData.week52_high || prev.week52High,
+    week52Low: draftData.week52_low || prev.week52Low,
+    annualRevenue: stockData.annual_revenue || prev.annualRevenue,
+    eps: stockData?.eps || prev.eps,
+    peRatio: stockData?.pe_ratio || prev.peRatio,
+    investmentDescription: draftData.description || prev.investmentDescription,
+  }));
+}
+      } catch (error) {
+        console.error('Error fetching draft:', error);
+      }
+    };
+
+    fetchDraft();
+  }, [currentUser]);
+  
 
   const [wordCount, setWordCount] = useState(0);
   const maxWords = 600;
@@ -215,7 +255,6 @@ useEffect(() => {
   // Handle CKEditor content change
   const handleEditorChange = (event: any, editor: any) => {
     const data = editor.getData();
-    console.log(event,'event');
 
      const viewDoc = editor.editing.view.document;
 
@@ -226,7 +265,6 @@ useEffect(() => {
       if (selectedElement?.is("element", "imageBlock")) {
         const url = selectedElement.getAttribute("src");
         if (url) {
-          console.log("Image URL:", url);
         }
       }
     };
@@ -243,8 +281,7 @@ useEffect(() => {
 
   const handleSaveDraft = () => {
     // Save draft functionality
-    console.log('Saving draft:', formData);
-    toast.success('Draft saved successfully!');
+    submitDraft();
   };
 
   function SupabaseUploadAdapterPlugin(userId: string) {
@@ -304,9 +341,12 @@ useEffect(() => {
     };
 
     const missingFields = requiredFields.filter((field) => {
-      const value = (formData as any)[field];
-      return typeof value !== 'string' || value.trim().length === 0;
-    });
+  const value = (formData as any)[field];
+  return value === null || value === undefined || String(value).trim().length === 0;
+});
+
+
+    console.log(formData);
     
     if (missingFields.length > 0) {
       const missingFieldLabels = missingFields.map(field => fieldLabels[field] || field);
@@ -374,27 +414,6 @@ useEffect(() => {
         },
         status: 'pending',
       };
-
-      // Debug logging: Output complete payload before API call
-      console.log('=== SUBMIT IDEA PAYLOAD DEBUG ===');
-      console.log('Complete idea payload:', JSON.stringify(ideaPayload, null, 2));
-      console.log('Payload structure validation:');
-      console.log('- User ID:', ideaPayload.user_id);
-      console.log('- Title:', ideaPayload.data.title);
-      console.log('- Company Name:', ideaPayload.data.company_name);
-      console.log('- Position Type:', ideaPayload.data.position_type);
-      console.log('- Investment Horizon:', ideaPayload.data.investment_horizon);
-      console.log('- Market Cap:', ideaPayload.data.market_cap);
-      console.log('- Current Price:', ideaPayload.data.current_price);
-      console.log('- Week 52 High:', ideaPayload.data.week52_high);
-      console.log('- Week 52 Low:', ideaPayload.data.week52_low);
-      console.log('- Annual Revenue:', ideaPayload.stock_details.annual_revenue);
-      console.log('- EPS:', ideaPayload.stock_details.eps);
-      console.log('- P/E Ratio:', ideaPayload.stock_details.pe_ratio);
-      console.log('- Word Count:', ideaPayload.data.word_count);
-      console.log('- Status:', ideaPayload.status);
-      console.log('=== END PAYLOAD DEBUG ===');
-
       const response = await fetch('https://acsobefarzmetevcseal.supabase.co/functions/v1/rest-idea-submitted', {
         method: 'POST',
         headers: {
@@ -453,6 +472,85 @@ useEffect(() => {
       setIsSubmitting(false);
     }
   };
+
+  const submitDraft = async () => {
+    const parseNumericValue = (value: string): number | undefined => {
+        const parsed = parseFloat(value);
+        return !Number.isNaN(parsed) ? parsed : undefined;
+      };
+
+      // Helper function to safely get string values
+      const getStringValue = (value: string): string | undefined => {
+        return value && value.trim().length > 0 ? value.trim() : undefined;
+      };
+    try {
+      setIsSubmitting(true);
+      const ideaPayload: any = {
+        data: {
+          // Required core fields
+          title: `${formData.companyName} (${formData.stockSymbol})`.trim(),
+          description: formData.investmentDescription,
+          
+          // Company and investment metadata (snake_case for database schema)
+          company_name: getStringValue(formData.companyName),
+          position_type: getStringValue(formData.positionType),
+          investment_horizon: getStringValue(formData.investmentHorizon),
+          market_cap: getStringValue(formData.marketCap),
+          
+          // Additional metadata that could be useful
+          word_count: wordCount,
+          submission_timestamp: new Date().toISOString(),
+
+           // Required stock identifier
+          ticker: formData.stockSymbol,
+          
+          // Price information (parsed as numbers with fallback to undefined)
+          current_price: parseNumericValue(formData.currentStockPrice),
+          target_price: parseNumericValue(formData.week52High), // Using week52High as target price
+          
+          // 52-week price range
+          week52_high: parseNumericValue(formData.week52High),
+          week52_low: parseNumericValue(formData.week52Low),
+        },
+        stock_details: {
+          annual_revenue: parseNumericValue(formData.annualRevenue),
+          eps: parseNumericValue(formData.eps),
+          pe_ratio: parseNumericValue(formData.peRatio),
+          
+          currency: 'INR', // Assuming Indian market
+          market: 'NSE/BSE', // Indian stock exchanges
+        },
+      };
+
+      const response = await fetch('https://acsobefarzmetevcseal.supabase.co/functions/v1/rest-idea-submitted/draft', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser?.access_token}`,
+        },
+        body: JSON.stringify({ idea: ideaPayload }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const baseMessage = (data && (data.error || data.message)) || 'Failed to submit idea.';
+        const details = (data && data.details && Array.isArray(data.details.errors)) ? `\n- ${data.details.errors.join('\n- ')}` : '';
+        const message = `${baseMessage}${details}`;
+        setErrorMessage(message);
+        toast.error(message);
+        return;
+      }
+      toast.success('Draft idea submitted successfully!');  
+  }
+  catch (error: any) {
+    const message = error?.message ?? 'Unexpected error while submitting idea.';
+    setErrorMessage(message);
+    toast.error(message);
+  }
+  finally {
+    setIsSubmitting(false);
+  }
+}
 
   // ===== FORM OPTIONS AND CONSTANTS =====
   
@@ -754,7 +852,6 @@ useEffect(() => {
               data={formData.investmentDescription}
               onReady={(editor: any) => {
                 editorRef.current = editor;
-                console.log('CKEditor is ready', editor);
               }}
               onChange={handleEditorChange}
               config={{

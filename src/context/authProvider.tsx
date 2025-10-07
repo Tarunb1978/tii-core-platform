@@ -59,7 +59,7 @@ const { data: { subscription } } = supabase.auth.onAuthStateChange(
     console.log("Auth state changed:", event, session);
     
     // Force a small delay to ensure session is fully established
-    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+    if (event === 'TOKEN_REFRESHED') {
       setTimeout(async () => {
         if (session?.user) {
           const { data: userData, error } = await supabase
@@ -81,7 +81,7 @@ const { data: { subscription } } = supabase.auth.onAuthStateChange(
         setIsLoading(false);
       }, 100);
     } else {
-      if (session?.user) {
+      if (session?.user && !currentUser) {
         const { data: userData, error } = await supabase
           .from('app_user')
           .select('role, first_name, last_name')
