@@ -59,7 +59,7 @@ const { data: { subscription } } = supabase.auth.onAuthStateChange(
     console.log("Auth state changed:", event, session);
     
     // Force a small delay to ensure session is fully established
-    if (event === 'TOKEN_REFRESHED') {
+    if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
       setTimeout(async () => {
         if (session?.user) {
           const { data: userData, error } = await supabase
