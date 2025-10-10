@@ -607,6 +607,7 @@ export default function IdeaCard({
           </div>
         </div>
       )}
+      
     </div>
   );
 }

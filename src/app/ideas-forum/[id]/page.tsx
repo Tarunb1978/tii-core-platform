@@ -172,7 +172,7 @@ useEffect(() => {
         )}
       </main>
       <Toaster 
-        position="bottom-center"
+        position="top-center"
         toastOptions={{
           duration: 2000,
           style: {

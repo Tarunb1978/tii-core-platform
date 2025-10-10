@@ -274,7 +274,7 @@ export default function IdeasForumPage() {
       </main>
 
       <Toaster
-        position="bottom-center"
+        position="top-center"
         toastOptions={{
           duration: 3000,
           style: { background: '#363636', color: '#fff' },
