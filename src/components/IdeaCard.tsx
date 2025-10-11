@@ -80,7 +80,6 @@ export default function IdeaCard({
 
   const d = idea.data || ({} as Idea['data']);
   const [showComments, setShowComments] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
@@ -361,8 +360,6 @@ export default function IdeaCard({
     }
   };
 
-  const shouldShowReadMore = d.description && d.description.length > 300;
-
   return (
     <div 
       className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden ${
@@ -441,25 +438,13 @@ export default function IdeaCard({
           </h1>
         </div>
 
-        {/* Description (HTML) */}
+        {/* Description (HTML) - Always show full content */}
         <div className="mb-4">
           <div
-            className={`prose max-w-none prose-img:rounded-lg prose-img:border prose-img:border-gray-100 ${!isExpanded ? 'overflow-hidden relative' : ''}`}
-            style={!isExpanded ? { maxHeight: 300 } : undefined}
+            className="prose max-w-none prose-img:rounded-lg prose-img:border prose-img:border-gray-100"
             onClick={(e) => e.stopPropagation()}
             dangerouslySetInnerHTML={{ __html: d.description || '' }}
           />
-          {shouldShowReadMore && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsExpanded(!isExpanded);
-              }}
-              className="text-blue-600 hover:text-blue-800 font-medium text-sm mt-2 transition-colors"
-            >
-              {isExpanded ? 'Read Less' : 'Read More'}
-            </button>
-          )}
         </div>
 
         {/* Stock Details */}
