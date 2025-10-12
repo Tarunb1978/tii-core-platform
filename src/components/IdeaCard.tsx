@@ -363,7 +363,7 @@ export default function IdeaCard({
   return (
     <div 
       className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden ${
-        !showBackButton ? 'cursor-pointer hover:shadow-md transition-shadow' : ''
+        !showBackButton ? 'cursor-pointer hover:shadow-md hover:border-blue-200 transition-all duration-200' : ''
       }`}
       onClick={handleCardClick}
     >
@@ -462,39 +462,57 @@ export default function IdeaCard({
         </div>
 
         {/* Engagement Metrics */}
-        <div className="flex items-center gap-6">
-          <button 
-            className={`flex items-center gap-2 transition-colors ${
-              isLiked 
-                ? 'text-red-500 hover:text-red-600' 
-                : 'text-gray-600 hover:text-red-500'
-            }`}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleLike();
-            }}
-            disabled={isLoading}
-          >
-            <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
-            <span>{likesCount}</span>
-          </button>
-          <button 
-            className={`flex items-center gap-2 transition-colors ${
-              showComments 
-                ? 'text-blue-600 hover:text-blue-700' 
-                : 'text-gray-600 hover:text-blue-500'
-            }`}
-            onClick={handleCommentClick}
-          >
-            <MessageSquare className="w-5 h-5" />
-            <span>{discussionsCount}</span>
-          </button>
-          <button 
-            className="flex items-center gap-2 text-gray-600 hover:text-green-500 transition-colors"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <ArrowUp className="w-5 h-5" />
-          </button>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <button 
+              className={`flex items-center gap-2 transition-colors ${
+                isLiked 
+                  ? 'text-red-500 hover:text-red-600' 
+                  : 'text-gray-600 hover:text-red-500'
+              }`}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleLike();
+              }}
+              disabled={isLoading}
+            >
+              <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+              <span>{likesCount}</span>
+            </button>
+            <button 
+              className={`flex items-center gap-2 transition-colors ${
+                showComments 
+                  ? 'text-blue-600 hover:text-blue-700' 
+                  : 'text-gray-600 hover:text-blue-500'
+              }`}
+              onClick={handleCommentClick}
+            >
+              <MessageSquare className="w-5 h-5" />
+              <span>{discussionsCount}</span>
+            </button>
+            <button 
+              className="flex items-center gap-2 text-gray-600 hover:text-green-500 transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ArrowUp className="w-5 h-5" />
+            </button>
+          </div>
+          
+          {/* Show More Details Link - Hidden on details page */}
+          {!disabledNavigate && !showBackButton && (
+            <div className="text-right">
+              <button
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium underline hover:no-underline transition-all duration-200 flex items-center gap-1 ml-auto"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCardClick();
+                }}
+              >
+                <span>Show More Details</span>
+                <ChevronRight className="w-3 h-3" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
