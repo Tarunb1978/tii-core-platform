@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Save, Send, Building2, TrendingUp, DollarSign } from 'lucide-react';
 import { useAuth } from '@/context/authProvider';
 import { createClient } from '@/lib/supabase/client';
-import toast from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 
 // import { MockUploadAdapterPlugin } from '@/utils/mockUploadAdapter';
 import { SupabaseUploadAdapter } from '@/utils/supabaseUploadAdapter';
@@ -922,6 +922,13 @@ useEffect(() => {
           </div>
         </form>
       </main>
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          duration: 3000,
+          style: { background: '#363636', color: '#fff' },
+        }}
+      />
     </div>
   );
 }

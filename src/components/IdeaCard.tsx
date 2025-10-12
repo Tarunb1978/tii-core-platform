@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/authProvider';
-import toast from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import { createClient } from '@/lib/supabase/client';
 import { Building2 } from 'lucide-react'
 
@@ -607,6 +607,13 @@ export default function IdeaCard({
           </div>
         </div>
       )}
+      <Toaster
+              position="top-center"
+              toastOptions={{
+                duration: 3000,
+                style: { background: '#363636', color: '#fff' },
+              }}
+            />
       
     </div>
   );

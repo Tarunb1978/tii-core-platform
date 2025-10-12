@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/authProvider';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import toast from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 
 interface UserProfile {
   id: string;
@@ -472,6 +472,13 @@ useEffect(() => {
           </div>
         </div>
       </div>
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          duration: 3000,
+          style: { background: '#363636', color: '#fff' },
+        }}
+      />
     </div>
   );
 }
