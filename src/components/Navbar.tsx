@@ -47,18 +47,25 @@ export default function Navbar() {
 
   // Handle sign out
   const handleSignOut = async () => {
+    console.log("🔥 handleSignOut function called!");
     try {
+      console.log("Navbar: Starting sign out process");
+      console.log("Navbar: Current user before sign out:", currentUser);
       setIsUserDropdownOpen(false);
       
+      console.log("Navbar: About to call supabase.auth.signOut()");
       const { error } = await supabase.auth.signOut();
+      console.log('Sign out result:', error);
       
       if (error) {
         console.error('Sign out error:', error);
         return;
       }
       
-      
-      router.replace('/');
+      console.log("Navbar: Sign out successful, about to redirect");
+      console.log("Navbar: Using window.location.href for full reload");
+      window.location.href = "/";
+      console.log("Navbar: Redirect initiated");
       
     } catch (error) {
       console.error('Error signing out:', error);
@@ -79,6 +86,21 @@ export default function Navbar() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Log currentUser changes for debugging
+  useEffect(() => {
+    console.log("🔄 Navbar: currentUser changed");
+    console.log("🔄 Navbar: currentUser value:", currentUser);
+    console.log("🔄 Navbar: currentUser is null?", currentUser === null);
+    console.log("🔄 Navbar: currentUser is undefined?", currentUser === undefined);
+    console.log("🔄 Navbar: submitted_flag value:", currentUser?.submitted_flag);
+    console.log("🔄 Navbar: User initials data:", {
+      first_name: currentUser?.first_name,
+      last_name: currentUser?.last_name,
+      full_name: currentUser?.user?.user_metadata?.full_name
+    });
+    console.log("🔄 Navbar: Will show user dropdown?", !!currentUser);
+  }, [currentUser]);
 
   return (
     <nav className="fixed top-0 left-0 right-0 w-full bg-white shadow-sm border-b border-gray-200 font-sans z-50">
@@ -126,7 +148,9 @@ export default function Navbar() {
           {/* Right Section - Info Text and Submit Button (Hidden on mobile) */}
           <div className="hidden md:flex items-center space-x-4">
             {/* Informational Text */}
-            <span className="text-sm text-gray-400">Showing 45-day old ideas</span>
+            {!currentUser?.submitted_flag && (
+              <span className="text-sm text-gray-400">Showing 45 days old ideas</span>
+            )}
             
             {/* Submit Idea Button */}
             <Link 
@@ -140,14 +164,19 @@ export default function Navbar() {
             {currentUser ? (
               // User is signed in - show initials button with dropdown
               <div className="relative" ref={dropdownRef}>
+                {console.log("Desktop: User is signed in, showing dropdown")}
                 <button
                   onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
                   className="w-10 h-10 bg-gray-100 hover:bg-gray-200 focus:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full flex items-center justify-center text-sm font-medium text-gray-700 transition-all duration-200"
                   aria-label="User menu"
                 >
-                  {currentUser.user.user_metadata?.full_name 
-                    ? getInitials(currentUser.user.user_metadata.full_name || currentUser.first_name+" "+currentUser.last_name)
-                    : 'U'
+                  {currentUser.first_name && currentUser.last_name 
+                    ? getInitials(`${currentUser.first_name} ${currentUser.last_name}`)
+                    : currentUser.user?.user_metadata?.full_name 
+                      ? getInitials(currentUser.user.user_metadata.full_name)
+                      : currentUser.user?.email
+                        ? getInitials(currentUser.user.email.split('@')[0])
+                        : 'U'
                   }
                 </button>
                 
@@ -183,6 +212,7 @@ export default function Navbar() {
                     )}
                     <button
                       onClick={(e) => {
+                        console.log("Desktop Sign Out button clicked!");
                         e.preventDefault();
                         handleSignOut();
                       }}
@@ -283,8 +313,12 @@ export default function Navbar() {
                 {currentUser ? (
                   // User is signed in - show user info and sign out
                   <div className="space-y-1">
+                    {console.log("Mobile: User is signed in, showing mobile menu")}
                     <div className="px-3 py-2 text-sm text-gray-600 border-t border-gray-100 pt-3 text-right">
-                      Welcome, {currentUser.user.user_metadata?.full_name || 'User'}
+                      Welcome, {currentUser.first_name && currentUser.last_name 
+                        ? `${currentUser.first_name} ${currentUser.last_name}`
+                        : currentUser.user?.user_metadata?.full_name || 'User'
+                      }
                     </div>
                     <Link
                       href="/profile"
@@ -304,6 +338,7 @@ export default function Navbar() {
                     )}
                     <button 
                       onClick={(e) => {
+                        console.log("Mobile Sign Out button clicked!");
                         e.preventDefault();
                         handleSignOut();
                         closeMobileMenu();
@@ -325,9 +360,11 @@ export default function Navbar() {
                 )}
                 
                 {/* Mobile Info Text */}
-                <div className="px-3 py-2 text-xs text-gray-400 border-t border-gray-100 pt-3 text-right">
-                  Showing 45-day old ideas
-                </div>
+                {!currentUser?.submitted_flag && (
+                  <div className="px-3 py-2 text-xs text-gray-400 border-t border-gray-100 pt-3 text-right">
+                    Showing 45 days old ideas
+                  </div>
+                )}
               </div>
             </div>
           </div>
