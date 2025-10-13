@@ -111,6 +111,21 @@ type MarketSentiment = {
 
 const API_URL_ACTIONS = process.env.NEXT_PUBLIC_API_URL_ACTIONS || '';
 
+// Symbol mapping for display names
+function getDisplaySymbol(symbol: string): string {
+  const symbolMap: { [key: string]: string } = {
+    '^BSESN': 'Sensex',
+    'NSEI': 'Nifty50',
+    '^NSEI': 'Nifty',
+    '^CNX100': 'CNX100',
+    'ITBEES.NS': 'ITBEES',
+    'BANKBEES.NS': 'BANKBEES',
+    'NIFTYBEES.NS': 'NIFTYBEES'
+  };
+  
+  return symbolMap[symbol] || symbol;
+}
+
 // In-memory cache store for finance data
 interface FinanceDataCache {
   data: any;
@@ -543,7 +558,7 @@ function ETFsPerformanceCard({ etfs }: { etfs: { [key: string]: ETF } }) {
         {Object.entries(etfs).slice(0, 3).map(([symbol, etf]) => (
           <div key={symbol} className="text-xs">
             <div className="flex items-center justify-between">
-              <span className="text-gray-600 font-medium truncate">{etf.symbol}</span>
+              <span className="text-gray-600 font-medium truncate">{getDisplaySymbol(etf.symbol)}</span>
               <span className="font-medium text-gray-900 ml-2">{etf.current_price}</span>
             </div>
             <div className={`text-xs font-medium ${etf.daily_change_pct?.startsWith('-') ? 'text-red-600' : 'text-green-600'}`}>
@@ -577,7 +592,7 @@ function IndicesPerformanceCard({ indices }: { indices: { [key: string]: Index }
         {Object.entries(indices).slice(0, 3).map(([indexName, index]) => (
           <div key={indexName} className="text-xs">
             <div className="flex items-center justify-between">
-              <span className="text-gray-600 font-medium truncate">{index.symbol}</span>
+              <span className="text-gray-600 font-medium truncate">{getDisplaySymbol(index.symbol)}</span>
               <span className="font-medium text-gray-900 ml-2">{index.current_price}</span>
             </div>
             <div className={`text-xs font-medium ${index.daily_change?.startsWith('-') ? 'text-red-600' : 'text-green-600'}`}>
@@ -987,7 +1002,7 @@ export default function IdeasForumPage() {
                   </button>
                 </div>
                 <div className="text-center text-gray-500 text-sm">
-                  Loading INVEST_INDIA data...
+                  Markets Data Loading...
                 </div>
               </div>
             ) : financialData?.error ? (
