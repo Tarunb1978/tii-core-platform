@@ -442,11 +442,18 @@ useEffect(() => {
                 </button>
               </div>
             )}
+            {/* Profile Created Info */}
+            <div className="mb-2">
+              <h3 className="block text-sm font-medium text-gray-700 mb-2">Profile Created</h3>
+              <p className="text-gray-600">
+                {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'N/A'}
+              </p>
+            </div>
           </form>
         </div>
       </div>
 
-      {/* Account Information */}
+      {/* Account Information 
       <div className="mt-8 bg-white border border-gray-200 rounded-lg shadow-sm">
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">Account Information</h2>
@@ -471,14 +478,18 @@ useEffect(() => {
             </div>
           </div>
         </div>
-      </div>
+      </div>*/}
       <Toaster
-        position="top-center"
-        toastOptions={{
-          duration: 3000,
-          style: { background: '#363636', color: '#fff' },
-        }}
-      />
+      position="top-center"
+      toastOptions={{
+        duration: 3000,
+        className:
+          "bg-transparent border border-blue-200 backdrop-blur-md text-white font-medium shadow-lg rounded-2xl px-4 py-3 flex items-center justify-center",
+        style: {
+          background: "transparent",
+        },
+      }}
+    />
     </div>
   );
 }

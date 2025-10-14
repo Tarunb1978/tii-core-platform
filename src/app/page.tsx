@@ -3,6 +3,7 @@
 import Navbar from '@/components/Navbar';
 import { useAuth } from "@/context/authProvider";
 import Link from "next/link";
+import Image from 'next/image';
 
 export default function Home() {
   const { currentUser } = useAuth();
@@ -291,15 +292,27 @@ export default function Home() {
       {/* Footer */}
       <footer className="py-16" style={{ backgroundColor: '#222' }}>
         <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Brand Column */}
             <div className="lg:col-span-1">
-              <div className="flex items-center mb-6">
-                <div className="w-8 h-8 flex items-center justify-center" style={{ backgroundColor: '#4A90E2', borderRadius: '4px' }}>
-                  <span className="font-bold" style={{ color: 'white' }}>₹</span>
-                </div>
-                <span className="ml-3 text-xl font-bold" style={{ color: 'white' }}>Indian Investors</span>
+              <div className="flex items-center mb-3">
+                <Link href="/" className="navbar-brand flex items-center">
+                  {/* Logo Image - Using Next.js Image component for optimization */}
+                  <Image 
+                    src="/assets/images/logo.svg" 
+                    alt="The Indian Investors Logo" 
+                    width={40} 
+                    height={40} 
+                    className="mr-2"
+                  />
+                  </Link>
               </div>
+              <div className="flex items-center mb-3">
+                  <span className="text-xl font-bold text-white transition-colors hover:text-white">The Indian Investors</span>
+                
+              </div>
+              
+              
               <p className="text-sm leading-relaxed" style={{ color: '#888' }}>Building India&apos;s research-driven investment community through collaborative wisdom and shared conviction.</p>
             </div>
 
