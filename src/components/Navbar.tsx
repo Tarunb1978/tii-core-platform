@@ -19,7 +19,12 @@ export default function Navbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   
   // Get authentication state from AuthProvider
-  const { currentUser } = useAuth();
+  const { currentUser, isLoading } = useAuth();
+  
+  // Normalize submitted flag to boolean with proper safeguards
+  const hasSubmittedIdea = currentUser?.submitted_idea ? 
+    (currentUser.submitted_idea === 'true' || currentUser.submitted_idea === true) : 
+    false;
   
   // Supabase client for sign out
   const supabase = createClient();
@@ -93,14 +98,15 @@ export default function Navbar() {
     console.log("🔄 Navbar: currentUser value:", currentUser);
     console.log("🔄 Navbar: currentUser is null?", currentUser === null);
     console.log("🔄 Navbar: currentUser is undefined?", currentUser === undefined);
-    console.log("🔄 Navbar: submitted_flag value:", currentUser?.submitted_flag);
+    console.log("🔄 Navbar: submitted_idea value:", currentUser?.submitted_idea);
+    console.log("🔄 Navbar: hasSubmittedIdea normalized:", hasSubmittedIdea);
     console.log("🔄 Navbar: User initials data:", {
       first_name: currentUser?.first_name,
       last_name: currentUser?.last_name,
       full_name: currentUser?.user?.user_metadata?.full_name
     });
     console.log("🔄 Navbar: Will show user dropdown?", !!currentUser);
-  }, [currentUser]);
+  }, [currentUser, hasSubmittedIdea]);
 
   return (
     <nav className="fixed top-0 left-0 right-0 w-full bg-white shadow-sm border-b border-gray-200 font-sans z-50">
@@ -126,6 +132,12 @@ export default function Navbar() {
           {/* Center Section - Navigation Links (Hidden on mobile) */}
           <div className="hidden md:flex items-center space-x-8">
             <Link 
+              href="/about-us" 
+              className="text-gray-600 hover:text-gray-800 transition-all duration-200 hover:-translate-y-0.5 text-sm font-medium"
+            >
+              About Us
+            </Link>
+            <Link 
               href="/ideas-forum" 
               className="text-gray-600 hover:text-gray-800 transition-all duration-200 hover:-translate-y-0.5 text-sm font-medium"
             >
@@ -148,7 +160,7 @@ export default function Navbar() {
           {/* Right Section - Info Text and Submit Button (Hidden on mobile) */}
           <div className="hidden md:flex items-center space-x-4">
             {/* Informational Text */}
-            {!currentUser?.submitted_flag && (
+            {!hasSubmittedIdea && (
               <span className="text-sm text-gray-400">Showing 45 days old ideas</span>
             )}
             
@@ -277,6 +289,13 @@ export default function Navbar() {
               <div className="w-auto min-w-[200px] px-2 pt-2 pb-3 space-y-1 bg-white shadow-lg rounded-bl-lg border-l border-b border-gray-200">
                 {/* Mobile Navigation Links */}
                 <Link 
+                  href="/about-us" 
+                  className="block px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors duration-200 text-right"
+                  onClick={closeMobileMenu}
+                >
+                  About Us
+                </Link>
+                <Link 
                   href="/ideas-forum" 
                   className="block px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors duration-200 text-right"
                   onClick={closeMobileMenu}
@@ -360,7 +379,7 @@ export default function Navbar() {
                 )}
                 
                 {/* Mobile Info Text */}
-                {!currentUser?.submitted_flag && (
+                {!hasSubmittedIdea && (
                   <div className="px-3 py-2 text-xs text-gray-400 border-t border-gray-100 pt-3 text-right">
                     Showing 45 days old ideas
                   </div>
