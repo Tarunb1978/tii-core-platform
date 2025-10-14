@@ -135,7 +135,7 @@ export default function Navbar() {
               href="/about-us" 
               className="text-gray-600 hover:text-gray-800 transition-all duration-200 hover:-translate-y-0.5 text-sm font-medium"
             >
-              About Us
+              Why we exist?
             </Link>
             <Link 
               href="/ideas-forum" 
@@ -143,18 +143,26 @@ export default function Navbar() {
             >
               Ideas Forum
             </Link>
-            <Link 
+            {/* TODO: Trending Topics feature not built yet - temporarily hidden */}
+            {/* <Link 
               href="/topic-of-the-week" 
               className="text-gray-600 hover:text-gray-800 transition-all duration-200 hover:-translate-y-0.5 text-sm font-medium"
             >
               Trending Topics
-            </Link>
-            <a 
+            </Link> */}
+            {/* TODO: Resources feature not built yet - temporarily hidden */}
+            {/* <a 
               href="#resources" 
               className="text-gray-600 hover:text-gray-800 transition-all duration-200 hover:-translate-y-0.5 text-sm font-medium"
             >
               Resources
-            </a>
+            </a> */}
+            <Link 
+              href="/articles" 
+              className="text-gray-600 hover:text-gray-800 transition-all duration-200 hover:-translate-y-0.5 text-sm font-medium"
+            >
+              Articles
+            </Link>
           </div>
 
           {/* Right Section - Info Text and Submit Button (Hidden on mobile) */}
@@ -293,7 +301,7 @@ export default function Navbar() {
                   className="block px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors duration-200 text-right"
                   onClick={closeMobileMenu}
                 >
-                  About Us
+                  Why we exist?
                 </Link>
                 <Link 
                   href="/ideas-forum" 
@@ -302,20 +310,29 @@ export default function Navbar() {
                 >
                   Ideas Forum
                 </Link>
-                <Link 
+                {/* TODO: Trending Topics feature not built yet - temporarily hidden */}
+                {/* <Link 
                   href="/topic-of-the-week" 
                   className="block px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors duration-200 text-right"
                   onClick={closeMobileMenu}
                 >
                   Trending Topics
-                </Link>
-                <a 
+                </Link> */}
+                {/* TODO: Resources feature not built yet - temporarily hidden */}
+                {/* <a 
                   href="#resources" 
                   className="block px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors duration-200 text-right"
                   onClick={closeMobileMenu}
                 >
                   Resources
-                </a>
+                </a> */}
+                <Link 
+                  href="/articles" 
+                  className="block px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors duration-200 text-right"
+                  onClick={closeMobileMenu}
+                >
+                  Articles
+                </Link>
                 
                 {/* Mobile Submit Idea Button */}
                 <div className="flex justify-end">

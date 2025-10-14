@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import { faqs } from '@/data/faq';
 
 export default function AboutUsPage() {
-  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
   const toggleFaq = (index: number) => {
     setOpenFaqIndex(openFaqIndex === index ? null : index);
@@ -16,17 +16,17 @@ export default function AboutUsPage() {
       <Navbar />
       
       <main className="pt-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {/* Main Heading */}
-          <h1 className="text-4xl font-bold text-black mb-8 text-center">
+          <h1 className="text-4xl font-bold text-black mb-4 text-center">
             About Us
           </h1>
 
           {/* Philosophy Section */}
-          <section className="mb-8">
-            <div className="bg-gray-50 rounded-lg p-8 border border-gray-200">
-              <h2 className="text-2xl font-semibold text-black mb-6">Our Story and Values</h2>
-              <div className="text-gray-700 leading-relaxed space-y-4" style={{ fontSize: '15px' }}>
+          <section className="mb-12">
+            <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+              <h2 className="text-2xl font-semibold text-black mb-4">Our Story and Values</h2>
+              <div className="text-gray-700 leading-relaxed space-y-4" style={{ fontSize: '14px' }}>
                 <p>
                   TheIndianInvestors.com is a community-driven platform founded by a group of Indian investors who are passionate about long-term, evidence-based investing and collaborative learning. Built out of a desire to foster rigorous investment research specifically tailored for Indian markets, our platform brings together serious investors seeking high standards of transparency, analysis, and quality in every idea shared.
                 </p>
@@ -34,14 +34,14 @@ export default function AboutUsPage() {
                 Inspired by best practices in global value investing communities, we strive to foster excellence and meaningful exchange tailored specifically for Indian markets. Recognizing the unique dynamics of our local context, we decided to provide a dedicated platform that facilitates focused research collaboration. We firmly believe India is entering a new wave of capitalism, unveiling unprecedented opportunities for long-term investment
                 </p>
                 <p>
-                  Through shared research and collective wisdom, our community aims to empower members to recognize, research, and capitalize on these transformative trends. We are not SEBI registered investment advisors, but strive to be a trusted forum where investors can exchange insights, support each other's learning, and make better investment decisions based on rigorous, well-researched ideas.
+                  We are not SEBI registered investment advisors, but strive to be a trusted forum where investors can exchange insights, support each other's learning, and make better investment decisions based on rigorous, well-researched ideas.
                 </p>
               </div>
             </div>
           </section>
 
           {/* FAQ Section */}
-          <section>
+          <section className="mt-8">
             <h2 className="text-2xl font-semibold text-black mb-8 text-center">
               Frequently Asked Questions
             </h2>
