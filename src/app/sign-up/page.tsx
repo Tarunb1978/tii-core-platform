@@ -239,8 +239,8 @@ export default function SignUp() {
             <a href="/sign-in" className="block text-sm text-gray-600 hover:texxt-gray-900 transition-colors">
               Already have an account? <span className="font-semibold">Log in</span>
             </a>
-            <a href="/reset-password" className="block text-xs text-gray-500 hover:text-gray-700 transition-colors">
-              Forgot your password?
+            <a href="#" className="block text-xs text-gray-500 hover:text-gray-700 transition-colors">
+              Forgot your user ID or password?
             </a>
           </div>
         </div>
@@ -251,8 +251,8 @@ export default function SignUp() {
             <a href="/sign-in" className="block text-sm text-gray-600 hover:text-gray-900 transition-colors">
               Already have an account? <span className="font-semibold">Log in</span>
             </a>
-            <a href="/reset-password" className="block text-xs text-gray-500 hover:text-gray-700 transition-colors">
-              Forgot your password?
+            <a href="#" className="block text-xs text-gray-500 hover:text-gray-700 transition-colors">
+              Forgot your user ID or password?
             </a>
           </div>
         </div>
