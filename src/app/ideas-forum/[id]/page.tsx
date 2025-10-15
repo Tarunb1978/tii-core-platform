@@ -42,6 +42,66 @@ type Idea = {
   idea_discussion?: Comment[];
 };
 
+interface FinancialData {
+  error?: string;
+  errorDetails?: any;
+  envError?: boolean;
+  missingVars?: {
+    supabaseUrl: boolean;
+    supabaseAnonKey: boolean;
+  };
+  timestamp?: string;  // ✅ added field
+  data?: {
+    company_info?: Record<string, any>;  // Or a more specific type if you know the shape
+    // other nested fields from your API response
+  };
+}
+
+type OrganizedMetrics = {
+  companyOverview: {
+    marketCap: string;
+    industry: string;
+    dividendYield: string;
+    peRatio: string;
+    city: string;
+    website: string;
+    fullTimeEmployees: string;
+  };
+  profitability: {
+    ebitdaMargin: string;
+    netProfitMargin: string;
+    grossMargin: string;
+    ebitda: string;
+    netProfits: string;
+  };
+  valuation: {
+    priceToBook: string;
+    priceToSales: string;
+    trailingPE: string;
+  };
+  growthReturns: {
+    threeYearReturn: string;
+    oneYearReturn: string;
+    weekRange: string;
+    avgVolume10Days: string;
+    lastExDividendDate: string;
+  };
+  financialHealth: {
+    debtToEquity: string;
+    totalCash: string;
+    totalDebt: string;
+    cashPerShare: string;
+    outstandingShares: string;
+  };
+  companyDetails: {
+    businessSummary: string;
+    location: string;
+    employees: string;
+    website: string;
+  };
+};
+
+
 
 const API_URL_ACTIONS = process.env.NEXT_PUBLIC_API_URL_ACTIONS || '';
 const FINANCIAL_DATA_API_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, '')}/functions/finance-data`;
@@ -76,10 +136,10 @@ function verifyEnvironment() {
   }
   
   // Check anon key with detailed validation
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (anonKey && anonKey.trim() !== '') {
-    console.log('✅ NEXT_PUBLIC_SUPABASE_ANON_KEY: present (length:', anonKey.length, ')');
-    console.log('✅ Anon key starts with "eyJ":', anonKey.startsWith('eyJ'));
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (supabaseAnonKey && supabaseAnonKey.trim() !== '') {
+    console.log('✅ NEXT_PUBLIC_SUPABASE_ANON_KEY: present (length:', supabaseAnonKey.length, ')');
+    console.log('✅ Anon key starts with "eyJ":', supabaseAnonKey.startsWith('eyJ'));
   } else {
     console.error('❌ NEXT_PUBLIC_SUPABASE_ANON_KEY is missing or empty');
     console.error('❌ This will cause 401/404/CORS errors on API calls');
@@ -103,8 +163,8 @@ function verifyEnvironment() {
   // Return validation results
   return {
     supabaseUrl: !!supabaseUrl,
-    anonKey: !!(anonKey && anonKey.trim() !== ''),
-    allValid: !!(supabaseUrl && anonKey && anonKey.trim() !== '')
+    supabaseAnonKey: !!(supabaseAnonKey && supabaseAnonKey.trim() !== ''),
+    allValid: !!(supabaseUrl && supabaseAnonKey && supabaseAnonKey.trim() !== '')
   };
 }
 
@@ -448,11 +508,12 @@ async function fetchFinancialData(ticker: string, currentUser?: any) {
     console.debug('Financial data received:', result);
     return result.financial_data || result || null;
   } catch (error) {
+    const err = error as Error;
     console.error('❌ CRITICAL: Financial data fetch failed');
-    console.error('❌ Error type:', error.name);
-    console.error('❌ Error message:', error.message);
-    console.error('❌ Full error object:', error);
-    console.error('❌ Error stack:', error.stack);
+    console.error('❌ Error type:', err.name);
+    console.error('❌ Error message:', err.message);
+    console.error('❌ Full error object:', err);
+    console.error('❌ Error stack:', err.stack);
     console.error('❌ Fetch details:', {
       url: fullFetchUrl,
       headers: headers,
@@ -461,11 +522,12 @@ async function fetchFinancialData(ticker: string, currentUser?: any) {
     });
     
     // Log specific error types
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+    
+    if (err.name === 'TypeError' && err.message.includes('fetch')) {
       console.error('❌ Network/Fetch Error - Possible CORS or connectivity issue');
-    } else if (error.message.includes('401')) {
+    } else if (err.message.includes('401')) {
       console.error('❌ Authentication Error - Check apikey and Authorization headers');
-    } else if (error.message.includes('404')) {
+    } else if (err.message.includes('404')) {
       console.error('❌ Endpoint Not Found - Check API URL and edge function deployment');
     }
     
@@ -480,9 +542,9 @@ export default function IdeaDetailPage({ params }: { params: Promise<{ id: strin
   const [idea, setIdea] = useState<Idea | null>(null);
   const [loading, setLoading] = useState(true);
   const [id, setId] = useState<string>('');
-  const [financialData, setFinancialData] = useState(null);
+  const [financialData, setFinancialData] = useState<FinancialData | null>(null);
   const [financialLoading, setFinancialLoading] = useState(false);
-  const [organizedMetrics, setOrganizedMetrics] = useState(null);
+  const [organizedMetrics, setOrganizedMetrics] = useState<OrganizedMetrics | null>(null);
   const [userActions, setUserActions] = useState<{
     likes: string[];
     bookmarks: string[];
@@ -510,15 +572,9 @@ export default function IdeaDetailPage({ params }: { params: Promise<{ id: strin
     if (currentUser) {
       console.debug('🔄 currentUser structure analysis:');
       console.debug('🔄 - currentUser.access_token:', currentUser.access_token ? 'present' : 'missing');
-      console.debug('🔄 - currentUser.session:', currentUser.session ? 'present' : 'missing');
       console.debug('🔄 - currentUser.user:', currentUser.user ? 'present' : 'missing');
       console.debug('🔄 - currentUser.provider_token:', currentUser.provider_token ? 'present' : 'missing');
       console.debug('🔄 - currentUser.refresh_token:', currentUser.refresh_token ? 'present' : 'missing');
-      
-      // Check if session exists and has access_token
-      if (currentUser.session) {
-        console.debug('🔄 - session.access_token:', currentUser.session.access_token ? 'present' : 'missing');
-      }
     } else {
       console.debug('🔄 No currentUser - user not authenticated');
     }
@@ -529,12 +585,12 @@ export default function IdeaDetailPage({ params }: { params: Promise<{ id: strin
     console.debug('🔄 organizedMetrics state changed:', organizedMetrics);
     if (organizedMetrics) {
       console.debug('🔄 Organized metrics available:');
-      console.debug('🔄 - companyOverview:', organizedMetrics.companyOverview ? 'present' : 'missing');
-      console.debug('🔄 - profitability:', organizedMetrics.profitability ? 'present' : 'missing');
-      console.debug('🔄 - valuation:', organizedMetrics.valuation ? 'present' : 'missing');
-      console.debug('🔄 - growthReturns:', organizedMetrics.growthReturns ? 'present' : 'missing');
-      console.debug('🔄 - financialHealth:', organizedMetrics.financialHealth ? 'present' : 'missing');
-      console.debug('🔄 - companyDetails:', organizedMetrics.companyDetails ? 'present' : 'missing');
+      console.debug('🔄 - companyOverview:', organizedMetrics?.['companyOverview'] ? 'present' : 'missing');
+      console.debug('🔄 - profitability:', organizedMetrics?.['profitability'] ? 'present' : 'missing');
+      console.debug('🔄 - valuation:', organizedMetrics?.['valuation'] ? 'present' : 'missing');
+      console.debug('🔄 - growthReturns:', organizedMetrics?.['growthReturns'] ? 'present' : 'missing');
+      console.debug('🔄 - financialHealth:', organizedMetrics?.['financialHealth'] ? 'present' : 'missing');
+      console.debug('🔄 - companyDetails:', organizedMetrics?.['companyDetails'] ? 'present' : 'missing');
     } else {
       console.debug('🔄 No organized metrics available');
     }
@@ -589,14 +645,12 @@ useEffect(() => {
         
         // Check multiple possible locations for access token
         const accessToken = 
-          currentUser?.access_token ||           // Direct access token on currentUser
-          currentUser?.session?.access_token ||  // Nested session access token
+          currentUser?.access_token ||           // Direct access token on currentUser  // Nested session access token
           currentUser?.provider_token ||         // Provider token
           '';
         
         console.debug('Token extraction results:');
         console.debug('- currentUser?.access_token:', currentUser?.access_token ? 'present' : 'missing');
-        console.debug('- currentUser?.session?.access_token:', currentUser?.session?.access_token ? 'present' : 'missing');
         console.debug('- currentUser?.provider_token:', currentUser?.provider_token ? 'present' : 'missing');
         console.debug('- Final accessToken:', accessToken ? 'present' : 'missing');
         
@@ -612,11 +666,11 @@ useEffect(() => {
         console.log('🔍 Runtime Environment Check - Validating Supabase credentials...');
         
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
         
         // Strict validation - both must be present and non-empty
         const isSupabaseUrlValid = supabaseUrl && supabaseUrl.trim() !== '';
-        const isAnonKeyValid = anonKey && anonKey.trim() !== '';
+        const isAnonKeyValid = supabaseAnonKey && supabaseAnonKey.trim() !== '';
         
         console.log('🔍 Environment Check Results:');
         console.log('  - NEXT_PUBLIC_SUPABASE_URL:', isSupabaseUrlValid ? '✅ Present' : '❌ Missing/Empty');
@@ -626,7 +680,7 @@ useEffect(() => {
           console.error('❌ CRITICAL: Supabase credentials missing - aborting fetch');
           console.error('❌ Missing variables:', {
             supabaseUrl: !isSupabaseUrlValid,
-            anonKey: !isAnonKeyValid
+            supabaseAnonKey: !isAnonKeyValid
           });
           
           setFinancialData({ 
@@ -634,7 +688,7 @@ useEffect(() => {
             envError: true,
             missingVars: {
               supabaseUrl: !isSupabaseUrlValid,
-              anonKey: !isAnonKeyValid
+              supabaseAnonKey: !isAnonKeyValid
             },
             timestamp: new Date().toISOString()
           });
@@ -721,36 +775,37 @@ useEffect(() => {
             setOrganizedMetrics(null);
           }
         } catch (error) {
+          const err = error as Error;
           console.error('❌ CRITICAL: Financial data fetch failed in main logic');
-          console.error('❌ Error type:', error.name);
-          console.error('❌ Error message:', error.message);
-          console.error('❌ Full error object:', error);
-          console.error('❌ Error stack:', error.stack);
+          console.error('❌ Error type:', err.name);
+          console.error('❌ Error message:', err.message);
+          console.error('❌ Full error object:', err);
+          console.error('❌ Error stack:', err.stack);
           console.error('❌ Timestamp:', new Date().toISOString());
           
           // Set comprehensive error state with full details
           const errorDetails = {
-            type: error.name,
-            message: error.message,
-            stack: error.stack,
+            type: err.name,
+            message: err.message,
+            stack: err.stack,
             timestamp: new Date().toISOString(),
             url: typeof window !== 'undefined' ? window.location.href : 'server-side'
           };
           
           let userFriendlyMessage = 'Unknown error occurred';
           
-          if (error.message?.includes('anon key is not configured')) {
+          if (err.message?.includes('anon key is not configured')) {
             userFriendlyMessage = 'Configuration error: Missing Supabase anon key';
-          } else if (error.message?.includes('401')) {
+          } else if (err.message?.includes('401')) {
             userFriendlyMessage = 'Authentication error: Invalid credentials or missing authorization';
-          } else if (error.message?.includes('404')) {
+          } else if (err.message?.includes('404')) {
             userFriendlyMessage = 'API endpoint not found: Check Supabase edge function deployment';
-          } else if (error.message?.includes('Network error') || error.name === 'TypeError') {
+          } else if (err.message?.includes('Network error') || err.name === 'TypeError') {
             userFriendlyMessage = 'Network error: Check internet connection and CORS settings';
-          } else if (error.message?.includes('CORS')) {
+          } else if (err.message?.includes('CORS')) {
             userFriendlyMessage = 'CORS error: Check Supabase edge function CORS configuration';
           } else {
-            userFriendlyMessage = `API Error: ${error.message}`;
+            userFriendlyMessage = `API Error: ${err.message}`;
           }
           
           setFinancialData({ 
@@ -930,7 +985,7 @@ useEffect(() => {
                         <p className="text-red-800 text-xs font-medium mb-2">Missing Environment Variables:</p>
                         <ul className="text-red-700 text-xs space-y-1">
                           {financialData.missingVars?.supabaseUrl && <li>• NEXT_PUBLIC_SUPABASE_URL</li>}
-                          {financialData.missingVars?.anonKey && <li>• NEXT_PUBLIC_SUPABASE_ANON_KEY</li>}
+                          {financialData.missingVars?.supabaseAnonKey && <li>• NEXT_PUBLIC_SUPABASE_ANON_KEY</li>}
                         </ul>
                         <p className="text-red-800 text-xs mt-2">
                           💡 <strong>Reminder:</strong> If using Vercel/Render/Netlify, always remember to set all process.env.* keys as protected environment variables and redeploy when updating them.

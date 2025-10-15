@@ -22,9 +22,10 @@ export default function Navbar() {
   const { currentUser, isLoading } = useAuth();
   
   // Normalize submitted flag to boolean with proper safeguards
-  const hasSubmittedIdea = currentUser?.submitted_idea ? 
-    (currentUser.submitted_idea === 'true' || currentUser.submitted_idea === true) : 
-    false;
+  const hasSubmittedIdea = currentUser?.submitted_idea
+  ? currentUser.submitted_idea === 'true' || currentUser.submitted_idea === '1'
+  : false;
+
   
   // Supabase client for sign out
   const supabase = createClient();
@@ -176,7 +177,6 @@ export default function Navbar() {
             {currentUser ? (
               // User is signed in - show initials button with dropdown
               <div className="relative" ref={dropdownRef}>
-                {console.log("Desktop: User is signed in, showing dropdown")}
                 <button
                   onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
                   className="w-10 h-10 bg-gray-100 hover:bg-gray-200 focus:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full flex items-center justify-center text-sm font-medium text-gray-700 transition-all duration-200"
@@ -332,7 +332,6 @@ export default function Navbar() {
                 {currentUser ? (
                   // User is signed in - show user info and sign out
                   <div className="space-y-1">
-                    {console.log("Mobile: User is signed in, showing mobile menu")}
                     <div className="px-3 py-2 text-sm text-gray-600 border-t border-gray-100 pt-3 text-right">
                       Welcome, {currentUser.first_name && currentUser.last_name 
                         ? `${currentUser.first_name} ${currentUser.last_name}`
