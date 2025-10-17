@@ -391,16 +391,18 @@ export default function Home() {
                       boxShadow: '0 4px 12px rgba(74, 144, 226, 0.3)'
                     }}
                     onMouseEnter={(e) => {
-                      e.target.style.backgroundColor = '#357ABD';
-                      e.target.style.borderColor = '#357ABD';
-                      e.target.style.transform = 'translateY(-2px)';
-                      e.target.style.boxShadow = '0 6px 16px rgba(74, 144, 226, 0.4)';
+                      const target = e.target as HTMLElement;
+                      target.style.backgroundColor = '#357ABD';
+                      target.style.borderColor = '#357ABD';
+                      target.style.transform = 'translateY(-2px)';
+                      target.style.boxShadow = '0 6px 16px rgba(74, 144, 226, 0.4)';
                     }}
                     onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = '#4A90E2';
-                      e.target.style.borderColor = '#4A90E2';
-                      e.target.style.transform = 'translateY(0)';
-                      e.target.style.boxShadow = '0 4px 12px rgba(74, 144, 226, 0.3)';
+                      const target = e.target as HTMLElement;
+                      target.style.backgroundColor = '';
+                      target.style.borderColor = '';
+                      target.style.transform = '';
+                      target.style.boxShadow = '';
                     }}
                   >
                     Join the Conviction Movement
@@ -415,12 +417,14 @@ export default function Home() {
                       borderRadius: '6px'
                     }}
                     onMouseEnter={(e) => {
-                      e.target.style.backgroundColor = '#4A90E2';
-                      e.target.style.color = 'white';
+                      const target = e.target as HTMLElement;
+                      target.style.backgroundColor = '#4A90E2';
+                      target.style.color = 'white';
                     }}
                     onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = 'transparent';
-                      e.target.style.color = '#4A90E2';
+                      const target = e.target as HTMLElement;
+                      target.style.backgroundColor = 'transparent';
+                      target.style.color = '#4A90E2';
                     }}
                   >
                     Share Your Research
