@@ -50,8 +50,7 @@ export default function SubmitIdeaGuidelines() {
     }
 
     // optionally verify token before proceeding
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) {
+    if (!currentUser) {
       router.push('/sign-in');
       return;
     }

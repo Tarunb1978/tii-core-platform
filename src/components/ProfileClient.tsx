@@ -49,11 +49,6 @@ export default function ProfileClient() {
       setIsLoading(true);
       console.log('Fetching profile for user:', currentUser.user.id);
       
-      // Get access token
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('No access token available');
-      }
 
       const apiUrl = `${process.env.NEXT_PUBLIC_SUPABASE_EDGE_FUNCTION_URL}/app-user/me`;
       console.log('API URL:', apiUrl);
@@ -62,7 +57,7 @@ export default function ProfileClient() {
       const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${currentUser.access_token}`,
           'Content-Type': 'application/json',
         },
       });

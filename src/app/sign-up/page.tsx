@@ -35,7 +35,7 @@ export default function SignUp() {
     try {
       await signUpWithEmail(formData) // call server action manually
       toast.success('Account created successfully 🎉')
-      router.push('/')
+      window.location.href = '/'; // reload to set the cookies
     } catch (error: any) {
       toast.error(error.message || 'Something went wrong')
     }
