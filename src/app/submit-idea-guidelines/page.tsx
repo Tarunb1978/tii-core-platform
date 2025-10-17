@@ -140,18 +140,14 @@ export default function SubmitIdeaGuidelines() {
           </div>
 
           <div className="text-center">
-            <button
-              onClick={handleProceedToForm}
-              className="inline-block px-8 py-4 text-lg font-medium transition-colors hover:opacity-90"
-              style={{ 
-                backgroundColor: '#4A90E2', 
-                color: 'white', 
-                borderRadius: '4px'
-              }}
-            >
-              Proceed to Submit Your Idea
-            </button>
-          </div>
+  <button
+    onClick={handleProceedToForm}
+    className="px-8 py-4 text-lg font-medium text-white bg-blue-500 rounded-xl shadow-lg hover:bg-blue-600 hover:shadow-xl transition-all duration-300"
+  >
+    Proceed to Submit Your Idea
+  </button>
+</div>
+
         </div>
       </section>
     </div>
