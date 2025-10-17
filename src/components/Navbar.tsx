@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/context/authProvider';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 export default function Navbar() {
   
@@ -30,6 +30,10 @@ export default function Navbar() {
   // Supabase client for sign out
   const supabase = createClient();
   const router = useRouter();
+  const pathname = usePathname();
+  
+  // Check if user is on Ideas Forum page
+  const isOnIdeasForum = pathname === '/ideas-forum';
   
 
   // Toggle mobile menu
@@ -169,8 +173,8 @@ export default function Navbar() {
           {/* Right Section - Info Text and Submit Button (Hidden on mobile) */}
           <div className="hidden md:flex items-center space-x-4">
             {/* Informational Text */}
-            {!hasSubmittedIdea && (
-              <span className="text-sm text-gray-400">Showing 45 days old ideas</span>
+            {!hasSubmittedIdea && isOnIdeasForum && (
+              <span className="text-sm text-gray-400">Showing 90 days old ideas</span>
             )}
             
             {/* Submit Idea Button */}
@@ -395,9 +399,9 @@ export default function Navbar() {
                 )}
                 
                 {/* Mobile Info Text */}
-                {!hasSubmittedIdea && (
+                {!hasSubmittedIdea && isOnIdeasForum && (
                   <div className="px-3 py-2 text-xs text-gray-400 border-t border-gray-100 pt-3 text-right">
-                    Showing 45 days old ideas
+                    Showing 90 days old ideas
                   </div>
                 )}
               </div>
