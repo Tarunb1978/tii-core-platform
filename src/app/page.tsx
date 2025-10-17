@@ -537,7 +537,6 @@ export default function Home() {
                 <li><Link href="#" className="text-sm transition-colors hover:text-white">Our Mission</Link></li>
                 <li><Link href="/topic-of-the-week" className="text-sm transition-colors hover:text-white">Trending Topics</Link></li>
                 <li><Link href="/ideas-forum" className="text-sm transition-colors hover:text-white">Ideas Forum</Link></li>
-                <li><Link href="#" className="text-sm transition-colors hover:text-white">Contact</Link></li>
               </ul>
             </div>
 

@@ -605,23 +605,24 @@ useEffect(() => {
 
   async function getIdea() {
     console.debug('Starting to fetch idea with ID:', id);
+    setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        console.warn("No access token found – user may not be signed in");
-        setIdea(null);
-        setLoading(false);
-        return;
-      }
+      const token = session?.access_token ?? null;
       
-      console.debug('Access token found, proceeding with idea fetch');
+      if (!id) {
+      console.error('Missing idea ID');
+      setError('Missing idea ID');
+      setLoading(false);
+      return;
+    }
 
-      // ✅ Use dynamic route instead of query param
-      const res = await fetch(`/api/fetchIdeas/${id}`, {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
+    console.debug(token ? 'Access token found — fetching private idea' : 'No token — fetching public idea');
+
+    // ✅ Use the dynamic route for single idea
+    const res = await fetch(`/api/fetchIdeas/${id}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
 
       if (!res.ok) {
         const errorText = await res.text();
@@ -1165,4 +1166,8 @@ useEffect(() => {
     />
     </div>
   );
+}
+
+function setError(arg0: string) {
+  throw new Error('Function not implemented.');
 }

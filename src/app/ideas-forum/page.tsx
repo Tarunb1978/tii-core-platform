@@ -663,37 +663,45 @@ export default function IdeasForumPage() {
   // Fetch ideas
   useEffect(() => {
     async function fetchIdeas() {
-    if (!user) {
-      console.log('No current user, skipping profile fetch');
-      return;
-    }
-    setLoading(true);
+      setLoading(true);
       try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (!session?.access_token) {
-            throw new Error('No access token available');
-          }
-          const res = await fetch('/api/fetchIdeas', {
-            headers: {
-              Authorization: `Bearer ${session.access_token}`,
-            },
-          });
-          if (!res.ok) throw new Error('Failed to fetch ideas');
+        let token: string | null = null;
 
-          const json = await res.json();
-          const fetchedIdeas = Array.isArray(json.ideas) ? json.ideas : [];
-          setIdeas(fetchedIdeas);
-          setFilteredIdeas(fetchedIdeas);
-        } catch (err) {
-          console.error('Error fetching ideas:', err);
-          setError('Failed to load ideas');
-        } finally {
-          setLoading(false);
+        // Try to get session token (if logged in)
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          token = session.access_token;
         }
-      }
 
-      fetchIdeas();
-    }, []);
+        // Call your API (send token only if logged in)
+        const res = await fetch('/api/fetchIdeas', {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+
+        if (!res.ok) throw new Error('Failed to fetch ideas');
+
+        const json = await res.json();
+        const fetchedIdeas = Array.isArray(json.ideas) ? json.ideas : [];
+
+        setIdeas(fetchedIdeas);
+        setFilteredIdeas(fetchedIdeas);
+
+        // Optional: show a friendly hint for guests
+        if (!token && fetchedIdeas.length > 0) {
+          console.log('Showing public ideas. Sign in to see more!');
+        }
+
+      } catch (err) {
+        console.error('Error fetching ideas:', err);
+        setError('Failed to load ideas');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchIdeas();
+  }, []);
+
 
 
   // Fetch user actions

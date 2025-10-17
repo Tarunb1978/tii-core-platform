@@ -440,11 +440,41 @@ export default function IdeaCard({
 
         {/* Description (HTML) - Always show full content */}
         <div className="mb-4">
-          <div
-            className="prose max-w-none prose-img:rounded-lg prose-img:border prose-img:border-gray-100"
-            onClick={(e) => e.stopPropagation()}
-            dangerouslySetInnerHTML={{ __html: d.description || '' }}
-          />
+          {(() => {
+            // Helper: strip HTML tags for measuring length
+            const plainText = d.description?.replace(/<[^>]+>/g, '') || '';
+            // eslint-disable-next-line react-hooks/rules-of-hooks
+            const [expanded, setExpanded] = useState(false);
+            const isLong = plainText.length > 300;
+
+            // Show truncated HTML safely
+            const truncatedHTML = d.description
+              ? d.description.slice(0, 300) + (isLong ? '...' : '')
+              : '';
+
+            const contentToDisplay = expanded || !isLong ? d.description : truncatedHTML;
+
+            return (
+              <>
+                <div
+                  className="prose max-w-none prose-img:rounded-lg prose-img:border prose-img:border-gray-100 transition-all duration-300"
+                  onClick={(e) => e.stopPropagation()}
+                  dangerouslySetInnerHTML={{ __html: contentToDisplay }}
+                />
+                {isLong && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setExpanded((prev) => !prev);
+                    }}
+                    className="mt-2 text-blue-600 font-medium hover:underline focus:outline-none"
+                  >
+                    {expanded ? 'Show Less' : 'Read More'}
+                  </button>
+                )}
+              </>
+            );
+          })()}
         </div>
 
         {/* Stock Details */}

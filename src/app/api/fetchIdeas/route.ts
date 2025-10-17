@@ -6,14 +6,12 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 export async function GET(req: NextRequest) {
     try {
         const authHeader = req.headers.get('authorization');
-        if (!authHeader) {
-        return NextResponse.json({ error: 'No auth token provided' }, { status: 401 });
-        }
+        const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        };
+        if (authHeader) headers['Authorization'] = authHeader;
         const res = await fetch(`${SUPABASE_URL}/functions/v1/restful-investment-ideas`, {
-        headers: {
-            Authorization: authHeader,
-            'Content-Type': 'application/json',
-        },
+        headers,
         });
 
         if (!res.ok) {

@@ -180,7 +180,7 @@ export default function Navbar() {
             {/* Submit Idea Button */}
             <Link 
               href="/submit-idea-guidelines"
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+              className="bg-gray-300 hover:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
             >
               Submit Idea
             </Link>
@@ -191,7 +191,7 @@ export default function Navbar() {
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                  className="w-10 h-10 bg-gray-100 hover:bg-gray-200 focus:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full flex items-center justify-center text-sm font-medium text-gray-700 transition-all duration-200"
+                  className="w-10 h-10 bg-gray-200 hover:bg-gray-300 focus:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full flex items-center justify-center text-sm font-medium text-gray-700 transition-all duration-200"
                   aria-label="User menu"
                 >
                   {currentUser.first_name && currentUser.last_name 
@@ -342,7 +342,7 @@ export default function Navbar() {
                 <div className="flex justify-end">
                   <Link 
                     href="/submit-idea-guidelines"
-                    className="w-auto px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors duration-200"
+                    className="w-auto px-3 py-2 bg-gray-300 hover:bg-gray-400 text-white rounded-lg text-sm font-medium transition-colors duration-200"
                     onClick={closeMobileMenu}
                   >
                     Submit Idea
