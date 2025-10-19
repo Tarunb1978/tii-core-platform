@@ -78,7 +78,8 @@ export async function signUpWithEmail(formData: FormData) {
   const dob = String(formData.get('dob'))
   const sex = String(formData.get('sex'))
   const contactNumber = String(formData.get('contactNumber'))
-  const supabase = await createSupabaseServerClient() // This now works correctly
+
+  const supabase = await createSupabaseServerClient()
 
   const { data: user, error } = await supabase.auth.signUp({
     email,
@@ -93,13 +94,14 @@ export async function signUpWithEmail(formData: FormData) {
     },
   })
 
-    if (error) {
-      console.error('Sign up error:', error.message)
-      return redirect('/sign-up?message=Could not create user')
-    }
+  if (error) {
+    console.error('Sign up error:', error.message)
+    // 🔹 Return the actual error to client instead of redirecting
+    return { error: error.message }
+  }
 
-    // Insert into app_user
-    const { error: insertError } = await supabase
+  // Insert into app_user
+  const { error: insertError } = await supabase
     .from('app_user')
     .upsert(
       {
@@ -112,17 +114,17 @@ export async function signUpWithEmail(formData: FormData) {
         contact_number: contactNumber,
         role: 'user',
       },
-      { onConflict: 'id' } // ✅ use "id" as conflict target
+      { onConflict: 'id' }
     )
 
-
-    if (insertError) {
-      console.error('Insert error:', insertError.message)
-      return redirect('/sign-up?message=Could not save profile')
-    }
-
-    return { user }
+  if (insertError) {
+    console.error('Insert error:', insertError.message)
+    return { error: insertError.message }
   }
+
+  return { success: true }
+}
+
 
 export async function signInWithOAuth(provider: Provider) {
 

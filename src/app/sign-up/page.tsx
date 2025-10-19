@@ -4,7 +4,7 @@ import { useState, FormEvent } from 'react'
 import Navbar from '@/components/Navbar'
 import Link from 'next/link'
 import { signUpWithEmail } from '../auth/action'
-import toast from 'react-hot-toast'
+import toast, { Toaster } from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
 
 
@@ -21,25 +21,28 @@ export default function SignUp() {
   const router = useRouter()
 
   const handleSignUp = async (e: FormEvent) => {
-    e.preventDefault()
+  e.preventDefault();
 
-    const formData = new FormData()
-    formData.append('firstName', firstName)
-    formData.append('secondName', secondName)
-    formData.append('dob', age)
-    formData.append('sex', sex)
-    formData.append('email', email)
-    formData.append('password', password)
-    formData.append('contactNumber', contactNumber)
+  const formData = new FormData();
+  formData.append('firstName', firstName);
+  formData.append('secondName', secondName);
+  formData.append('dob', age);
+  formData.append('sex', sex);
+  formData.append('email', email);
+  formData.append('password', password);
+  formData.append('contactNumber', contactNumber);
 
-    try {
-      await signUpWithEmail(formData) // call server action manually
-      toast.success('Account created successfully 🎉')
-      window.location.href = '/'; // reload to set the cookies
-    } catch (error: any) {
-      toast.error(error.message || 'Something went wrong')
-    }
+  const result = await signUpWithEmail(formData);
+
+  if (result?.error) {
+    toast.error(result.error || 'Something went wrong');
+    return;
   }
+
+  toast.success('Account created successfully 🎉');
+  router.push('/'); // ✅ navigate normally
+};
+
 
 
   return (
@@ -264,6 +267,17 @@ export default function SignUp() {
           </Link>
         </div>
       </div>
+      <Toaster
+      position="top-center"
+      toastOptions={{
+        duration: 3000,
+        className:
+          "bg-transparent border border-blue-200 backdrop-blur-md text-white font-medium shadow-lg rounded-2xl px-4 py-3 flex items-center justify-center",
+        style: {
+          background: "transparent",
+        },
+      }}
+    />
     </div>
   );
 }
