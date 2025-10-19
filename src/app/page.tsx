@@ -6,7 +6,6 @@ import { useAuth } from "@/context/authProvider";
 import Link from "next/link";
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { Toaster } from 'react-hot-toast';
 
 export default function Home() {
   const { currentUser } = useAuth();
@@ -577,17 +576,7 @@ export default function Home() {
           </div>
         </div>
       </footer>
-      <Toaster
-      position="top-center"
-      toastOptions={{
-        duration: 3000,
-        className:
-          "bg-transparent border border-blue-200 backdrop-blur-md text-white font-medium shadow-lg rounded-2xl px-4 py-3 flex items-center justify-center",
-        style: {
-          background: "transparent",
-        },
-      }}
-    />
+      
     </div>
   );
 }
