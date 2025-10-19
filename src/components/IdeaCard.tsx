@@ -467,23 +467,41 @@ export default function IdeaCard({
           </h1>
         </div>
 
-        {/* Description (HTML) - Truncated to 100 words */}
+        {/* Description (HTML) - Truncated to 100 words with improved expand/collapse */}
         <div className="mb-4">
-          <div
-            className="prose max-w-none prose-img:rounded-lg prose-img:border prose-img:border-gray-100"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="text-gray-700 leading-relaxed text-sm">
-              {truncateHTMLContent(d.description || '')}
-            </p>
-            {d.description && truncateHTMLContent(d.description, 100) !== d.description && (
-              <div className="mt-2">
-                <span className="text-blue-600 text-xs font-medium">
-                  ...Read more details
-                </span>
-              </div>
-            )}
-          </div>
+          {(() => {
+            // Helper: strip HTML tags for measuring length
+            const plainText = d.description?.replace(/<[^>]+>/g, '') || '';
+            const [expanded, setExpanded] = useState(false);
+            const isLong = plainText.length > 300;
+
+            // Use the improved truncation function for better word-based truncation
+            const truncatedContent = truncateHTMLContent(d.description || '');
+            const shouldShowTruncated = !expanded && isLong;
+
+            return (
+              <>
+                <div
+                  className="prose max-w-none prose-img:rounded-lg prose-img:border prose-img:border-gray-100 transition-all duration-300"
+                  onClick={(e) => e.stopPropagation()}
+                  dangerouslySetInnerHTML={{ 
+                    __html: shouldShowTruncated ? truncatedContent : (d.description || '') 
+                  }}
+                />
+                {isLong && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setExpanded((prev) => !prev);
+                    }}
+                    className="mt-2 text-blue-600 text-xs font-medium hover:underline focus:outline-none"
+                  >
+                    {expanded ? 'Show Less' : 'Read More Details'}
+                  </button>
+                )}
+              </>
+            );
+          })()}
         </div>
 
         {/* Stock Details */}

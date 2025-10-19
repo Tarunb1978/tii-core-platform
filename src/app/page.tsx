@@ -387,6 +387,57 @@ export default function Home() {
                 <p className="text-sm mb-4" style={{ color: '#444' }}>
                   Be part of a community that values quality over quantity, conviction over consensus, and long-term wealth over short-term gains.
                 </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <a
+                    href="/sign-up"
+                    className="px-8 py-3 text-lg font-medium transition-all duration-200 border"
+                    style={{ 
+                      backgroundColor: '#4A90E2', 
+                      color: 'white', 
+                      borderColor: '#4A90E2',
+                      borderRadius: '6px',
+                      boxShadow: '0 4px 12px rgba(74, 144, 226, 0.3)'
+                    }}
+                    onMouseEnter={(e) => {
+                      const target = e.target as HTMLElement;
+                      target.style.backgroundColor = '#357ABD';
+                      target.style.borderColor = '#357ABD';
+                      target.style.transform = 'translateY(-2px)';
+                      target.style.boxShadow = '0 6px 16px rgba(74, 144, 226, 0.4)';
+                    }}
+                    onMouseLeave={(e) => {
+                      const target = e.target as HTMLElement;
+                      target.style.backgroundColor = '';
+                      target.style.borderColor = '';
+                      target.style.transform = '';
+                      target.style.boxShadow = '';
+                    }}
+                  >
+                    Join the Conviction Movement
+                  </a>
+                  <a
+                    href="/submit-idea-guidelines"
+                    className="px-8 py-3 text-lg font-medium transition-all duration-200 border"
+                    style={{ 
+                      backgroundColor: 'transparent', 
+                      color: '#4A90E2', 
+                      borderColor: '#4A90E2',
+                      borderRadius: '6px'
+                    }}
+                    onMouseEnter={(e) => {
+                      const target = e.target as HTMLElement;
+                      target.style.backgroundColor = '#4A90E2';
+                      target.style.color = 'white';
+                    }}
+                    onMouseLeave={(e) => {
+                      const target = e.target as HTMLElement;
+                      target.style.backgroundColor = 'transparent';
+                      target.style.color = '#4A90E2';
+                    }}
+                  >
+                    Share Your Research
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -486,7 +537,6 @@ export default function Home() {
                 <li><Link href="#" className="text-sm transition-colors hover:text-white">Our Mission</Link></li>
                 <li><Link href="/topic-of-the-week" className="text-sm transition-colors hover:text-white">Trending Topics</Link></li>
                 <li><Link href="/ideas-forum" className="text-sm transition-colors hover:text-white">Ideas Forum</Link></li>
-                <li><Link href="#" className="text-sm transition-colors hover:text-white">Contact</Link></li>
               </ul>
             </div>
 

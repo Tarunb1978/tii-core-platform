@@ -5,6 +5,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { Provider } from '@supabase/supabase-js'
+import { BASE_URL } from '@/lib/constants'
 
 export const createSupabaseServerClient = async () => {
   const cookieStore = await cookies()
@@ -50,7 +51,7 @@ export async function requestPasswordReset(formData: FormData) {
   const email = String(formData.get('email'))
   const supabase = await createSupabaseServerClient()
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/update-password`,
+    redirectTo: `${BASE_URL}/update-password`,
   })
   if (error) {
     return { error: error.message }
@@ -129,7 +130,7 @@ export async function signInWithOAuth(provider: Provider) {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback`,
+      redirectTo: `${BASE_URL}/auth/callback`,
     },
   })
 console.log('OAuth data:', data);
