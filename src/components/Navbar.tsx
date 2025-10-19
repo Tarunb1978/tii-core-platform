@@ -163,7 +163,7 @@ export default function Navbar() {
               Resources
             </a> */}
             <Link 
-              href="/articles" 
+              href="/blogs" 
               className="text-gray-600 hover:text-gray-800 transition-all duration-200 hover:-translate-y-0.5 text-sm font-medium"
             >
               Articles
@@ -331,7 +331,7 @@ export default function Navbar() {
                   Resources
                 </a> */}
                 <Link 
-                  href="/articles" 
+                  href="/blogs" 
                   className="block px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors duration-200 text-right"
                   onClick={closeMobileMenu}
                 >
