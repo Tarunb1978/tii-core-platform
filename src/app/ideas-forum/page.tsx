@@ -44,53 +44,39 @@ type Idea = {
 
 // Types for INVEST_INDIA market overview data
 type Sector = {
-  sector: string;
-  price: number;
-  '1d_return': string;
-  '1m_return': string;
-  '6m_return': string;
-  '1y_return': string;
-  '2y_return': string;
+  name: string;
+  current_price: number | string;
+  daily_change_pct: string;
+  returns: {
+    '1m'?: string;
+    '6m'?: string;
+    '1y'?: string;
+    '2y'?: string;
+  };
 };
 
 type ETF = {
   name: string;
-  symbol: string;
   current_price: string | number;
-  returns: {
-    '1m_return'?: string;
-    '1y_return'?: string;
-    '2y_return'?: string;
-  };
   daily_change_pct: string;
-  year_high_low: {
-    year_low?: number;
-    year_high?: number;
-    distances?: any;
+  returns: {
+    '1m'?: string;
+    '6m'?: string;
+    '1y'?: string;
+    '2y'?: string;
   };
-  volume_analysis?: any;
-  fundamental_metrics?: any;
-  technical_indicators?: any;
 };
 
 type Index = {
   name: string;
-  symbol: string;
   current_price: string | number;
+  daily_change_pct: string;
   returns: {
-    '1m_return'?: string;
-    '1y_return'?: string;
-    '2y_return'?: string;
+    '1m'?: string;
+    '6m'?: string;
+    '1y'?: string;
+    '2y'?: string;
   };
-  daily_change?: string;
-  year_high_low: {
-    year_low?: number;
-    year_high?: number;
-    distances?: any;
-  };
-  volume_analysis?: any;
-  fundamental_metrics?: any;
-  technical_indicators?: any;
 };
 
 type MarketSentiment = {
@@ -341,191 +327,136 @@ async function fetchFinancialData(ticker: string, currentUser?: any, forceRefres
  * Parse INVEST_INDIA market overview data into structured sections
  */
 function parseInvestIndiaData(rawData: any) {
-  // Parsing INVEST_INDIA data
-  
   if (!rawData) {
-    // No raw data provided to parse
     return {
       sectors: [],
-      etfs: {},
-      indices: {},
+      etfs: [],
+      indices: [],
       market_sentiment: null
     };
   }
 
-  // CORRECT PARSING STRATEGY - Use rawData.financial_data.data.data structure
-  // Starting correct parsing strategy
+  // Extract from new structure: financial_data.data
+  const data = rawData.financial_data?.data || {};
   
-  // Extract data from the correct structure: rawData.financial_data.data.data
-  console.log("Raw API response:", rawData);
-  const deep = rawData.financial_data?.data?.data || {};
-  // Using correct path: rawData.financial_data.data.data
+  console.log('Parsing financial data:', data);
   
-  // Extract market data sections from the correct structure
-  // Extracting market data sections from rawData.financial_data.data.data
-  const sectors = deep.sectors || {};
-  const etfs = deep.etfs || {};
-  const indices = deep.indices || {};
-  const marketSentiment = deep.market_sentiment || null;
-  
-  // Market data sections extracted
+  // Parse sectors - already an array in API response
+  const parsedSectors: Sector[] = (data.sectors || []).map((sector: any) => ({
+    name: sector.name,
+    current_price: sector.current_price,
+    daily_change_pct: sector.daily_change_pct || 'N/A',
+    returns: {
+      '1m': sector.returns?.['1m'] || 'N/A',
+      '6m': sector.returns?.['6m'] || 'N/A',
+      '1y': sector.returns?.['1y'] || 'N/A',
+      '2y': sector.returns?.['2y'] || 'N/A'
+    }
+  }));
 
-  // Starting to parse each section from rawData.financial_data.data.data structure
+  // Parse ETFs - array in API response
+  const parsedETFs: ETF[] = (data.etfs || []).map((etf: any) => ({
+    name: etf.name,
+    current_price: etf.current_price || 'N/A',
+    daily_change_pct: etf.daily_change_pct || 'N/A',
+    returns: {
+      '1m': etf.returns?.['1m'] || 'N/A',
+      '6m': etf.returns?.['6m'] || 'N/A',
+      '1y': etf.returns?.['1y'] || 'N/A',
+      '2y': etf.returns?.['2y'] || 'N/A'
+    }
+  }));
 
-  // Parse sectors
-  
-  const parsedSectors: Sector[] = Object.keys(sectors).map((sectorKey, index) => {
-    const sector = sectors[sectorKey];
-    return {
-      sector: sector.name || sectorKey,
-      price: parseFloat(sector.current_price) || 0,
-      '1d_return': sector.daily_change_pct || 'N/A',
-      '1m_return': sector.returns?.['1m_return'] || 'N/A',
-      '6m_return': sector.returns?.['6m_return'] || 'N/A',
-      '1y_return': sector.returns?.['1y_return'] || 'N/A',
-      '2y_return': sector.returns?.['2y_return'] || 'N/A'
-    };
-  });
-  
-  // Sectors parsed
+  // Parse indices - array in API response
+  const parsedIndices: Index[] = (data.indices || []).map((index: any) => ({
+    name: index.name,
+    current_price: index.current_price || 'N/A',
+    daily_change_pct: index.daily_change_pct || 'N/A',
+    returns: {
+      '1m': index.returns?.['1m'] || 'N/A',
+      '6m': index.returns?.['6m'] || 'N/A',
+      '1y': index.returns?.['1y'] || 'N/A',
+      '2y': index.returns?.['2y'] || 'N/A'
+    }
+  }));
 
-  // Parse ETFs
-  
-  const parsedETFs: { [key: string]: ETF } = Object.keys(etfs).reduce((acc, symbol) => {
-    const etf = etfs[symbol];
-    acc[symbol] = {
-      name: etf.name || 'N/A',
-      symbol: etf.symbol || symbol,
-      current_price: etf.current_price || 'N/A',
-      returns: {
-        '1m_return': etf.returns?.['1m_return'] || 'N/A',
-        '1y_return': etf.returns?.['1y_return'] || 'N/A',
-        '2y_return': etf.returns?.['2y_return'] || 'N/A'
-      },
-      daily_change_pct: etf.daily_change_pct || 'N/A',
-      year_high_low: etf.year_high_low || {},
-      volume_analysis: etf.volume_analysis,
-      fundamental_metrics: etf.fundamental_metrics,
-      technical_indicators: etf.technical_indicators
-    };
-    return acc;
-  }, {} as { [key: string]: ETF });
-  
-  // ETFs parsed
+  console.log('Parsed sectors:', parsedSectors);
+  console.log('Parsed ETFs:', parsedETFs);
+  console.log('Parsed indices:', parsedIndices);
 
-  // Parse indices
-  
-  const parsedIndices: { [key: string]: Index } = Object.keys(indices).reduce((acc, indexName) => {
-    const index = indices[indexName];
-    acc[indexName] = {
-      name: index.name || 'N/A',
-      symbol: index.symbol || indexName,
-      current_price: index.current_price || 'N/A',
-      returns: {
-        '1m_return': index.returns?.['1m_return'] || 'N/A',
-        '1y_return': index.returns?.['1y_return'] || 'N/A',
-        '2y_return': index.returns?.['2y_return'] || 'N/A'
-      },
-      daily_change: index.daily_change || 'N/A',
-      year_high_low: index.year_high_low || {},
-      volume_analysis: index.volume_analysis,
-      fundamental_metrics: index.fundamental_metrics,
-      technical_indicators: index.technical_indicators
-    };
-    return acc;
-  }, {} as { [key: string]: Index });
-  
-  if (Object.keys(parsedIndices).length > 0) {
-  } else {
-  }
-
-  // Parse market sentiment with detailed logging
-  
-  const parsedMarketSentiment: MarketSentiment | null = marketSentiment ? {
-    analysis_time: marketSentiment.analysis_time || 'N/A',
-    major_indices: marketSentiment.major_indices || {},
-    total_sectors: marketSentiment.total_sectors || 0,
-    sentiment_score: marketSentiment.sentiment_score || 0,
-    negative_sectors: marketSentiment.negative_sectors || [],
-    positive_sectors: marketSentiment.positive_sectors || [],
-    overall_sentiment: marketSentiment.overall_sentiment || 'N/A',
-    sector_performance: marketSentiment.sector_performance || []
-  } : null;
-  
-  if (parsedMarketSentiment) {
-  } else {
-  }
-
-  // Final parsing summary
-  const parseResult = {
+  return {
     sectors: parsedSectors,
     etfs: parsedETFs,
     indices: parsedIndices,
-    market_sentiment: parsedMarketSentiment
+    market_sentiment: data.market_sentiment || null
   };
-  
-
-  return parseResult;
 }
 
 // Modular component for Sectors Performance Table (Long-Term Returns)
 function SectorsPerformanceTable({ sectors }: { sectors: Sector[] }) {
   if (sectors.length === 0) return null;
 
+  // Helper to parse percentage and determine color
+  const getColorClass = (value: string) => {
+    if (value === 'N/A' || value === '-') return 'text-gray-400';
+    const numValue = parseFloat(value.replace('%', ''));
+    return isNaN(numValue) ? 'text-gray-400' : numValue >= 0 ? 'text-green-600' : 'text-red-600';
+  };
+
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-4">
+    <div className="bg-gradient-to-br from-blue-50/40 to-indigo-50/40 rounded-xl border border-blue-100/60 p-4">
       <div className="flex items-center gap-2 mb-3">
         <span className="text-lg">📈</span>
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">
-            Sector Performance (Long-Term Returns)
+          <h3 className="text-sm font-semibold text-gray-600">
+            Sectoral Performance
           </h3>
-          <p className="text-xs text-gray-600 mt-1">
-            Multi-period return data for key Nifty sectors: 1M, 6M, 1Y, and 2Y
+          <p className="text-xs text-gray-400 mt-1">
+            Returns across 5 periods: 1D, 1M, 6M, 1Y, 2Y
           </p>
         </div>
       </div>
-      <div className="w-full">
-        <table className="w-full table-fixed divide-y divide-blue-200">
-          <thead className="bg-blue-100">
+      <div className="w-full overflow-x-auto">
+        <table className="w-full table-fixed divide-y divide-blue-100/60">
+          <thead className="bg-blue-50/60">
             <tr>
-              <th className="w-2/5 px-2 py-2 text-left text-xs font-medium text-blue-800 uppercase tracking-wider">Sector</th>
-              <th className="w-1/5 px-1 py-2 text-center text-xs font-medium text-blue-800 uppercase tracking-wider">1M Return</th>
-              <th className="w-1/5 px-1 py-2 text-center text-xs font-medium text-blue-800 uppercase tracking-wider">6M Return</th>
-              <th className="w-1/5 px-1 py-2 text-center text-xs font-medium text-blue-800 uppercase tracking-wider">
-                <div>1Y</div>
-                <div>Return</div>
-              </th>
-              <th className="w-1/5 px-1 py-2 text-center text-xs font-medium text-blue-800 uppercase tracking-wider">
-                <div>2Y</div>
-                <div>Return</div>
-              </th>
+              <th className="w-1/4 px-2 py-2 text-left text-xs font-medium text-blue-500 uppercase">Sector</th>
+              <th className="w-3/20 px-1 py-2 text-center text-xs font-medium text-blue-500 uppercase">1D</th>
+              <th className="w-3/20 px-1 py-2 text-center text-xs font-medium text-blue-500 uppercase">1M</th>
+              <th className="w-3/20 px-1 py-2 text-center text-xs font-medium text-blue-500 uppercase">6M</th>
+              <th className="w-3/20 px-1 py-2 text-center text-xs font-medium text-blue-500 uppercase">1Y</th>
+              <th className="w-3/20 px-1 py-2 text-center text-xs font-medium text-blue-500 uppercase">2Y</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white divide-y divide-gray-50">
             {sectors.map((sector, index) => (
-              <tr key={index} className="hover:bg-gray-50">
-                <td className="px-2 py-2 text-xs font-medium text-gray-900 truncate" title={sector.sector}>
-                  {sector.sector}
+              <tr key={index} className="hover:bg-blue-50/20">
+                <td className="px-2 py-2 text-xs font-medium text-gray-600 truncate" title={sector.name}>
+                  {sector.name}
                 </td>
                 <td className="px-1 py-2 text-center text-xs">
-                  <span className={`font-medium ${sector['1m_return']?.startsWith('-') ? 'text-red-600' : 'text-green-600'}`}>
-                    {sector['1m_return']}
+                  <span className={`font-medium ${getColorClass(sector.daily_change_pct)}`}>
+                    {sector.daily_change_pct}
                   </span>
                 </td>
                 <td className="px-1 py-2 text-center text-xs">
-                  <span className={`font-medium ${sector['6m_return']?.startsWith('-') ? 'text-red-600' : 'text-green-600'}`}>
-                    {sector['6m_return']}
+                  <span className={`font-medium ${getColorClass(sector.returns['1m'] || 'N/A')}`}>
+                    {sector.returns['1m'] || 'N/A'}
                   </span>
                 </td>
                 <td className="px-1 py-2 text-center text-xs">
-                  <span className={`font-medium ${sector['1y_return']?.startsWith('-') ? 'text-red-600' : 'text-green-600'}`}>
-                    {sector['1y_return']}
+                  <span className={`font-medium ${getColorClass(sector.returns['6m'] || 'N/A')}`}>
+                    {sector.returns['6m'] || 'N/A'}
                   </span>
                 </td>
                 <td className="px-1 py-2 text-center text-xs">
-                  <span className={`font-medium ${sector['2y_return']?.startsWith('-') ? 'text-red-600' : 'text-green-600'}`}>
-                    {sector['2y_return']}
+                  <span className={`font-medium ${getColorClass(sector.returns['1y'] || 'N/A')}`}>
+                    {sector.returns['1y'] || 'N/A'}
+                  </span>
+                </td>
+                <td className="px-1 py-2 text-center text-xs">
+                  <span className={`font-medium ${getColorClass(sector.returns['2y'] || 'N/A')}`}>
+                    {sector.returns['2y'] || 'N/A'}
                   </span>
                 </td>
               </tr>
@@ -538,68 +469,113 @@ function SectorsPerformanceTable({ sectors }: { sectors: Sector[] }) {
 }
 
 // Modular component for ETFs Performance (Daily Changes)
-function ETFsPerformanceCard({ etfs }: { etfs: { [key: string]: ETF } }) {
-  if (Object.keys(etfs).length === 0) return null;
+function ETFsPerformanceCard({ etfs }: { etfs: ETF[] }) {
+  if (etfs.length === 0) return null;
+
+  const getColorClass = (value: string) => {
+    if (value === 'N/A' || value === '-') return 'text-gray-400';
+    const numValue = parseFloat(value.replace('%', ''));
+    return isNaN(numValue) ? 'text-gray-400' : numValue >= 0 ? 'text-green-600' : 'text-red-600';
+  };
 
   return (
-    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 p-4">
+    <div className="bg-gradient-to-br from-green-50/40 to-emerald-50/40 rounded-xl border border-green-100/60 p-4">
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-lg">⚡️</span>
+        <span className="text-lg">📊</span>
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">
-            ETFs Performance
-          </h3>
-          <p className="text-xs text-gray-600 mt-1">
-            Today's price and daily percent changes
-          </p>
+          <h3 className="text-sm font-semibold text-gray-600">ETFs Performance</h3>
+          <p className="text-xs text-gray-400 mt-1">Returns across 5 periods: 1D, 1M, 6M, 1Y, 2Y</p>
         </div>
       </div>
-      <div className="space-y-2">
-        {Object.entries(etfs).slice(0, 3).map(([symbol, etf]) => (
-          <div key={symbol} className="text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600 font-medium truncate">{getDisplaySymbol(etf.symbol)}</span>
-              <span className="font-medium text-gray-900 ml-2">{etf.current_price}</span>
-            </div>
-            <div className={`text-xs font-medium ${etf.daily_change_pct?.startsWith('-') ? 'text-red-600' : 'text-green-600'}`}>
-              1D Change: {etf.daily_change_pct}
-            </div>
-          </div>
-        ))}
+      <div className="w-full overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead className="bg-green-50/60">
+            <tr>
+              <th className="px-2 py-1 text-left text-xs font-medium text-green-600 uppercase">ETF</th>
+              <th className="px-1 py-1 text-center text-xs font-medium text-green-600 uppercase">Price</th>
+              <th className="px-1 py-1 text-center text-xs font-medium text-green-600 uppercase">1D</th>
+              <th className="px-1 py-1 text-center text-xs font-medium text-green-600 uppercase">1M</th>
+              <th className="px-1 py-1 text-center text-xs font-medium text-green-600 uppercase">6M</th>
+              <th className="px-1 py-1 text-center text-xs font-medium text-green-600 uppercase">1Y</th>
+              <th className="px-1 py-1 text-center text-xs font-medium text-green-600 uppercase">2Y</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-50">
+            {etfs.map((etf, index) => (
+              <tr key={index} className="hover:bg-green-50/20">
+                <td className="px-2 py-1 text-xs font-medium text-gray-600 truncate">{etf.name}</td>
+                <td className="px-1 py-1 text-center text-xs text-gray-500">{etf.current_price}</td>
+                <td className="px-1 py-1 text-center text-xs"><span className={`font-medium ${getColorClass(etf.daily_change_pct)}`}>{etf.daily_change_pct}</span></td>
+                <td className="px-1 py-1 text-center text-xs"><span className={`font-medium ${getColorClass(etf.returns['1m'] || 'N/A')}`}>{etf.returns['1m'] || 'N/A'}</span></td>
+                <td className="px-1 py-1 text-center text-xs"><span className={`font-medium ${getColorClass(etf.returns['6m'] || 'N/A')}`}>{etf.returns['6m'] || 'N/A'}</span></td>
+                <td className="px-1 py-1 text-center text-xs"><span className={`font-medium ${getColorClass(etf.returns['1y'] || 'N/A')}`}>{etf.returns['1y'] || 'N/A'}</span></td>
+                <td className="px-1 py-1 text-center text-xs"><span className={`font-medium ${getColorClass(etf.returns['2y'] || 'N/A')}`}>{etf.returns['2y'] || 'N/A'}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 }
 
 // Modular component for Indices Performance (Daily Changes)
-function IndicesPerformanceCard({ indices }: { indices: { [key: string]: Index } }) {
-  if (Object.keys(indices).length === 0) return null;
+function IndicesPerformanceCard({ indices }: { indices: Index[] }) {
+  if (indices.length === 0) return null;
+
+  const getColorClass = (value: string) => {
+    if (value === 'N/A' || value === '-') return 'text-gray-400';
+    const numValue = parseFloat(value.replace('%', ''));
+    return isNaN(numValue) ? 'text-gray-400' : numValue >= 0 ? 'text-green-600' : 'text-red-600';
+  };
+
+  // Filter for NIFTY 50 and SENSEX only (case insensitive)
+  const filteredIndices = indices.filter((index) => {
+    const name = index.name.toLowerCase();
+    return name.includes('nifty 50') || name.includes('sensex');
+  });
+
+  // If no indices match the filter, show all indices as fallback
+  const indicesToShow = filteredIndices.length > 0 ? filteredIndices : indices;
+
+  if (indicesToShow.length === 0) return null;
 
   return (
-    <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl border border-orange-200 p-4">
+    <div className="bg-gradient-to-br from-orange-50/40 to-amber-50/40 rounded-xl border border-orange-100/60 p-4">
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-lg">⚡️</span>
+        <span className="text-lg">📊</span>
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">
-            Indices Performance
-          </h3>
-          <p className="text-xs text-gray-600 mt-1">
-            Today's price and daily percent changes
-          </p>
+          <h3 className="text-sm font-semibold text-gray-600">Indices Performance</h3>
+          <p className="text-xs text-gray-400 mt-1">NIFTY 50 & SENSEX returns: 1D, 1M, 6M, 1Y, 2Y</p>
         </div>
       </div>
-      <div className="space-y-2">
-        {Object.entries(indices).slice(0, 3).map(([indexName, index]) => (
-          <div key={indexName} className="text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600 font-medium truncate">{getDisplaySymbol(index.symbol)}</span>
-              <span className="font-medium text-gray-900 ml-2">{index.current_price}</span>
-            </div>
-            <div className={`text-xs font-medium ${index.daily_change?.startsWith('-') ? 'text-red-600' : 'text-green-600'}`}>
-              1D Change: {index.daily_change}
-            </div>
-          </div>
-        ))}
+      <div className="w-full overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead className="bg-orange-50/60">
+            <tr>
+              <th className="px-2 py-1 text-left text-xs font-medium text-orange-600 uppercase">Index</th>
+              <th className="px-1 py-1 text-center text-xs font-medium text-orange-600 uppercase">Price</th>
+              <th className="px-1 py-1 text-center text-xs font-medium text-orange-600 uppercase">1D</th>
+              <th className="px-1 py-1 text-center text-xs font-medium text-orange-600 uppercase">1M</th>
+              <th className="px-1 py-1 text-center text-xs font-medium text-orange-600 uppercase">6M</th>
+              <th className="px-1 py-1 text-center text-xs font-medium text-orange-600 uppercase">1Y</th>
+              <th className="px-1 py-1 text-center text-xs font-medium text-orange-600 uppercase">2Y</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-50">
+            {indicesToShow.map((index, idx) => (
+              <tr key={idx} className="hover:bg-orange-50/20">
+                <td className="px-2 py-1 text-xs font-medium text-gray-600 truncate">{index.name}</td>
+                <td className="px-1 py-1 text-center text-xs text-gray-500">{index.current_price}</td>
+                <td className="px-1 py-1 text-center text-xs"><span className={`font-medium ${getColorClass(index.daily_change_pct)}`}>{index.daily_change_pct}</span></td>
+                <td className="px-1 py-1 text-center text-xs"><span className={`font-medium ${getColorClass(index.returns['1m'] || 'N/A')}`}>{index.returns['1m'] || 'N/A'}</span></td>
+                <td className="px-1 py-1 text-center text-xs"><span className={`font-medium ${getColorClass(index.returns['6m'] || 'N/A')}`}>{index.returns['6m'] || 'N/A'}</span></td>
+                <td className="px-1 py-1 text-center text-xs"><span className={`font-medium ${getColorClass(index.returns['1y'] || 'N/A')}`}>{index.returns['1y'] || 'N/A'}</span></td>
+                <td className="px-1 py-1 text-center text-xs"><span className={`font-medium ${getColorClass(index.returns['2y'] || 'N/A')}`}>{index.returns['2y'] || 'N/A'}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
@@ -651,10 +627,10 @@ export default function IdeasForumPage() {
   const [financialData, setFinancialData] = useState<any>(null);
   const [financialLoading, setFinancialLoading] = useState(false);
   const [sectors, setSectors] = useState<Sector[]>([]);
-  const [etfs, setETFs] = useState<{ [key: string]: ETF }>({});
-  const [indices, setIndices] = useState<{ [key: string]: Index }>({});
+  const [etfs, setETFs] = useState<ETF[]>([]);
+  const [indices, setIndices] = useState<Index[]>([]);
   const [marketSentiment, setMarketSentiment] = useState<MarketSentiment | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  
   
   const user = useAuth();
   const supabase = createClient();
@@ -881,39 +857,11 @@ export default function IdeasForumPage() {
     setFilteredIdeas(filtered);
   }, [ideas, marketCapFilter, filterType, userActions]);
 
+
   const handleIdeaUpdate = (updatedIdea: Idea) => {
     setIdeas(prev => prev.map(idea => idea.id === updatedIdea.id ? updatedIdea : idea));
   };
 
-  // Manual refresh function for finance data
-  const handleRefreshFinanceData = async () => {
-    if (isRefreshing) return;
-    
-    setIsRefreshing(true);
-    setFinancialLoading(true);
-    
-    try {
-      const financialData = await fetchFinancialData('INVEST_INDIA', user?.currentUser, true); // Force refresh
-      
-      if (financialData) {
-        setFinancialData(financialData);
-        
-        // Parse the data into structured sections
-        const parsedData = parseInvestIndiaData(financialData);
-        
-        // Set each section in state
-        setSectors(parsedData.sectors);
-        setETFs(parsedData.etfs);
-        setIndices(parsedData.indices);
-        setMarketSentiment(parsedData.market_sentiment);
-      }
-    } catch (error) {
-      console.error('Error refreshing finance data:', error);
-    } finally {
-      setFinancialLoading(false);
-      setIsRefreshing(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -964,15 +912,15 @@ export default function IdeasForumPage() {
           <div className="lg:col-span-3">
 
             {loading ? (
-              <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-gray-500">
+              <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-gray-500 text-sm">
                 Loading ideas...
               </div>
             ) : error ? (
-              <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-red-500">
+              <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-red-500 text-sm">
                 {error}
               </div>
             ) : filteredIdeas.length === 0 ? (
-              <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-gray-500">
+              <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-gray-500 text-sm">
                 {!isAuthenticated
                   ? 'Login to see latest ideas'
                   : filterType === 'most_recent' 
@@ -994,112 +942,63 @@ export default function IdeasForumPage() {
           </div>
 
           <aside className="lg:col-span-2">
-            {/* Finance Data Card */}
-            {financialLoading ? (
-              <div className="bg-white rounded-xl border border-gray-100 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-gray-900">
-                    Market Data
-                  </h3>
-                  <button
-                    onClick={handleRefreshFinanceData}
-                    disabled={isRefreshing}
-                    className="text-xs text-blue-600 hover:text-blue-800 disabled:text-gray-400 disabled:cursor-not-allowed"
-                  >
-                    {isRefreshing ? 'Refreshing...' : 'Refresh'}
-                  </button>
-                </div>
-                <div className="text-center text-gray-500 text-sm">
-                  Markets Data Loading...
-                </div>
-              </div>
-            ) : financialData?.error ? (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium text-red-900">
-                    {financialData.envError ? 'Configuration Error' : 'API Error'}
-                  </h4>
-                  <button
-                    onClick={handleRefreshFinanceData}
-                    disabled={isRefreshing}
-                    className="text-xs text-red-600 hover:text-red-800 disabled:text-gray-400 disabled:cursor-not-allowed"
-                  >
-                    {isRefreshing ? 'Retrying...' : 'Retry'}
-                  </button>
-                </div>
-                <p className="text-red-700 text-sm">{financialData.error}</p>
-                {financialData.envError && (
-                  <div className="mt-3 p-3 bg-red-100 rounded">
-                    <p className="text-red-800 text-xs font-medium mb-2">Missing Environment Variables:</p>
-                    <ul className="text-red-700 text-xs space-y-1">
-                      {financialData.missingVars?.supabaseUrl && <li>• NEXT_PUBLIC_SUPABASE_URL</li>}
-                      {financialData.missingVars?.anonKey && <li>• NEXT_PUBLIC_SUPABASE_ANON_KEY</li>}
-                    </ul>
+            {/* Market Data Sidebar */}
+            <div>
+              
+              {/* Finance Data Card */}
+              {financialLoading ? (
+                <div className="bg-white rounded-xl border border-gray-100 p-6">
+                  <div className="text-center text-gray-500 text-sm">
+                    Markets Data Loading...
                   </div>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {/* Market Data Header with Refresh */}
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-gray-900">
-                    Market Data
-                  </h3>
-                  <button
-                    onClick={handleRefreshFinanceData}
-                    disabled={isRefreshing}
-                    className="text-xs text-blue-600 hover:text-blue-800 disabled:text-gray-400 disabled:cursor-not-allowed"
-                  >
-                    {isRefreshing ? 'Refreshing...' : 'Refresh'}
-                  </button>
                 </div>
-
-                {/* Explanatory Note */}
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                  <p className="text-xs text-gray-600">
-                    <span className="font-medium">💡 Data Purpose:</span> Long-term data is suitable for trend analysis, daily change highlights current market momentum.
-                  </p>
-                </div>
-                
-                {/* Long-Term Returns Section */}
-                <div className="space-y-4">
-                  <SectorsPerformanceTable sectors={sectors} />
-                </div>
-
-                {/* Market Movers Section (Daily Changes) */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-lg">⚡️</span>
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-900">
-                        Market Movers (Daily Changes)
-                      </h3>
-                      <p className="text-xs text-gray-600 mt-1">
-                        Today's price and daily percent changes for major indices and ETFs
-                      </p>
+              ) : financialData?.error ? (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="mb-2">
+                    <h4 className="font-medium text-red-900">
+                      {financialData.envError ? 'Configuration Error' : 'API Error'}
+                    </h4>
+                  </div>
+                  <p className="text-red-700 text-sm">{financialData.error}</p>
+                  {financialData.envError && (
+                    <div className="mt-3 p-3 bg-red-100 rounded">
+                      <p className="text-red-800 text-xs font-medium mb-2">Missing Environment Variables:</p>
+                      <ul className="text-red-700 text-xs space-y-1">
+                        {financialData.missingVars?.supabaseUrl && <li>• NEXT_PUBLIC_SUPABASE_URL</li>}
+                        {financialData.missingVars?.anonKey && <li>• NEXT_PUBLIC_SUPABASE_ANON_KEY</li>}
+                      </ul>
                     </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-6">
+
+                  {/* Long-Term Returns Section */}
+                  <div className="space-y-4">
+                    <SectorsPerformanceTable sectors={sectors} />
                   </div>
-                  
-                  <div className="space-y-3">
+
+                  {/* Market Movers Section */}
+                  <div className="space-y-4">
+                    <div className="space-y-3">
                     <ETFsPerformanceCard etfs={etfs} />
                     <IndicesPerformanceCard indices={indices} />
                   </div>
-                </div>
-
-                {/* Market Sentiment */}
-                <MarketSentimentCard marketSentiment={marketSentiment} />
-
-                {/* No Data State */}
-                {sectors.length === 0 && Object.keys(etfs).length === 0 && Object.keys(indices).length === 0 && !marketSentiment && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                    <div className="text-yellow-800 font-medium text-xs mb-1">No market data available</div>
-                    <div className="text-yellow-700 text-xs">
-                      Check console for debugging information
-                    </div>
                   </div>
-                )}
-              </div>
-            )}
+
+
+                  {/* No Data State */}
+                  {sectors.length === 0 && etfs.length === 0 && indices.length === 0 && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                      <div className="text-yellow-800 font-medium text-xs mb-1">No market data available</div>
+                      <div className="text-yellow-700 text-xs">
+                        Check console for debugging information
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </aside>
         </div>
       </main>

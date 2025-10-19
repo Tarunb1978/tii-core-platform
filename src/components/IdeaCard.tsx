@@ -93,6 +93,35 @@ export default function IdeaCard({
   const [authorName, setAuthorName] = useState<string | null>(null);
   const [commentUserNames, setCommentUserNames] = useState<Record<string, string>>({});
 
+  // Helper function to truncate HTML content to 100 words
+  const truncateHTMLContent = (htmlContent: string, wordLimit: number = 100) => {
+    if (!htmlContent) return '';
+    
+    // Create a temporary div to parse HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlContent;
+    
+    // Get text content and split into words
+    const textContent = tempDiv.textContent || tempDiv.innerText || '';
+    const words = textContent.trim().split(/\s+/);
+    
+    if (words.length <= wordLimit) {
+      return htmlContent; // Return original if within limit
+    }
+    
+    // Truncate to word limit
+    const truncatedWords = words.slice(0, wordLimit);
+    const truncatedText = truncatedWords.join(' ');
+    
+    // Find the last complete sentence or add ellipsis
+    const lastSentenceEnd = truncatedText.lastIndexOf('.');
+    const finalText = lastSentenceEnd > truncatedText.length * 0.7 
+      ? truncatedText.substring(0, lastSentenceEnd + 1)
+      : truncatedText + '...';
+    
+    return finalText;
+  };
+
   // Helpers
   const getInitials = (name?: string | null) => {
     const n = (name || '').trim();
@@ -377,19 +406,19 @@ export default function IdeaCard({
               </span>
             </div>
             <div>
-              <div className="font-medium text-gray-900">
+              <div className="font-medium text-gray-900 text-sm">
                 {authorName || 'Market Expert'}
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-xs text-gray-500">
                 {formatISTDateTime(d.submission_timestamp || idea.created_at)}
               </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+            <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
               {d.position_type || 'Position Type'}
             </span>
-            <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+            <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
               {d.market_cap || 'Market'} Cap
             </span>
             <button 
@@ -411,7 +440,7 @@ export default function IdeaCard({
 
         {/* Breadcrumb Navigation */}
         {showBreadcrumb && (
-          <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+          <div className="flex items-center gap-2 text-xs text-gray-500 mb-4">
             <Link href="/" className="flex items-center gap-1 hover:text-gray-700 transition-colors">
               <Home className="w-4 h-4" />
               Home
@@ -428,38 +457,36 @@ export default function IdeaCard({
         {/* Title */}
         <div className="mb-3">
           <h1 
-            className="text-xl font-bold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+            className="text-lg font-bold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
             onClick={handleTitleClick}
           >
             <div className="flex items-center gap-2 text-gray-700">
               <Building2 className="w-4 h-4 text-gray-400" />
-              <span className="text-sm">{d.company_name}</span>
+              <span className="text-xs">{d.company_name}</span>
             </div>
           </h1>
         </div>
 
-        {/* Description (HTML) - Always show full content */}
+        {/* Description (HTML) - Truncated to 100 words with improved expand/collapse */}
         <div className="mb-4">
           {(() => {
             // Helper: strip HTML tags for measuring length
             const plainText = d.description?.replace(/<[^>]+>/g, '') || '';
-            // eslint-disable-next-line react-hooks/rules-of-hooks
             const [expanded, setExpanded] = useState(false);
             const isLong = plainText.length > 300;
 
-            // Show truncated HTML safely
-            const truncatedHTML = d.description
-              ? d.description.slice(0, 300) + (isLong ? '...' : '')
-              : '';
-
-            const contentToDisplay = expanded || !isLong ? d.description : truncatedHTML;
+            // Use the improved truncation function for better word-based truncation
+            const truncatedContent = truncateHTMLContent(d.description || '');
+            const shouldShowTruncated = !expanded && isLong;
 
             return (
               <>
                 <div
                   className="prose max-w-none prose-img:rounded-lg prose-img:border prose-img:border-gray-100 transition-all duration-300"
                   onClick={(e) => e.stopPropagation()}
-                  dangerouslySetInnerHTML={{ __html: contentToDisplay }}
+                  dangerouslySetInnerHTML={{ 
+                    __html: shouldShowTruncated ? truncatedContent : (d.description || '') 
+                  }}
                 />
                 {isLong && (
                   <button
@@ -467,9 +494,9 @@ export default function IdeaCard({
                       e.stopPropagation();
                       setExpanded((prev) => !prev);
                     }}
-                    className="mt-2 text-blue-600 font-medium hover:underline focus:outline-none"
+                    className="mt-2 text-blue-600 text-xs font-medium hover:underline focus:outline-none"
                   >
-                    {expanded ? 'Show Less' : 'Read More'}
+                    {expanded ? 'Show Less' : 'Read More Details'}
                   </button>
                 )}
               </>
@@ -480,14 +507,14 @@ export default function IdeaCard({
         {/* Stock Details */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-gray-900">{d.ticker}</span>
-            <span className="text-lg font-semibold text-gray-900">
+            <span className="font-bold text-gray-900 text-sm">{d.ticker}</span>
+            <span className="text-base font-semibold text-gray-900">
               ₹{d.current_price ?? 'N/A'}
             </span>
           </div>
           <div className="text-right">
-            <div className="text-sm text-gray-500">Timeline Horizon</div>
-            <div className="font-medium text-gray-900">{d.investment_horizon || 'Long Term'}</div>
+            <div className="text-xs text-gray-500">Timeline Horizon</div>
+            <div className="font-medium text-gray-900 text-sm">{d.investment_horizon || 'Long Term'}</div>
           </div>
         </div>
 
@@ -527,7 +554,7 @@ export default function IdeaCard({
           {!disabledNavigate && !showBackButton && (
             <div className="text-right">
               <button
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium underline hover:no-underline transition-all duration-200 flex items-center gap-1 ml-auto"
+                className="text-blue-600 hover:text-blue-800 text-xs font-medium underline hover:no-underline transition-all duration-200 flex items-center gap-1 ml-auto"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleCardClick();
@@ -545,10 +572,10 @@ export default function IdeaCard({
       {showComments && (
         <div className="p-6 border-t border-gray-100">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-base font-semibold text-gray-900">
               Discussion for {d.ticker}
             </h3>
-            <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+            <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
               {discussionsCount} messages
             </span>
           </div>
@@ -558,7 +585,7 @@ export default function IdeaCard({
             {['Earnings Analysis', 'Technical Charts', 'Sector Comparison', 'Risk Assessment', 'Price Targets'].map((tag) => (
               <button
                 key={tag}
-                className="px-3 py-1 bg-gray-50 hover:bg-gray-100 text-gray-700 text-sm rounded-full transition-colors"
+                className="px-3 py-1 bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs rounded-full transition-colors"
                 onClick={(e) => e.stopPropagation()}
               >
                 {tag}
@@ -590,14 +617,14 @@ export default function IdeaCard({
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-gray-900 text-sm">
+                        <span className="font-medium text-gray-900 text-xs">
                           {displayName}
                         </span>
                         <span className="text-gray-500 text-xs">
                           {formatISTDateTime(comment.created_at)}
                         </span>
                       </div>
-                      <p className="text-gray-700 text-sm leading-relaxed">
+                      <p className="text-gray-700 text-xs leading-relaxed">
                         {comment.content}
                       </p>
                     </div>
