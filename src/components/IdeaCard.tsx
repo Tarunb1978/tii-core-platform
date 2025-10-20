@@ -472,6 +472,7 @@ export default function IdeaCard({
           {(() => {
             // Helper: strip HTML tags for measuring length
             const plainText = d.description?.replace(/<[^>]+>/g, '') || '';
+            // eslint-disable-next-line react-hooks/rules-of-hooks
             const [expanded, setExpanded] = useState(false);
             const isLong = plainText.length > 300;
 

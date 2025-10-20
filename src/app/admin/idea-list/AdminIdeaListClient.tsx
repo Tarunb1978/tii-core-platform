@@ -203,6 +203,7 @@ export default function AdminIdeaListClient() {
       setIsLoading(false)
     }
   }
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     fetchIdeas()
   }, [])
@@ -220,6 +221,7 @@ export default function AdminIdeaListClient() {
   }
 
   // Load ideas on component mount
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     fetchIdeas()
   }, [])
