@@ -23,7 +23,7 @@ export default function SubmitIdeaGuidelines() {
         throw new Error('No access token');
       }
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_EDGE_FUNCTION_URL}/app-user/me`, {
+      const res = await fetch(`https://acsobefarzmetevcseal.supabase.co/functions/v1/app-user/me`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
 

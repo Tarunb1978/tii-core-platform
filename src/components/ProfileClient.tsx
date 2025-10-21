@@ -50,7 +50,7 @@ export default function ProfileClient() {
       console.log('Fetching profile for user:', currentUser.user.id);
       
 
-      const apiUrl = `${process.env.NEXT_PUBLIC_SUPABASE_EDGE_FUNCTION_URL}/app-user/me`;
+      const apiUrl = `https://acsobefarzmetevcseal.supabase.co/functions/v1/app-user/me`;
       console.log('API URL:', apiUrl);
 
       // Fetch profile from API
@@ -149,7 +149,7 @@ export default function ProfileClient() {
       if (formData.investor_bio !== undefined) updateFields.investor_bio = formData.investor_bio;
 
       // Update profile via API
-      const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_EDGE_FUNCTION_URL}/app-user/me`, {
+      const response = await fetch(`https://acsobefarzmetevcseal.supabase.co/functions/v1/app-user/me`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
