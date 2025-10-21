@@ -28,7 +28,7 @@ export default function SignIn() {
     if (result?.error) {
       setError(result.error) // show error under password
     } else {
-      router.push('/') // ✅ go to home on success
+      window.location.href = '/'
     }
   }
 

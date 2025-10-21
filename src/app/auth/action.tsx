@@ -135,7 +135,6 @@ export async function signInWithOAuth(provider: Provider) {
       redirectTo: `${BASE_URL}/auth/callback`,
     },
   })
-console.log('OAuth data:', data);
   if (error) {
     console.error('OAuth error:', error.message);
     return redirect('/login?message=Could not authenticate with provider');

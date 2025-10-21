@@ -40,7 +40,7 @@ export default function SignUp() {
   }
 
   toast.success('Account created successfully 🎉');
-  router.push('/'); // ✅ navigate normally
+  window.location.href = '/';
 };
 
 
