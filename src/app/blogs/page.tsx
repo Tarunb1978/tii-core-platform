@@ -86,7 +86,7 @@ export default function BlogsPage() {
                 href={`/blogs/${blog.slug}`}
                 className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md hover:border-blue-200 transition-all duration-200"
               >
-                <div className="relative w-full h-48">
+                <div className="relative w-full aspect-[1000/500] bg-gray-100">
                   {(() => {
                     const IMAGE_BASE = process.env.NEXT_PUBLIC_SUPABASE_IMAGE_BASE;
                     const imageSrc = blog.blog_image
@@ -98,7 +98,7 @@ export default function BlogsPage() {
                         src={imageSrc}
                         alt={blog.title}
                         fill
-                        className="object-cover"
+                        className="object-cover object-top"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
                     );

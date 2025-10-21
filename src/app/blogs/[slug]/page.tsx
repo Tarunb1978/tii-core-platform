@@ -114,12 +114,12 @@ export default async function BlogPage({ params }: BlogPageProps) {
         {/* Blog Header */}
         <article className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           {/* Blog Image */}
-          <div className="relative w-full h-64 md:h-80">
+          <div className="relative w-full h-72 md:h-88">
             <Image
               src={imageSrc}
               alt={blog.title}
               fill
-              className="object-cover"
+              className="object-cover object-top"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
               priority
             />
@@ -133,7 +133,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
             </h1>
 
             {/* Excerpt */}
-            <p className="text-gray-600 italic text-lg mb-4 leading-relaxed">
+            <p className="text-gray-600 italic text-xs mb-4 leading-relaxed">
               {blog.excerpt}
             </p>
 
@@ -161,7 +161,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
             )}
 
             {/* Blog Content */}
-            <div className="prose max-w-none prose-lg prose-headings:text-gray-900 prose-headings:font-bold prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-ul:text-gray-700 prose-ol:text-gray-700 prose-li:text-gray-700 prose-blockquote:text-gray-600 prose-blockquote:border-blue-200 prose-code:text-gray-800 prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-gray-100 prose-pre:text-gray-800">
+            <div className="prose max-w-none prose prose-headings:text-gray-900 prose-headings:font-bold prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-ul:text-gray-700 prose-ol:text-gray-700 prose-li:text-gray-700 prose-blockquote:text-gray-600 prose-blockquote:border-blue-200 prose-code:text-gray-800 prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-gray-100 prose-pre:text-gray-800">
               <div 
                 dangerouslySetInnerHTML={{ __html: blog.blog_content.html }}
               />
