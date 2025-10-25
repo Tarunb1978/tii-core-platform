@@ -21,9 +21,9 @@ export default function Navbar() {
   // Get authentication state from AuthProvider
   const { currentUser, isLoading } = useAuth();
   
-  // Normalize submitted flag to boolean with proper safeguards
+  // Normalize submitted flag to boolean with proper safeguards and case-insensitive comparison
   const hasSubmittedIdea = currentUser?.submitted_idea
-  ? currentUser.submitted_idea === 'true' || currentUser.submitted_idea === '1'
+  ? (String(currentUser.submitted_idea).toLowerCase() === 'true' || currentUser.submitted_idea === '1')
   : false;
 
   
