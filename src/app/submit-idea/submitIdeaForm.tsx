@@ -314,13 +314,6 @@ useEffect(() => {
       'stockSymbol',
       'positionType',
       'investmentHorizon',
-      'marketCap',
-      'currentStockPrice',
-      'week52High',
-      'week52Low',
-      'annualRevenue',
-      'eps',
-      'peRatio',
       'investmentDescription'
     ];
 
@@ -394,12 +387,8 @@ useEffect(() => {
           ticker: formData.stockSymbol,
           
           // Price information (parsed as numbers with fallback to undefined)
-          current_price: parseNumericValue(formData.currentStockPrice),
-          target_price: parseNumericValue(formData.week52High), // Using week52High as target price
           
           // 52-week price range
-          week52_high: parseNumericValue(formData.week52High),
-          week52_low: parseNumericValue(formData.week52Low),
         },
         // Stock details object: Contains all financial metrics and stock-specific data
         stock_details: {
@@ -700,136 +689,10 @@ useEffect(() => {
                 </select>
               </div>
             </div>
-            
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="marketCap" className="block text-sm font-medium text-gray-700 mb-2">
-                  Market Cap *
-                </label>
-                <select
-                  id="marketCap"
-                  value={formData.marketCap}
-                  onChange={(e) => handleInputChange('marketCap', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  required
-                >
-                  <option value="">Select market cap</option>
-                  {marketCapOptions.map((cap) => (
-                    <option key={cap} value={cap}>
-                      {cap}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
           </div>
 
           {/* Financial Data Section */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-yellow-600" />
-              </div>
-              <h2 className="text-xl font-semibold text-gray-900">Financial Data</h2>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <label htmlFor="currentStockPrice" className="block text-sm font-medium text-gray-700 mb-2">
-                  Current Stock Price (₹) *
-                </label>
-                <input
-                  type="number"
-                  id="currentStockPrice"
-                  value={formData.currentStockPrice}
-                  onChange={(e) => handleInputChange('currentStockPrice', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="e.g., 2450.50"
-                  step="0.01"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="week52High" className="block text-sm font-medium text-gray-700 mb-2">
-                  52 Week High (₹) *
-                </label>
-                <input
-                  type="number"
-                  id="week52High"
-                  value={formData.week52High}
-                  onChange={(e) => handleInputChange('week52High', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="e.g., 2800.00"
-                  step="0.01"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="week52Low" className="block text-sm font-medium text-gray-700 mb-2">
-                  52 Week Low (₹) *
-                </label>
-                <input
-                  type="number"
-                  id="week52Low"
-                  value={formData.week52Low}
-                  onChange={(e) => handleInputChange('week52Low', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="e.g., 2100.00"
-                  step="0.01"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="annualRevenue" className="block text-sm font-medium text-gray-700 mb-2">
-                  Annual Revenue (₹ Cr) *
-                </label>
-                <input
-                  type="number"
-                  id="annualRevenue"
-                  value={formData.annualRevenue}
-                  onChange={(e) => handleInputChange('annualRevenue', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="e.g., 50000"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="eps" className="block text-sm font-medium text-gray-700 mb-2">
-                  EPS (₹) *
-                </label>
-                <input
-                  type="number"
-                  id="eps"
-                  value={formData.eps}
-                  onChange={(e) => handleInputChange('eps', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="e.g., 85.50"
-                  step="0.01"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="peRatio" className="block text-sm font-medium text-gray-700 mb-2">
-                  P/E Ratio *
-                </label>
-                <input
-                  type="number"
-                  id="peRatio"
-                  value={formData.peRatio}
-                  onChange={(e) => handleInputChange('peRatio', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="e.g., 28.65"
-                  step="0.01"
-                  required
-                />
-              </div>
-            </div>
-          </div>
+          
 
           {/* Investment Thesis Section */}
           <div className="bg-white rounded-xl shadow-md border border-gray-100 p-4">
