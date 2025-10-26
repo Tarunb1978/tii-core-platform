@@ -2,6 +2,7 @@
 
 import Navbar from '@/components/Navbar';
 import IdeaCard from '@/components/IdeaCard';
+import MarketGlanceWidget from '@/components/MarketGlanceWidget';
 import { ChevronDown } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 import { useState, useEffect } from 'react';
@@ -908,8 +909,8 @@ export default function IdeasForumPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-          <div className="lg:col-span-3">
+        <div className="max-w-7xl mx-auto">
+          <div className="w-full">
 
             {loading ? (
               <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-gray-500 text-sm">
@@ -940,68 +941,17 @@ export default function IdeasForumPage() {
               </div>
             )}
           </div>
-
-          <aside className="lg:col-span-2">
-            {/* Market Data Sidebar */}
-            <div>
-              
-              {/* Finance Data Card */}
-              {financialLoading ? (
-                <div className="bg-white rounded-xl border border-gray-100 p-6">
-                  <div className="text-center text-gray-500 text-sm">
-                    Markets Data Loading...
-                  </div>
-                </div>
-              ) : financialData?.error ? (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <div className="mb-2">
-                    <h4 className="font-medium text-red-900">
-                      {financialData.envError ? 'Configuration Error' : 'API Error'}
-                    </h4>
-                  </div>
-                  <p className="text-red-700 text-sm">{financialData.error}</p>
-                  {financialData.envError && (
-                    <div className="mt-3 p-3 bg-red-100 rounded">
-                      <p className="text-red-800 text-xs font-medium mb-2">Missing Environment Variables:</p>
-                      <ul className="text-red-700 text-xs space-y-1">
-                        {financialData.missingVars?.supabaseUrl && <li>• NEXT_PUBLIC_SUPABASE_URL</li>}
-                        {financialData.missingVars?.anonKey && <li>• NEXT_PUBLIC_SUPABASE_ANON_KEY</li>}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-6">
-
-                  {/* Long-Term Returns Section */}
-                  <div className="space-y-4">
-                    <SectorsPerformanceTable sectors={sectors} />
-                  </div>
-
-                  {/* Market Movers Section */}
-                  <div className="space-y-4">
-                    <div className="space-y-3">
-                    <ETFsPerformanceCard etfs={etfs} />
-                    <IndicesPerformanceCard indices={indices} />
-                  </div>
-                  </div>
-
-
-                  {/* No Data State */}
-                  {sectors.length === 0 && etfs.length === 0 && indices.length === 0 && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                      <div className="text-yellow-800 font-medium text-xs mb-1">No market data available</div>
-                      <div className="text-yellow-700 text-xs">
-                        Check console for debugging information
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </aside>
         </div>
       </main>
+
+      {/* Floating Market Glance Widget */}
+      <MarketGlanceWidget 
+        sectors={sectors} 
+        etfs={etfs} 
+        indices={indices}
+        financialLoading={financialLoading}
+        financialData={financialData}
+      />
 
       <Toaster
       position="top-center"
