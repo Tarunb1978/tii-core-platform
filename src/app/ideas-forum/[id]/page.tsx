@@ -578,7 +578,13 @@ export default function IdeaDetailPage({ params }: { params: Promise<{ id: strin
         show: true,
       },
       zoom: {
-        enabled: true,
+        enabled: false,
+      },
+      pan: {
+        enabled: false,
+      },
+      selection: {
+        enabled: false,
       },
       animations: {
         enabled: true,
