@@ -124,13 +124,10 @@ const FINANCIAL_DATA_API_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(
 
 // Enhanced Environment verification function with color-coded output
 function verifyEnvironment() {
-  console.log('🔍 Environment Verification:');
-  console.log('='.repeat(50));
   
   // Check Supabase URL
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (supabaseUrl) {
-    console.log('✅ NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl);
   } else {
     console.error('❌ NEXT_PUBLIC_SUPABASE_URL is missing');
   }
@@ -138,27 +135,14 @@ function verifyEnvironment() {
   // Check anon key with detailed validation
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (supabaseAnonKey && supabaseAnonKey.trim() !== '') {
-    console.log('✅ NEXT_PUBLIC_SUPABASE_ANON_KEY: present (length:', supabaseAnonKey.length, ')');
-    console.log('✅ Anon key starts with "eyJ":', supabaseAnonKey.startsWith('eyJ'));
   } else {
-    console.error('❌ NEXT_PUBLIC_SUPABASE_ANON_KEY is missing or empty');
-    console.error('❌ This will cause 401/404/CORS errors on API calls');
   }
   
   // Construct and verify API URL
   if (supabaseUrl) {
     const apiUrl = `${supabaseUrl.replace(/\/$/, '')}/functions/v1/finance-data`;
-    console.log('🔗 Constructed API URL:', apiUrl);
-    console.log('🔗 URL validation:');
-    console.log('  - Contains functions.supabase.co:', apiUrl.includes('functions.supabase.co'));
-    console.log('  - Contains /functions/v1/:', apiUrl.includes('/functions/v1/'));
-    console.log('  - Contains /v1/ (required):', apiUrl.includes('/v1/'));
-    console.log('  - Ends with /finance-data:', apiUrl.endsWith('/finance-data'));
   }
   
-  console.log('🌍 NODE_ENV:', process.env.NODE_ENV);
-  console.log('🌐 Current URL:', typeof window !== 'undefined' ? window.location.href : 'server-side');
-  console.log('='.repeat(50));
   
   // Return validation results
   return {
@@ -239,7 +223,6 @@ function organizeFinancialData(rawFinancialData: any) {
 
   // Proceed as before - mapping fields as per your UI's expectation
   const dividendYieldFormatted = formatDividendYield(growthmetrics["Dividend Yield"]);
-  console.log("Formatted Dividend Yield in organizeFinancialData:", dividendYieldFormatted);
   
   const organized = {
     companyOverview: {
@@ -289,7 +272,6 @@ function organizeFinancialData(rawFinancialData: any) {
   };
 
   // Add logging for debug
-  console.log("organizeFinancialData output", organized);
   return organized;
 }
 
@@ -367,18 +349,11 @@ async function fetchFinancialData(ticker: string, currentUser?: any) {
   
   // Supabase Edge Functions require '/v1/' in the functions endpoint path (see official docs)
   const FINANCIALDATAAPIURL = `${baseSupabaseUrl?.replace(/\/$/, '')}/functions/v1/finance-data`;
-  console.log("Finance Data API URL:", FINANCIALDATAAPIURL);
   
   const fullFetchUrl = `${FINANCIALDATAAPIURL}?ticker=${ticker}`;
   console.debug("Full financial data fetch URL:", fullFetchUrl);
   
   // Verify URL format against Supabase docs
-  console.debug("URL format verification:");
-  console.debug("- Contains 'functions.supabase.co'?", fullFetchUrl.includes('functions.supabase.co'));
-  console.debug("- Contains '/functions/v1/' (correct path)?", fullFetchUrl.includes('/functions/v1/'));
-  console.debug("- Contains '/v1/' (required)?", fullFetchUrl.includes('/v1/'));
-  console.debug("- Ends with '/finance-data'?", fullFetchUrl.includes('/finance-data'));
-  console.debug("- Has query parameter?", fullFetchUrl.includes('?ticker='));
   
   // Get Supabase anon key from environment
   const apiKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -421,15 +396,6 @@ async function fetchFinancialData(ticker: string, currentUser?: any) {
     throw new Error('Authorization header is missing or empty');
   }
   
-  // Log full headers object with security truncation
-  console.log("📤 Headers being sent in fetch:");
-  console.log("📤 Full headers object:", {
-    apikey: headers.apikey ? `${headers.apikey.substring(0, 20)}...` : 'missing',
-    Authorization: headers.Authorization ? `${headers.Authorization.substring(0, 30)}...` : 'missing',
-    'Content-Type': headers['Content-Type']
-  });
-  console.debug("Authorization header present:", !!headers.Authorization);
-  console.debug("Apikey header present:", !!headers.apikey);
   
   // Document the authentication strategy being used
   if (accessToken) {
@@ -439,30 +405,11 @@ async function fetchFinancialData(ticker: string, currentUser?: any) {
   }
   
   try {
-    // Debug log for Supabase API headers
-    console.log("Supabase API headers:", {
-      apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? `${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.substring(0, 20)}...` : 'missing',
-      Authorization: headers.Authorization ? `${headers.Authorization.substring(0, 30)}...` : 'missing'
-    });
-    
-    // Log API URL and headers before fetch
-    console.log("🚀 Making fetch request to:", fullFetchUrl);
-    console.log("📤 Headers being sent:", {
-      apikey: headers.apikey ? `${headers.apikey.substring(0, 20)}...` : 'missing',
-      Authorization: headers.Authorization ? `${headers.Authorization.substring(0, 30)}...` : 'missing',
-      'Content-Type': headers['Content-Type']
-    });
-    console.log("🔗 Full fetch URL:", fullFetchUrl);
-    console.log("📋 Full headers object:", headers);
-    
+
     const response = await fetch(fullFetchUrl, {
       method: 'GET',
       headers
     });
-    
-    console.log("Fetched API response:", response);
-    console.debug('Financial data fetch response status:', response.status);
-    console.debug('Financial data fetch response headers:', Object.fromEntries(response.headers.entries()));
     
     if (!response.ok) {
       const errorText = await response.text();
@@ -501,11 +448,6 @@ async function fetchFinancialData(ticker: string, currentUser?: any) {
     }
     
     const result = await response.json();
-    console.log("✅ API Response received successfully");
-    console.log("📊 Full API response:", result);
-    console.log("📊 Response data type:", typeof result);
-    console.log("📊 Response keys:", Object.keys(result || {}));
-    console.debug('Financial data received:', result);
     return result.financial_data || result || null;
   } catch (error) {
     const err = error as Error;
@@ -601,7 +543,6 @@ useEffect(() => {
   
   // Clear console for clean debugging
   console.clear();
-  console.log('🚀 Starting idea fetch process for ID:', id);
 
   async function getIdea() {
     console.debug('Starting to fetch idea with ID:', id);
@@ -664,7 +605,6 @@ useEffect(() => {
         console.debug('Session expires in:', session?.expires_at ? new Date(session.expires_at * 1000) : 'N/A');
         
         // Runtime Environment Check - Critical validation before any fetch
-        console.log('🔍 Runtime Environment Check - Validating Supabase credentials...');
         
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
         const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -673,12 +613,8 @@ useEffect(() => {
         const isSupabaseUrlValid = supabaseUrl && supabaseUrl.trim() !== '';
         const isAnonKeyValid = supabaseAnonKey && supabaseAnonKey.trim() !== '';
         
-        console.log('🔍 Environment Check Results:');
-        console.log('  - NEXT_PUBLIC_SUPABASE_URL:', isSupabaseUrlValid ? '✅ Present' : '❌ Missing/Empty');
-        console.log('  - NEXT_PUBLIC_SUPABASE_ANON_KEY:', isAnonKeyValid ? '✅ Present' : '❌ Missing/Empty');
         
         if (!isSupabaseUrlValid || !isAnonKeyValid) {
-          console.error('❌ CRITICAL: Supabase credentials missing - aborting fetch');
           console.error('❌ Missing variables:', {
             supabaseUrl: !isSupabaseUrlValid,
             supabaseAnonKey: !isAnonKeyValid
@@ -696,20 +632,11 @@ useEffect(() => {
           setFinancialLoading(false);
           return;
         }
-        
-        console.log('✅ Environment validation passed - both credentials present');
-        
-        console.log('✅ Environment validation passed - proceeding with fetch');
-        
-        // Use robust token extraction - pass entire currentUser object
-        console.debug('Proceeding with financial data fetch using robust token extraction');
         setFinancialLoading(true);
         
         try {
           const financialData = await fetchFinancialData(ideaData.data.ticker, currentUser);
           if (financialData) {
-            console.log('✅ Financial data fetched successfully');
-            console.log('Raw API Response:', financialData);
             setFinancialData(financialData);
             
             // COMPREHENSIVE DEBUGGING: Log raw API response
@@ -736,37 +663,10 @@ useEffect(() => {
             }
             
             // Organize the raw financial data into structured metrics
-            console.log('🔍 TRANSFORMATION DEBUG: Starting organizeFinancialData...');
-            console.log('Input to organizeFinancialData:', financialData);
             const organized = organizeFinancialData(financialData);
             
             if (organized) {
-              console.log('🔍 TRANSFORMATION SUCCESS: Financial data organized successfully');
-              console.log('🔍 FINAL ORGANIZED METRICS:', organized);
-              
-              // Log each section with detailed field analysis
-              console.log('🔍 COMPANY OVERVIEW DEBUG:', {
-                marketCap: organized.companyOverview?.marketCap,
-                industry: organized.companyOverview?.industry,
-                dividendYield: organized.companyOverview?.dividendYield,
-                peRatio: organized.companyOverview?.peRatio
-              });
-              
-              console.log('🔍 PROFITABILITY DEBUG:', {
-                ebitdaMargin: organized.profitability?.ebitdaMargin,
-                netProfitMargin: organized.profitability?.netProfitMargin,
-                grossMargin: organized.profitability?.grossMargin
-              });
-              
-              console.log('🔍 VALUATION DEBUG:', {
-                priceToBook: organized.valuation?.priceToBook,
-                priceToSales: organized.valuation?.priceToSales,
-                trailingPE: organized.valuation?.trailingPE
-              });
-              
-              console.log('organizedMetrics set to:', organized);
               setOrganizedMetrics(organized);
-              console.log("Set organizedMetrics:", organized);
             } else {
               console.error('❌ TRANSFORMATION FAILED: Failed to organize financial data');
               setOrganizedMetrics(null);
@@ -954,16 +854,9 @@ useEffect(() => {
                 {idea?.data?.ticker && (
                   <div className="space-y-4">
                     {(() => {
-                      console.log("Debug - idea.data:", idea.data);
-                      console.log("Debug - financialData state:", financialData);
-                      console.log("Debug - company_info:", financialData?.data?.company_info);
-                      console.log("Debug - organizedMetrics:", organizedMetrics);
                       const companyShortName = financialData?.data?.company_info?.["Short Name"];
                       const companyNameFromOrganized = organizedMetrics?.companyDetails?.businessSummary ? 
                         organizedMetrics.companyDetails.businessSummary.split('.')[0] : null;
-                      console.log("Debug - companyShortName:", companyShortName);
-                      console.log("Debug - companyNameFromOrganized:", companyNameFromOrganized);
-                      console.log("Debug - ticker:", idea.data.ticker);
                       return (
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">
                           Financial Data for {companyShortName || companyNameFromOrganized || idea.data.ticker}

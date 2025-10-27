@@ -186,7 +186,6 @@ async function fetchFinancialData(ticker: string, currentUser?: any, forceRefres
     }
   }
   
-  console.log(`Fetching fresh finance data for ${ticker}${forceRefresh ? ' (forced refresh)' : ''}`);
   // Fetching financial data for ticker
   
   // Debug auth state
@@ -289,8 +288,6 @@ async function fetchFinancialData(ticker: string, currentUser?: any, forceRefres
     
     const result = await response.json();
     // API Response received successfully
-    console.log("Raw API response after fetch:", result);
-    console.log("result.data:", result.data);
     
     const financialData = result.data || result || null;
     
@@ -340,7 +337,6 @@ function parseInvestIndiaData(rawData: any) {
   // Extract from new structure: financial_data.data
   const data = rawData.financial_data?.data || {};
   
-  console.log('Parsing financial data:', data);
   
   // Parse sectors - already an array in API response
   const parsedSectors: Sector[] = (data.sectors || []).map((sector: any) => ({
@@ -381,9 +377,6 @@ function parseInvestIndiaData(rawData: any) {
     }
   }));
 
-  console.log('Parsed sectors:', parsedSectors);
-  console.log('Parsed ETFs:', parsedETFs);
-  console.log('Parsed indices:', parsedIndices);
 
   return {
     sectors: parsedSectors,
@@ -665,7 +658,6 @@ export default function IdeasForumPage() {
 
         // Optional: show a friendly hint for guests
         if (!token && fetchedIdeas.length > 0) {
-          console.log('Showing public ideas. Sign in to see more!');
         }
 
       } catch (err) {

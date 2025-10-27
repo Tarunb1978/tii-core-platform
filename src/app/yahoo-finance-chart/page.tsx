@@ -165,8 +165,6 @@ export default function YahooFinanceStockChart() {
       // MVP: Using 1 year range for comprehensive data view (user-selectable range is future enhancement)
       const apiUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/yahoo-proxy?symbol=${encodeURIComponent(normalizedSymbol)}&range=1y&interval=1d`;
       
-      console.log('Fetching data from:', apiUrl);
-
       // Fetch data via Supabase Edge Function proxy
       const response = await fetch(apiUrl);
       
@@ -190,18 +188,9 @@ export default function YahooFinanceStockChart() {
       const data: YahooFinanceResponse = await response.json();
 
       // Debug: Log the full API response structure
-      console.log('Full API response:', data);
-      console.log('Chart result length:', data.chart?.result?.length);
       
       if (data.chart?.result?.[0]) {
         const result = data.chart.result[0];
-        console.log('Result structure:', {
-          hasTimestamp: !!result.timestamp,
-          hasIndicators: !!result.indicators,
-          hasQuote: !!result.indicators?.quote,
-          quoteLength: result.indicators?.quote?.length,
-          hasClose: !!result.indicators?.quote?.[0]?.close
-        });
       }
 
       // Check if the API returned an error in the response body
@@ -211,8 +200,8 @@ export default function YahooFinanceStockChart() {
       }
       
       // Check for error field in the response
-      if (data.error) {
-        setErrorMessage(`API Error: ${data.error}`);
+      if (data?.error) {
+        setErrorMessage(`API Error: ${data?.error}`);
         return;
       }
 
@@ -228,19 +217,15 @@ export default function YahooFinanceStockChart() {
       }
 
       // Debug: Log data lengths to verify we're getting full 1-year data
-      console.log(`Raw data received - Timestamps: ${timestamps.length}, Prices: ${closePrices.length}`);
       
       // Debug: Log first and last timestamps to see actual date range
       if (timestamps.length > 0) {
         const firstDate = new Date(timestamps[0] * 1000);
         const lastDate = new Date(timestamps[timestamps.length - 1] * 1000);
-        console.log(`Raw date range: ${firstDate.toLocaleDateString()} to ${lastDate.toLocaleDateString()}`);
-        console.log(`Days between: ${Math.ceil((timestamps[timestamps.length - 1] - timestamps[0]) / (24 * 60 * 60))} days`);
         
         // Debug: Check for timestamp duplicates or gaps
         const sortedTimestamps = [...timestamps].sort((a, b) => a - b);
         const duplicates = sortedTimestamps.filter((ts, i) => i > 0 && ts === sortedTimestamps[i - 1]);
-        console.log(`Duplicate timestamps found: ${duplicates.length}`);
         
         // Debug: Check for large gaps in timestamps
         const gaps = [];
@@ -254,7 +239,6 @@ export default function YahooFinanceStockChart() {
             });
           }
         }
-        console.log('Large gaps in timestamps:', gaps);
         
         // Debug: Specifically check March 2025 data
         const march2025Start = new Date('2025-03-01').getTime();
@@ -263,11 +247,8 @@ export default function YahooFinanceStockChart() {
           const timestampMs = ts * 1000;
           return timestampMs >= march2025Start && timestampMs <= march2025End;
         });
-        console.log(`March 2025 timestamps found: ${march2025Timestamps.length}`);
         if (march2025Timestamps.length > 0) {
-          console.log('March 2025 dates:', march2025Timestamps.map(ts => new Date(ts * 1000).toLocaleDateString()));
         } else {
-          console.log('⚠️ NO March 2025 data found!');
         }
         
         // Debug: Check for timestamp clustering (multiple timestamps on same day)
@@ -281,15 +262,11 @@ export default function YahooFinanceStockChart() {
         });
         
         const clusteredDates = Object.entries(timestampClusters).filter(([date, timestamps]) => timestamps.length > 1);
-        console.log(`Dates with multiple timestamps: ${clusteredDates.length}`);
         if (clusteredDates.length > 0) {
-          console.log('Clustered dates (first 5):', clusteredDates.slice(0, 5));
         }
       }
       
       // Debug: Log sample of raw data
-      console.log('Sample raw timestamps:', timestamps.slice(0, 5));
-      console.log('Sample raw prices:', closePrices.slice(0, 5));
 
       // Filter out null/undefined/NaN prices (Yahoo Finance returns nulls for holidays/missing dates)
       // This ensures we only display valid trading days in our 1-year chart
@@ -299,12 +276,9 @@ export default function YahooFinanceStockChart() {
       }));
       
       // Debug: Log mapping results
-      console.log(`Mapped data points: ${mapped.length}`);
-      console.log('Sample mapped data:', mapped.slice(0, 3));
       
       // Count null/undefined prices
       const nullCount = mapped.filter(pt => pt.price == null || isNaN(pt.price)).length;
-      console.log(`Null/NaN prices found: ${nullCount} out of ${mapped.length}`);
       
       // Filter out invalid data points (null/NaN prices and invalid timestamps)
       const filtered = mapped.filter(pt => 
@@ -330,18 +304,13 @@ export default function YahooFinanceStockChart() {
         }
       }
       
-      console.log(`After removing duplicates: ${uniqueData.length} unique points from ${sortedData.length} sorted points`);
       
       // Debug: Log sorting results
-      console.log(`Final unique data points: ${uniqueData.length}`);
       if (uniqueData.length > 0) {
-        console.log('First 3 unique points:', uniqueData.slice(0, 3));
-        console.log('Last 3 unique points:', uniqueData.slice(-3));
         
         // Debug: Check for any remaining timestamp issues
         const timestamps = uniqueData.map(p => p.date);
         const isStrictlyIncreasing = timestamps.every((ts, i) => i === 0 || ts > timestamps[i - 1]);
-        console.log(`Timestamps are strictly increasing: ${isStrictlyIncreasing}`);
       }
 
       if (uniqueData.length === 0) {
@@ -349,25 +318,19 @@ export default function YahooFinanceStockChart() {
         return;
       }
 
-      // Debug: Log filtered data length to verify we're keeping all valid data
-      console.log(`Final unique data points: ${uniqueData.length} out of ${timestamps.length} total`);
       
       // Debug: Log date range to verify we have full 1-year data
       if (uniqueData.length > 0) {
         const startDate = new Date(uniqueData[0].date);
         const endDate = new Date(uniqueData[uniqueData.length - 1].date);
-        console.log(`Final date range: ${startDate.toLocaleDateString()} to ${endDate.toLocaleDateString()}`);
         
         // Debug: Check March 2025 in final processed data
         const march2025Data = uniqueData.filter(point => {
           const pointDate = new Date(point.date);
           return pointDate.getFullYear() === 2025 && pointDate.getMonth() === 2; // March is month 2 (0-indexed)
         });
-        console.log(`March 2025 data points in final data: ${march2025Data.length}`);
         if (march2025Data.length > 0) {
-          console.log('March 2025 final dates:', march2025Data.map(p => new Date(p.date).toLocaleDateString()));
         } else {
-          console.log('⚠️ March 2025 data LOST during processing!');
         }
         
         // Debug: Show monthly distribution of final data
@@ -377,7 +340,6 @@ export default function YahooFinanceStockChart() {
           const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
           monthlyDistribution[monthKey] = (monthlyDistribution[monthKey] || 0) + 1;
         });
-        console.log('Monthly data distribution:', monthlyDistribution);
       }
 
       // For ApexCharts datetime type, data should be [timestamp, value] pairs in strictly increasing order
