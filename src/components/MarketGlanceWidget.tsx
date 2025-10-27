@@ -1,17 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  DndContext,
-  PointerSensor,
-  KeyboardSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-  DragStartEvent,
-  useDraggable,
-} from '@dnd-kit/core';
-import { restrictToWindowEdges } from '@dnd-kit/modifiers';
+import React, { useState, useEffect } from 'react';
 
 // Helper function to format indices - show raw API values without decimals
 const formatIndexValue = (value: string | number | undefined | null): string => {
@@ -197,6 +186,7 @@ const SectorsPerformanceTable: React.FC<{ sectors: Sector[] }> = ({ sectors }) =
         <thead>
           <tr className="border-b border-gray-200">
             <th className="text-left py-1 px-2 font-medium text-gray-600">Sector</th>
+            <th className="text-right py-1 px-2 font-medium text-gray-600">Value</th>
             <th className="text-right py-1 px-2 font-medium text-gray-600" title="1 Day">1D</th>
             <th className="text-right py-1 px-2 font-medium text-gray-600" title="1 Month">1M</th>
             <th className="text-right py-1 px-2 font-medium text-gray-600" title="6 Months">6M</th>
@@ -208,6 +198,7 @@ const SectorsPerformanceTable: React.FC<{ sectors: Sector[] }> = ({ sectors }) =
           {sectors.map((sector) => (
             <tr key={sector.name} className="border-b border-gray-100 hover:bg-gray-50">
               <td className="py-2 px-2 font-medium text-gray-900">{sector.name}</td>
+              <td className="py-2 px-2 text-right text-gray-900">{formatIndexValue(sector.current_price)}</td>
               <td className="py-2 px-2 text-right">
                 <span className={`font-medium ${getColorClass(sector.daily_change_pct)}`}>
                   {formatPercentage(sector.daily_change_pct)}%
@@ -249,153 +240,44 @@ interface Props {
   financialData?: any;
 }
 
-// Draggable Widget Component with persistent position
-function DraggableWidget({ 
-  children, 
-  isExpanded, 
-  setIsExpanded, 
-  position, 
-  onDragEnd 
-}: { 
-  children: React.ReactNode; 
-  isExpanded: boolean; 
-  setIsExpanded: (expanded: boolean) => void;
-  position: { x: number; y: number };
-  onDragEnd: (event: DragEndEvent) => void;
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    isDragging,
-  } = useDraggable({
-    id: 'market-glance-widget',
-  });
-
-  // Base position from state + live transform during drag
-  const style = {
-    position: 'fixed' as const,
-    left: `${position.x}px`,
-    top: `${position.y}px`,
-    zIndex: 50,
-    width: '480px',
-    maxHeight: '70vh',
-    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
-    opacity: isDragging ? 0.9 : 1,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden sm:w-[95vw] sm:max-w-xl"
-    >
-      <div
-        className="bg-gradient-to-r from-gray-50 via-gray-100 to-gray-200 text-gray-800 border-b border-gray-200 p-3 flex items-center justify-between cursor-move select-none"
-        {...listeners}
-        {...attributes}
-        role="button"
-        tabIndex={0}
-        aria-label="Drag Market Glance"
-      >
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-sm">
-            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-          </div>
-          <h3 className="text-sm font-semibold">Market Glance</h3>
-        </div>
-        <button
-          onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
-          className="p-1 rounded hover:bg-white/20"
-          aria-expanded={isExpanded}
-        >
-          {isExpanded ? '−' : '+'}
-        </button>
-      </div>
-      <div
-        className={`bg-white overflow-y-auto transition-all duration-300 ease-in-out ${
-          isExpanded ? 'max-h-[70vh] opacity-100 p-4 space-y-4' : 'max-h-0 opacity-0 p-0'
-        }`}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-
 export default function MarketGlanceWidget({ sectors, etfs, indices, financialLoading, financialData }: Props) {
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor)
-  );
-
+  // Load modal state from localStorage
   useEffect(() => {
-    const savedPos = localStorage.getItem('marketGlancePos');
-    if (savedPos) {
-      setPosition(JSON.parse(savedPos));
-    } else {
-      // Default position: bottom-right corner
-      setPosition({ 
-        x: typeof window !== 'undefined' ? window.innerWidth - 480 - 24 : 0, // 480px widget + 24px margin
-        y: typeof window !== 'undefined' ? window.innerHeight - 500 - 24 : 0 // 500px height + 24px margin
-      });
+    const savedModalState = localStorage.getItem('marketGlanceModalOpen');
+    if (savedModalState !== null) {
+      setIsModalOpen(JSON.parse(savedModalState));
     }
-    const savedExpanded = localStorage.getItem('marketGlanceExpanded');
-    if (savedExpanded !== null) setIsExpanded(JSON.parse(savedExpanded));
   }, []);
 
+  // Save modal state to localStorage
   useEffect(() => {
-    localStorage.setItem('marketGlancePos', JSON.stringify(position));
-  }, [position]);
+    localStorage.setItem('marketGlanceModalOpen', JSON.stringify(isModalOpen));
+  }, [isModalOpen]);
 
-  useEffect(() => {
-    localStorage.setItem('marketGlanceExpanded', JSON.stringify(isExpanded));
-  }, [isExpanded]);
-
-  // Escape key handler for mobile modal
+  // Escape key handler for closing modal
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isMobileModalOpen) {
-        setIsMobileModalOpen(false);
+      if (e.key === 'Escape' && isModalOpen) {
+        setIsModalOpen(false);
       }
     };
     document.addEventListener('keydown', handleEsc);
     return () => document.removeEventListener('keydown', handleEsc);
-  }, [isMobileModalOpen]);
-
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { delta } = event;
-    setPosition((prev) => ({
-      x: Math.max(0, Math.min(prev.x + delta.x, window.innerWidth - 480)),
-      y: Math.max(0, Math.min(prev.y + delta.y, window.innerHeight - 500)),
-    }));
-  }, []);
+  }, [isModalOpen]);
 
   if (financialLoading) {
     return (
-      <>
-        {/* Desktop loading */}
-        <div className="hidden md:block fixed right-6 bottom-6 z-50 w-[480px] p-4 bg-white rounded-2xl shadow-2xl border border-gray-200 text-center text-sm text-gray-500">
-          Loading markets...
-        </div>
-        {/* Mobile FAB (loading state) */}
-        <button
-          disabled
-          className="md:hidden fixed bottom-6 right-6 z-50 w-14 h-14 bg-gray-400 rounded-full shadow-lg flex items-center justify-center text-white opacity-50 cursor-not-allowed"
-          aria-label="Market Data Loading"
-        >
-          <svg className="w-6 h-6 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-        </button>
-      </>
+      <button
+        disabled
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-gray-400 rounded-full shadow-lg flex items-center justify-center text-white opacity-50 cursor-not-allowed"
+        aria-label="Market Data Loading"
+      >
+        <svg className="w-6 h-6 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      </button>
     );
   }
 
@@ -405,65 +287,68 @@ export default function MarketGlanceWidget({ sectors, etfs, indices, financialLo
 
   return (
     <>
-      {/* Mobile FAB */}
+      {/* Circular FAB for Desktop and Mobile */}
       <button
-        onClick={() => setIsMobileModalOpen(true)}
-        className="md:hidden fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full shadow-lg flex items-center justify-center text-white hover:scale-110 active:scale-95 transition-transform duration-200"
+        onClick={() => setIsModalOpen(true)}
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full shadow-lg flex items-center justify-center text-white hover:scale-110 active:scale-95 transition-transform duration-200 group"
         aria-label="Open Market Data"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
+        {/* Tooltip for desktop only */}
+        <span className="absolute right-full mr-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none hidden md:block">
+          Market Glance
+        </span>
       </button>
 
-      {/* Mobile Modal */}
-      {isMobileModalOpen && (
-        <div className="md:hidden fixed inset-0 z-50 bg-white overflow-y-auto" role="dialog" aria-modal="true">
-          {/* Sticky header with close button */}
-          <div className="sticky top-0 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-200 border-b border-gray-200 p-4 flex items-center justify-between shadow-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900">Market Glance</h2>
-            </div>
-            <button
-              onClick={() => setIsMobileModalOpen(false)}
-              className="p-2 hover:bg-gray-200 rounded-full transition-colors"
-              aria-label="Close Market Data"
-            >
-              <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+      {/* Modal for Desktop and Mobile */}
+      {isModalOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-[60] bg-black/30 backdrop-blur-sm"
+            onClick={() => setIsModalOpen(false)}
+            aria-hidden="true"
+          />
           
-          {/* Tables */}
-          <div className="p-4 space-y-6 pb-24">
-            <IndicesPerformanceCard indices={indices} />
-            <ETFsPerformanceCard etfs={etfs} />
-            <SectorsPerformanceTable sectors={sectors} />
-          </div>
-        </div>
-      )}
-
-      {/* Desktop Widget */}
-      <div className="hidden md:block">
-        <DndContext sensors={sensors} onDragEnd={handleDragEnd} modifiers={[restrictToWindowEdges]}>
-          <DraggableWidget 
-            isExpanded={isExpanded} 
-            setIsExpanded={setIsExpanded}
-            position={position}
-            onDragEnd={handleDragEnd}
+          {/* Modal Content - Full screen on mobile, centered panel on desktop */}
+          <div
+            className="fixed inset-0 z-[60] md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[90vw] md:max-w-[600px] md:h-[85vh] bg-white shadow-2xl rounded-2xl overflow-hidden transition-all duration-300"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="market-glance-title"
           >
-            <IndicesPerformanceCard indices={indices} />
-            <ETFsPerformanceCard etfs={etfs} />
-            <SectorsPerformanceTable sectors={sectors} />
-          </DraggableWidget>
-        </DndContext>
-      </div>
+            {/* Sticky header with close button */}
+            <div className="sticky top-0 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-200 border-b border-gray-200 p-4 flex items-center justify-between shadow-sm z-10">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <h2 id="market-glance-title" className="text-lg font-semibold text-gray-900">Market Glance</h2>
+              </div>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                aria-label="Close Market Data"
+              >
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Tables */}
+            <div className="overflow-y-auto h-full md:h-[calc(100%-73px)] p-4 space-y-6 pb-24">
+              <IndicesPerformanceCard indices={indices} />
+              <ETFsPerformanceCard etfs={etfs} />
+              <SectorsPerformanceTable sectors={sectors} />
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 }

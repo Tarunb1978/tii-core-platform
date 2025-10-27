@@ -134,14 +134,34 @@ export default function ProfileClient() {
         throw new Error('No access token available');
       }
 
-      // Prepare update data
+      // Prepare update data - only include non-empty values
       const updateFields: Record<string, string> = {};
-      if (formData.first_name !== undefined) updateFields.first_name = formData.first_name;
-      if (formData.last_name !== undefined) updateFields.last_name = formData.last_name;
-      if (formData.dob !== undefined) updateFields.dob = formData.dob;
-      if (formData.sex !== undefined) updateFields.sex = formData.sex;
-      if (formData.contact_number !== undefined) updateFields.contact_number = formData.contact_number;
-      if (formData.investor_bio !== undefined) updateFields.investor_bio = formData.investor_bio;
+      if (formData.first_name !== undefined && formData.first_name.trim() !== '') {
+        updateFields.first_name = formData.first_name;
+      }
+      if (formData.last_name !== undefined && formData.last_name.trim() !== '') {
+        updateFields.last_name = formData.last_name;
+      }
+      if (formData.dob !== undefined && formData.dob.trim() !== '') {
+        updateFields.dob = formData.dob;
+      }
+      if (formData.sex !== undefined && formData.sex.trim() !== '') {
+        updateFields.sex = formData.sex;
+      }
+      if (formData.contact_number !== undefined && formData.contact_number.trim() !== '') {
+        updateFields.contact_number = formData.contact_number;
+      }
+      if (formData.investor_bio !== undefined && formData.investor_bio.trim() !== '') {
+        updateFields.investor_bio = formData.investor_bio;
+      }
+
+      // Check if there are any fields to update
+      if (Object.keys(updateFields).length === 0) {
+        console.log('No fields to update');
+        return;
+      }
+
+      console.log('Updating fields:', updateFields);
 
       // Update profile via API
       const response = await fetch(`https://acsobefarzmetevcseal.supabase.co/functions/v1/app-user/me`, {
@@ -154,10 +174,29 @@ export default function ProfileClient() {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to update profile: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Update API error:', response.status, errorText);
+        throw new Error(`Failed to update profile: ${response.statusText} - ${errorText}`);
       }
 
-      const responseData = await response.json();
+      // Try to parse JSON response
+      let responseData;
+      try {
+        responseData = await response.json();
+        console.log('Update response received:', responseData);
+      } catch (jsonError) {
+        console.error('Failed to parse JSON response:', jsonError);
+        // If response is empty or not JSON, still consider it a success if status was 200
+        if (response.ok) {
+          console.log('Update successful (no JSON response)');
+          // Fetch updated profile
+          await fetchProfile();
+          setIsEditing(false);
+          toast.success('Profile updated successfully!');
+          return;
+        }
+        throw new Error('Invalid response from server');
+      }
       
       // Extract profile data from nested structure
       const profileData = responseData.profile || responseData;

@@ -1,13 +1,14 @@
 'use client';
 
-import { Heart, Bookmark, MessageSquare, ArrowUp, Send, ChevronRight, Home } from 'lucide-react';
+import { Heart, Bookmark, MessageSquare, ArrowUp, Send, ChevronRight, Home, TrendingUp, TrendingDown, DollarSign, Calculator } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/authProvider';
 import toast from 'react-hot-toast';
 import { createClient } from '@/lib/supabase/client';
-import { Building2 } from 'lucide-react'
+import { Building2 } from 'lucide-react';
+import { classifyMarketCap } from './MarketCapClassifier';
 
 // New data types based on updated schema
 type Comment = {
@@ -43,6 +44,13 @@ type Idea = {
     position_type?: string; // Long/Short
     investment_horizon?: string; // e.g., '6 Months'
     submission_timestamp?: string; // ISO
+    // New financial fields from backend
+    "52 High"?: string;
+    "52W Low"?: string;
+    "52W Range"?: string;
+    "Industry"?: string;
+    "Market Cap"?: string;
+    "P/E Ratio"?: string;
   };
   stock_details?: StockDetails | null;
   status?: string;
@@ -141,6 +149,13 @@ export default function IdeaCard({
         timeStyle: "short",
     });
   }
+
+  // Helper function to format currency values with ₹ symbol
+  const formatCurrency = (value: string | undefined) => {
+    if (!value) return 'N/A';
+    // Add ₹ if not already present
+    return value.includes('₹') ? value : `₹${value}`;
+  };
 
 
   // Fetch submitter profile name
@@ -396,45 +411,104 @@ export default function IdeaCard({
       }`}
       onClick={handleCardClick}
     >
-      {/* Header Section */}
+      {/* Header Section - Company Name as Primary Focus */}
       <div className="p-6 border-b border-gray-100">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-blue-600 font-semibold text-sm">
-                {getInitials(authorName)}
-              </span>
-            </div>
-            <div>
-              <div className="font-medium text-gray-900 text-sm">
-                {authorName || 'Market Expert'}
-              </div>
-              <div className="text-xs text-gray-500">
-                {formatISTDateTime(d.submission_timestamp || idea.created_at)}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
-              {d.position_type || 'Position Type'}
-            </span>
-            <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
-              {d.market_cap || 'Market'} Cap
-            </span>
-            <button 
-              className={`p-2 rounded-lg transition-colors ${
-                isBookmarked 
-                  ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' 
-                  : 'hover:bg-gray-100 text-gray-400'
-              }`}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleBookmark();
-              }}
-              disabled={isLoading}
+        <div className="mb-4">
+          {/* Top Row: Company Name (Hero) */}
+          <div className="mb-3">
+            <h1 
+              className="text-2xl font-bold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+              onClick={handleTitleClick}
             >
-              <Bookmark className="w-5 h-5" />
-            </button>
+              <div className="flex items-center gap-3">
+                <Building2 className="w-6 h-6 text-gray-400" />
+                <span>{d.company_name}</span>
+              </div>
+            </h1>
+          </div>
+          
+          {/* Bottom Row: Credibility Metrics + Financial Highlights */}
+          <div className="flex items-center justify-between gap-4">
+            {/* Left: Author Credibility Section */}
+            <div className="flex items-center gap-0 bg-gradient-to-r from-blue-50 to-transparent px-3 py-2 rounded-lg border border-blue-100">
+              <div className="flex items-center gap-2">
+                <div className="font-semibold text-gray-900 text-sm">
+                  {authorName || 'Market Expert'}
+                </div>
+                <span className="text-gray-400 text-sm">•</span>
+                <div className="text-xs text-gray-500">
+                  {(() => {
+                    const date = d.submission_timestamp || idea.created_at;
+                    if (!date) return '';
+                    const dateObj = new Date(date);
+                    return dateObj.toLocaleDateString('en-IN', { 
+                      day: 'numeric', 
+                      month: 'short',
+                      year: 'numeric'
+                    });
+                  })()}
+                </div>
+              </div>
+            </div>
+            
+            {/* Right: Financial Highlights Pill Badges + Bookmark in same container */}
+            <div className="flex items-center gap-3">
+              {/* Financial Highlights Pill Badges */}
+              {!disabledNavigate && (d["52 High"] || d["52W Low"] || d["P/E Ratio"] || d["Industry"]) && (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                {/* 52W High */}
+                {d["52 High"] && (
+                  <div className="flex items-center justify-center gap-1 px-2 py-0.5 bg-gray-50 text-gray-700 rounded-full text-xs font-medium border border-gray-200">
+                    <TrendingUp className="w-2.5 h-2.5 text-gray-500" />
+                    <span className="font-semibold">High:</span>
+                    <span className="font-bold">{formatCurrency(d["52 High"])}</span>
+                  </div>
+                )}
+
+                {/* 52W Low */}
+                {d["52W Low"] && (
+                  <div className="flex items-center justify-center gap-1 px-2 py-0.5 bg-gray-50 text-gray-700 rounded-full text-xs font-medium border border-gray-200">
+                    <TrendingDown className="w-2.5 h-2.5 text-gray-500" />
+                    <span className="font-semibold">Low:</span>
+                    <span className="font-bold">{formatCurrency(d["52W Low"])}</span>
+                  </div>
+                )}
+
+                {/* P/E Ratio */}
+                {d["P/E Ratio"] && (
+                  <div className="flex items-center justify-center gap-1 px-2 py-0.5 bg-gray-50 text-gray-700 rounded-full text-xs font-medium border border-gray-200">
+                    <Calculator className="w-2.5 h-2.5 text-gray-500" />
+                    <span className="font-semibold">P/E:</span>
+                    <span className="font-bold">{d["P/E Ratio"]}</span>
+                  </div>
+                )}
+
+                {/* Industry */}
+                {d["Industry"] && (
+                  <div className="flex items-center justify-center gap-1 px-2 py-0.5 bg-gray-50 text-gray-700 rounded-full text-xs font-medium border border-gray-200">
+                    <Building2 className="w-2.5 h-2.5 text-gray-500" />
+                    <span className="font-bold truncate max-w-[120px]">{d["Industry"]}</span>
+                  </div>
+                )}
+                </div>
+              )}
+              
+              {/* Bookmark Button */}
+              <button 
+                className={`p-2 rounded-lg transition-colors flex-shrink-0 ${
+                  isBookmarked 
+                    ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' 
+                    : 'hover:bg-gray-100 text-gray-400'
+                }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleBookmark();
+                }}
+                disabled={isLoading}
+              >
+                <Bookmark className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -453,19 +527,6 @@ export default function IdeaCard({
             <span className="text-gray-900 font-medium">{d.ticker}</span>
           </div>
         )}
-
-        {/* Title */}
-        <div className="mb-3">
-          <h1 
-            className="text-lg font-bold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
-            onClick={handleTitleClick}
-          >
-            <div className="flex items-center gap-2 text-gray-700">
-              <Building2 className="w-4 h-4 text-gray-400" />
-              <span className="text-xs">{d.company_name}</span>
-            </div>
-          </h1>
-        </div>
 
         {/* Description (HTML) - Truncated to 100 words with improved expand/collapse */}
         <div className="mb-4">
@@ -513,9 +574,21 @@ export default function IdeaCard({
               ₹{d.current_price ?? 'N/A'}
             </span>
           </div>
-          <div className="text-right">
-            <div className="text-xs text-gray-500">Timeline Horizon</div>
-            <div className="font-medium text-gray-900 text-sm">{d.investment_horizon || 'Long Term'}</div>
+          <div className="flex items-center gap-6">
+            <div className="text-left">
+              <div className="text-xs text-gray-500">Position Type</div>
+              <div className="font-medium text-gray-900 text-sm">{d.position_type || 'Long'}</div>
+            </div>
+            <div className="text-left">
+              <div className="text-xs text-gray-500">Market Cap</div>
+              <div className="font-medium text-gray-900 text-sm">
+                {classifyMarketCap(d["Market Cap"])}
+              </div>
+            </div>
+            <div className="text-left">
+              <div className="text-xs text-gray-500">Timeline Horizon</div>
+              <div className="font-medium text-gray-900 text-sm">{d.investment_horizon || 'Long Term'}</div>
+            </div>
           </div>
         </div>
 
