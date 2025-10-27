@@ -178,10 +178,8 @@ async function fetchFinancialData(ticker: string, currentUser?: any, forceRefres
     const cacheAge = now - financeDataCache.timestamp;
     
     if (cacheAge < CACHE_DURATION) {
-      console.log(`Using cached finance data for ${ticker} (age: ${Math.round(cacheAge / 1000)}s)`);
       return financeDataCache.data;
     } else {
-      console.log(`Cache expired for ${ticker} (age: ${Math.round(cacheAge / 1000)}s), fetching fresh data`);
       financeDataCache = null; // Clear expired cache
     }
   }
@@ -298,7 +296,6 @@ async function fetchFinancialData(ticker: string, currentUser?: any, forceRefres
         timestamp: Date.now(),
         ticker: ticker
       };
-      console.log(`Cached finance data for ${ticker}`);
     }
     
     return financialData;
@@ -651,26 +648,9 @@ export default function IdeasForumPage() {
         if (!res.ok) throw new Error('Failed to fetch ideas');
 
         const json = await res.json();
-        console.log('📥 Full API Response (JSON):', JSON.stringify(json, null, 2));
-        console.log('📊 Ideas array:', json.ideas);
-        console.log('🔢 Number of ideas:', Array.isArray(json.ideas) ? json.ideas.length : 0);
         
         const fetchedIdeas = Array.isArray(json.ideas) ? json.ideas : [];
         
-        // Log each idea's structure
-        fetchedIdeas.forEach((idea, index) => {
-          console.log(`💡 Idea ${index + 1}:`, {
-            id: idea.id,
-            user_id: idea.user_id,
-            data: idea.data,
-            likes_count: idea.likes_count,
-            bookmarks_count: idea.bookmarks_count,
-            discussions_count: idea.discussions_count,
-            status: idea.status,
-            created_at: idea.created_at,
-            idea_discussion: idea.idea_discussion
-          });
-        });
 
         setIdeas(fetchedIdeas);
         setFilteredIdeas(fetchedIdeas);

@@ -22,15 +22,9 @@ export async function GET(req: NextRequest) {
         const data = await res.json();
         
         // Debug logging: Print what's coming from the database
-        console.log('📥 Raw API Response from Supabase Edge Function:');
-        console.log('Full response:', JSON.stringify(data, null, 2));
-        console.log('Ideas array exists?', Array.isArray(data.ideas));
-        console.log('Number of ideas:', data.ideas?.length || 0);
         
         // If there are ideas, log the first one's structure
         if (data.ideas && data.ideas.length > 0) {
-          console.log('Sample idea structure (first item):');
-          console.log(JSON.stringify(data.ideas[0], null, 2));
         }
         
         return NextResponse.json(data);

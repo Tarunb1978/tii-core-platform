@@ -743,7 +743,6 @@ useEffect(() => {
       
       if (!id) {
       console.error('Missing idea ID');
-      setError('Missing idea ID');
       setLoading(false);
       return;
     }
@@ -963,269 +962,307 @@ useEffect(() => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
-        {/* Back button */}
-        <div className="mb-6">
-          <Link
-            href="/ideas-forum"
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <div className="w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors">
-              <ArrowLeft className="w-4 h-4 text-gray-700" />
-            </div>
-            <span className="text-sm font-medium">Back to Ideas Forum</span>
-          </Link>
+  <div className="min-h-screen bg-gray-50">
+    <Navbar />
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
+      {/* Back button */}
+      <div className="mb-6">
+        <Link
+          href="/ideas-forum"
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          <div className="w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors">
+            <ArrowLeft className="w-4 h-4 text-gray-700" />
+          </div>
+          <span className="text-sm font-medium">Back to Ideas Forum</span>
+        </Link>
+      </div>
+
+      {loading ? (
+        <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-gray-500">
+          Loading idea...
         </div>
+      ) : !idea ? (
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-8 text-center">
+          Idea not found
+        </div>
+      ) : (
+        <div>
+          {organizedMetrics?.companyOverview && (
+            <div className="mb-6">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                {/* Header */}
+                <div className="border-b border-gray-200 pb-3 mb-3">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {idea?.data?.ticker?.replace('.NS', '')} -{' '}
+                    {financialData?.data?.company_info?.['Short Name'] ||
+                      idea?.data?.company_name ||
+                      'Company Overview'}
+                  </h3>
+                </div>
 
-        {loading ? (
-          <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-gray-500">
-            Loading idea...
-          </div>
-        ) : !idea ? (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-8 text-center">
-            Idea not found
-          </div>
-        ) : (
-          <div>
-            {/* Compact Company Overview Card - Top */}
-            {organizedMetrics?.companyOverview && (
-              <div className="mb-6">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                  {/* Header */}
-                  <div className="border-b border-gray-200 pb-3 mb-3">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {idea?.data?.ticker?.replace('.NS', '')} - {financialData?.data?.company_info?.["Short Name"] || idea?.data?.company_name || 'Company Overview'}
-                    </h3>
+                {/* First Row - Key Metrics */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">Industry</div>
+                    <div className="text-sm font-semibold text-gray-900">
+                      {organizedMetrics.companyOverview.industry || 'N/A'}
+                    </div>
                   </div>
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">P/E Ratio</div>
+                    <div className="text-sm font-semibold text-gray-900">
+                      {organizedMetrics.companyOverview.peRatio || 'N/A'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">Dividend Yield</div>
+                    <div className="text-sm font-semibold text-gray-900">
+                      {getDividendYieldDisplay(
+                        organizedMetrics.companyOverview.dividendYield,
+                        false
+                      )}
+                    </div>
+                  </div>
+                  {organizedMetrics.growthReturns?.weekRange && (
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">52-Week Range</div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        ₹
+                        {organizedMetrics.growthReturns.weekRange
+                          .split(' - ')
+                          .map((price) => Math.round(parseFloat(price)))
+                          .filter(Boolean)
+                          .join(' - ₹') || 'N/A'}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-                  {/* First Row - Key Metrics */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Industry</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {organizedMetrics.companyOverview.industry || 'N/A'}
-                      </div>
+                {/* Right Column - Financial Data (40% width) */}
+                <div className="lg:col-span-2">
+                  {idea?.data?.ticker && (
+                    <div className="space-y-4">
+                      {(() => {
+                        const companyShortName =
+                          financialData?.data?.company_info?.['Short Name'];
+                        const companyNameFromOrganized =
+                          organizedMetrics?.companyDetails?.businessSummary
+                            ? organizedMetrics.companyDetails.businessSummary.split('.')[0]
+                            : null;
+                        return (
+                          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                            Financial Data for{' '}
+                            {companyShortName ||
+                              companyNameFromOrganized ||
+                              idea.data.ticker}
+                          </h3>
+                        );
+                      })()}
+
+                      {financialLoading ? (
+                        <div className="text-center text-gray-500 py-4">
+                          Loading financial data...
+                        </div>
+                      ) : financialData?.error ? (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                          <h4 className="font-medium text-red-900 mb-2">
+                            {financialData.envError
+                              ? 'Environment Configuration Error'
+                              : 'API Error'}
+                          </h4>
+                          <p className="text-red-700 text-sm">{financialData.error}</p>
+                          {financialData.envError && (
+                            <div className="mt-3 p-3 bg-red-100 rounded">
+                              <p className="text-red-800 text-xs font-medium mb-2">
+                                Missing Environment Variables:
+                              </p>
+                              <ul className="text-red-700 text-xs space-y-1">
+                                {financialData.missingVars?.supabaseUrl && (
+                                  <li>• NEXT_PUBLIC_SUPABASE_URL</li>
+                                )}
+                                {financialData.missingVars?.supabaseAnonKey && (
+                                  <li>• NEXT_PUBLIC_SUPABASE_ANON_KEY</li>
+                                )}
+                              </ul>
+                              <p className="text-red-800 text-xs mt-2">
+                                💡 <strong>Reminder:</strong> If using Vercel/Render/Netlify,
+                                always remember to set all process.env.* keys as protected
+                                environment variables and redeploy when updating them.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3 pt-3 border-t border-gray-100">
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">Price to Book</div>
+                            <div className="text-sm font-semibold text-gray-900">
+                              {organizedMetrics.valuation?.priceToBook || 'N/A'}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">Price to Sales</div>
+                            <div className="text-sm font-semibold text-gray-900">
+                              {organizedMetrics.valuation?.priceToSales || 'N/A'}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">Debt to Equity</div>
+                            <div className="text-sm font-semibold text-gray-900">
+                              {organizedMetrics.financialHealth?.debtToEquity || 'N/A'}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">Total Cash</div>
+                            <div className="text-sm font-semibold text-gray-900">
+                              {organizedMetrics.financialHealth?.totalCash || 'N/A'}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">EBITDA Margin</div>
+                            <div className="text-sm font-semibold text-gray-900">
+                              {organizedMetrics.profitability?.ebitdaMargin || 'N/A'}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">Net Profit Margin</div>
+                            <div className="text-sm font-semibold text-gray-900">
+                              {organizedMetrics.profitability?.netProfitMargin || 'N/A'}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">3-Year Return</div>
+                            <div
+                              className={`text-sm font-semibold ${
+                                organizedMetrics.growthReturns?.threeYearReturn &&
+                                parseFloat(
+                                  organizedMetrics.growthReturns.threeYearReturn.replace('%', '')
+                                ) >= 0
+                                  ? 'text-green-600'
+                                  : 'text-red-600'
+                              }`}
+                            >
+                              {organizedMetrics.growthReturns?.threeYearReturn || 'N/A'}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">1-Year Return</div>
+                            <div
+                              className={`text-sm font-semibold ${
+                                organizedMetrics.growthReturns?.oneYearReturn &&
+                                parseFloat(
+                                  organizedMetrics.growthReturns.oneYearReturn.replace('%', '')
+                                ) >= 0
+                                  ? 'text-green-600'
+                                  : 'text-red-600'
+                              }`}
+                            >
+                              {organizedMetrics.growthReturns?.oneYearReturn || 'N/A'}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Business Model */}
+                      {organizedMetrics?.companyDetails?.businessSummary && (
+                        <div className="pt-3 mt-3 border-t border-gray-200">
+                          <details open className="group">
+                            <summary className="cursor-pointer text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors flex items-center justify-between">
+                              <span>Business Model</span>
+                              <span className="text-gray-400 group-open:rotate-180 transition-transform">
+                                ▼
+                              </span>
+                            </summary>
+                            <p className="mt-2 text-sm text-gray-700 leading-relaxed">
+                              {organizedMetrics.companyDetails.businessSummary}
+                            </p>
+                          </details>
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">P/E Ratio</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {organizedMetrics.companyOverview.peRatio || 'N/A'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Dividend Yield</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {getDividendYieldDisplay(organizedMetrics.companyOverview.dividendYield, false)}
-                      </div>
-                    </div>
-                    {organizedMetrics.growthReturns?.weekRange && (
-                      <div>
-                        <div className="text-xs text-gray-500 mb-1">52-Week Range</div>
-                        <div className="text-sm font-semibold text-gray-900">
-                          ₹{organizedMetrics.growthReturns.weekRange.split(' - ').map(price => 
-                            Math.round(parseFloat(price))
-                          ).filter(Boolean).join(' - ₹') || 'N/A'}
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Single Column Layout - Full width components */}
+          <div className="space-y-6">
+            {/* Investment Thesis */}
+            <IdeaCard
+              idea={idea}
+              showBreadcrumb={false}
+              disabledNavigate={true}
+              onIdeaUpdate={handleIdeaUpdate}
+            />
+
+            {/* Stock Chart Section */}
+            {idea?.data?.ticker && (
+              <div className="mt-6">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                    Price Chart - {idea.data.ticker.replace('.NS', '')}
+                  </h4>
+
+                  {chartLoading ? (
+                    <div className="bg-gray-50 rounded-lg p-4" style={{ height: '420px' }}>
+                      <div className="flex items-center justify-center h-full">
+                        <div className="text-center">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                          <p className="text-sm text-gray-600">Loading chart...</p>
                         </div>
                       </div>
-                    )}
-                  </div>
-
-              {/* Right Column - Financial Data (40% width) */}
-              <div className="lg:col-span-2">
-                {idea?.data?.ticker && (
-                  <div className="space-y-4">
-                    {(() => {
-                      const companyShortName = financialData?.data?.company_info?.["Short Name"];
-                      const companyNameFromOrganized = organizedMetrics?.companyDetails?.businessSummary ? 
-                        organizedMetrics.companyDetails.businessSummary.split('.')[0] : null;
-                      return (
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                          Financial Data for {companyShortName || companyNameFromOrganized || idea.data.ticker}
-                        </h3>
-                      );
-                    })()}
-                
-                {financialLoading ? (
-                  <div className="text-center text-gray-500 py-4">
-                    Loading financial data...
-                  </div>
-                ) : financialData?.error ? (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <h4 className="font-medium text-red-900 mb-2">
-                      {financialData.envError ? 'Environment Configuration Error' : 'API Error'}
-                    </h4>
-                    <p className="text-red-700 text-sm">{financialData.error}</p>
-                    {financialData.envError && (
-                      <div className="mt-3 p-3 bg-red-100 rounded">
-                        <p className="text-red-800 text-xs font-medium mb-2">Missing Environment Variables:</p>
-                        <ul className="text-red-700 text-xs space-y-1">
-                          {financialData.missingVars?.supabaseUrl && <li>• NEXT_PUBLIC_SUPABASE_URL</li>}
-                          {financialData.missingVars?.supabaseAnonKey && <li>• NEXT_PUBLIC_SUPABASE_ANON_KEY</li>}
-                        </ul>
-                        <p className="text-red-800 text-xs mt-2">
-                          💡 <strong>Reminder:</strong> If using Vercel/Render/Netlify, always remember to set all process.env.* keys as protected environment variables and redeploy when updating them.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Valuation & Growth Row */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3 pt-3 border-t border-gray-100">
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Price to Book</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {organizedMetrics.valuation?.priceToBook || 'N/A'}
-                      </div>
                     </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Price to Sales</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {organizedMetrics.valuation?.priceToSales || 'N/A'}
-                      </div>
+                  ) : chartError ? (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <p className="text-sm text-yellow-800">{chartError}</p>
                     </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Debt to Equity</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {organizedMetrics.financialHealth?.debtToEquity || 'N/A'}
-                      </div>
+                  ) : chartSeries.length > 0 ? (
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <Chart
+                        options={getChartOptions(normalizeSymbol(idea.data.ticker))}
+                        series={[
+                          {
+                            name: 'Closing Price',
+                            data: chartSeries,
+                          },
+                        ]}
+                        type="line"
+                        height={420}
+                      />
                     </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Total Cash</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {organizedMetrics.financialHealth?.totalCash || 'N/A'}
+                  ) : (
+                    <div className="bg-gray-50 rounded-lg p-4" style={{ height: '420px' }}>
+                      <div className="flex items-center justify-center h-full">
+                        <div className="text-center">
+                          <p className="text-sm text-gray-600">No chart data available</p>
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">EBITDA Margin</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {organizedMetrics.profitability?.ebitdaMargin || 'N/A'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Net Profit Margin</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {organizedMetrics.profitability?.netProfitMargin || 'N/A'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">3-Year Return</div>
-                      <div className={`text-sm font-semibold ${
-                        organizedMetrics.growthReturns?.threeYearReturn && 
-                        parseFloat(organizedMetrics.growthReturns.threeYearReturn.replace('%', '')) >= 0 
-                          ? 'text-green-600' 
-                          : 'text-red-600'
-                      }`}>
-                        {organizedMetrics.growthReturns?.threeYearReturn || 'N/A'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">1-Year Return</div>
-                      <div className={`text-sm font-semibold ${
-                        organizedMetrics.growthReturns?.oneYearReturn && 
-                        parseFloat(organizedMetrics.growthReturns.oneYearReturn.replace('%', '')) >= 0 
-                          ? 'text-green-600' 
-                          : 'text-red-600'
-                      }`}>
-                        {organizedMetrics.growthReturns?.oneYearReturn || 'N/A'}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Business Model - Separate Section */}
-                  {organizedMetrics?.companyDetails?.businessSummary && (
-                    <div className="pt-3 mt-3 border-t border-gray-200">
-                      <details className="group">
-                        <summary className="cursor-pointer text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors flex items-center justify-between">
-                          <span>Business Model</span>
-                          <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
-                        </summary>
-                        <p className="mt-2 text-sm text-gray-700 leading-relaxed">
-                          {organizedMetrics.companyDetails.businessSummary}
-                        </p>
-                      </details>
                     </div>
                   )}
                 </div>
               </div>
             )}
-
-            {/* Single Column Layout - Full width components */}
-            <div className="space-y-6">
-              {/* Investment Thesis - Full Width */}
-              <IdeaCard 
-                idea={idea} 
-                showBreadcrumb={false}
-                disabledNavigate={true}
-                onIdeaUpdate={handleIdeaUpdate}
-              />
-
-              {/* Stock Chart Section */}
-              {idea?.data?.ticker && (
-                <div className="mt-6">
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                    <h4 className="text-lg font-semibold text-gray-900 mb-3">
-                      Price Chart - {idea.data.ticker.replace('.NS', '')}
-                    </h4>
-                    
-                    {chartLoading ? (
-                      <div className="bg-gray-50 rounded-lg p-4" style={{ height: '420px' }}>
-                        <div className="flex items-center justify-center h-full">
-                          <div className="text-center">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                            <p className="text-sm text-gray-600">Loading chart...</p>
-                          </div>
-                        </div>
-                      </div>
-                    ) : chartError ? (
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                        <p className="text-sm text-yellow-800">{chartError}</p>
-                      </div>
-                    ) : chartSeries.length > 0 ? (
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <Chart
-                          options={getChartOptions(normalizeSymbol(idea.data.ticker))}
-                          series={[{
-                            name: 'Closing Price',
-                            data: chartSeries
-                          }]}
-                          type="line"
-                          height={420}
-                        />
-                      </div>
-                    ) : (
-                      <div className="bg-gray-50 rounded-lg p-4" style={{ height: '420px' }}>
-                        <div className="flex items-center justify-center h-full">
-                          <div className="text-center">
-                            <p className="text-sm text-gray-600">No chart data available</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-            </div>
           </div>
-          )}
-      </main>
-      <Toaster
+        </div>
+      )}
+    </main>
+
+    <Toaster
       position="top-center"
       toastOptions={{
         duration: 3000,
         className:
-          "bg-transparent border border-blue-200 backdrop-blur-md text-white font-medium shadow-lg rounded-2xl px-4 py-3 flex items-center justify-center",
+          'bg-transparent border border-blue-200 backdrop-blur-md text-white font-medium shadow-lg rounded-2xl px-4 py-3 flex items-center justify-center',
         style: {
-          background: "transparent",
+          background: 'transparent',
         },
       }}
     />
-    </div>
-  );
-}
+  </div>
+);
 
-function setError(arg0: string) {
-  throw new Error('Function not implemented.');
+
+  
 }

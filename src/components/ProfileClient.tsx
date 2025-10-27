@@ -161,7 +161,6 @@ export default function ProfileClient() {
         return;
       }
 
-      console.log('Updating fields:', updateFields);
 
       // Update profile via API
       const response = await fetch(`https://acsobefarzmetevcseal.supabase.co/functions/v1/app-user/me`, {

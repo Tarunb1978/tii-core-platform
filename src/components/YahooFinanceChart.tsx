@@ -38,14 +38,7 @@ interface YahooFinanceChartProps {
 
 // Chart options configuration
 const getChartOptions = (symbol: string, chartData?: { series: [number, number][] }, showTitle: boolean = true) => {
-  console.log('[DIAGNOSTIC] Creating chart options:', {
-    symbol,
-    hasChartData: !!chartData,
-    dataLength: chartData?.series?.length,
-    showTitle,
-    timestamp: Date.now()
-  });
-  
+   
   return {
   chart: {
     type: 'line' as const,
@@ -123,21 +116,11 @@ const getChartOptions = (symbol: string, chartData?: { series: [number, number][
     y: {
       formatter: (value: number) => {
         // Simplified formatter - no event references
-        console.log('[DIAGNOSTIC] Tooltip Y formatter called with value:', value);
         return `₹${value.toFixed(2)}`;
       }
     },
     // Add custom tooltip to debug all parameters
     custom: (opt: any) => {
-      console.log('[DIAGNOSTIC] Custom tooltip callback:', {
-        seriesIndex: opt.seriesIndex,
-        dataPointIndex: opt.dataPointIndex,
-        w: opt.w ? Object.keys(opt.w) : 'N/A',
-        hasOffsetY: opt.w?.chartY !== undefined,
-        chartY: opt.w?.chartY,
-        cursorOffsetY: opt.w?.cursorOffsetY,
-        timestamp: Date.now()
-      });
       return '<div></div>';
     }
   },
@@ -157,23 +140,11 @@ const getChartOptions = (symbol: string, chartData?: { series: [number, number][
   },
   events: {
     mounted: (chartContext: any, config: any) => {
-      console.log('[DIAGNOSTIC] ApexCharts mounted event:', {
-        hasContext: !!chartContext,
-        hasConfig: !!config,
-        chartContextType: chartContext?.constructor?.name,
-        timestamp: Date.now()
-      });
+      
     },
     init: (chartContext: any, config: any) => {
-      console.log('[DIAGNOSTIC] ApexCharts init event:', {
-        hasContext: !!chartContext,
-        hasConfig: !!config,
-        chartContextType: chartContext?.constructor?.name,
-        timestamp: Date.now()
-      });
     },
     rendered: () => {
-      console.log('[DIAGNOSTIC] ApexCharts rendered event');
     }
   }
   };
@@ -193,9 +164,7 @@ export default function YahooFinanceChart({
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    console.log('[DIAGNOSTIC] YahooFinanceChart mounting, symbol:', symbol);
     setIsMounted(true);
-    console.log('[DIAGNOSTIC] isMounted set to true');
   }, [symbol]);
 
   // Function to normalize stock symbol (add .NS if not present)
@@ -220,7 +189,6 @@ export default function YahooFinanceChart({
 
       const apiUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/yahoo-proxy?symbol=${encodeURIComponent(normalizedSymbol)}&range=1y&interval=1d`;
       
-      console.log('Fetching data from:', apiUrl);
 
       const response = await fetch(apiUrl);
       
@@ -347,20 +315,9 @@ export default function YahooFinanceChart({
     );
   }
 
-  // Diagnostic: Log all render conditions
-  console.log('[CHART RENDER] All conditions:', {
-    loading: loading,
-    errorMessage: errorMessage,
-    hasChartData: !!chartData,
-    chartDataLength: chartData?.series?.length || 0,
-    isMounted: isMounted,
-    chartSeriesLength: chartSeries.length,
-    symbol: displaySymbol
-  });
 
   // Simplified rendering: only check for valid data, not mounted state
   if (chartData && chartData.series && chartData.series.length > 0) {
-    console.log('[CHART RENDER] ✅ RENDERING CHART with', chartData.series.length, 'data points');
 
     return (
       <div className="bg-gray-50 rounded-lg p-4" key="chart-container">
@@ -375,8 +332,6 @@ export default function YahooFinanceChart({
     );
   }
 
-  // Fallback for no data
-  console.log('[CHART RENDER] ❌ Using fallback - no valid chart data');
   return (
     <div className="bg-gray-50 rounded-lg p-4" style={{ height: `${height}px` }}>
       <div className="flex items-center justify-center h-full">
