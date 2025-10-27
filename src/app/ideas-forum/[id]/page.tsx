@@ -8,6 +8,10 @@ import { useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { useAuth } from '@/context/authProvider';
 import { createClient } from '@/lib/supabase/client';
+import dynamic from 'next/dynamic';
+
+// Dynamically import ApexCharts to avoid SSR issues
+const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 type Comment = {
   id: string;
@@ -550,6 +554,186 @@ export default function IdeaDetailPage({ params }: { params: Promise<{ id: strin
     bookmarks: string[];
     comments: string[];
   }>({ likes: [], bookmarks: [], comments: [] });
+  
+  // Chart state
+  const [chartLoading, setChartLoading] = useState(false);
+  const [chartError, setChartError] = useState<string | null>(null);
+  const [chartSeries, setChartSeries] = useState<[number, number][]>([]);
+
+  // Helper function to normalize symbol
+  const normalizeSymbol = (inputSymbol: string): string => {
+    const trimmedSymbol = inputSymbol.trim().toUpperCase();
+    if (!trimmedSymbol.endsWith('.NS')) {
+      return `${trimmedSymbol}.NS`;
+    }
+    return trimmedSymbol;
+  };
+
+  // Chart options configuration - same as working yahoo-finance-chart page
+  const getChartOptions = (symbol: string) => ({
+    chart: {
+      type: 'line' as const,
+      height: 420,
+      toolbar: {
+        show: true,
+      },
+      zoom: {
+        enabled: true,
+      },
+      animations: {
+        enabled: true,
+        easing: 'easeinout',
+        speed: 800,
+      },
+      redrawOnParentResize: true,
+      redrawOnWindowResize: true,
+    },
+    title: {
+      text: `1 Year Closing Prices for ${symbol.replace('.NS', '')}`,
+      align: 'center' as const,
+      style: {
+        fontSize: '16px',
+        fontWeight: 'bold',
+      },
+    },
+    xaxis: {
+      type: 'datetime' as const,
+      labels: {
+        format: 'MMM yyyy',
+        rotate: -45,
+        show: true,
+        style: {
+          fontSize: '12px',
+          fontWeight: 400,
+          cssClass: 'apexcharts-xaxis-label',
+        },
+      },
+      title: {
+        text: 'Date',
+        offsetY: 20,
+        style: {
+          fontSize: '14px',
+        },
+      },
+      tickAmount: 15,
+      forceNiceScale: false,
+      tickPlacement: 'on',
+      axisTicks: {
+        show: true,
+      },
+      axisBorder: {
+        show: true,
+      },
+    },
+    yaxis: {
+      title: {
+        text: 'Price (₹)',
+      },
+      labels: {
+        formatter: (value: number) => `₹${value.toFixed(2)}`,
+      },
+    },
+    stroke: {
+      curve: 'smooth' as const,
+      width: 2,
+    },
+    colors: ['#4A90E2'],
+    grid: {
+      borderColor: '#e7e7e7',
+      strokeDashArray: 4,
+    },
+    tooltip: {
+      x: {
+        format: 'MMM dd, yyyy',
+      },
+      y: {
+        formatter: (value: number) => `₹${value.toFixed(2)}`,
+      },
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    markers: {
+      size: 0,
+      hover: {
+        size: 6,
+      },
+    },
+    noData: {
+      text: 'No data available',
+      align: 'center' as const,
+      verticalAlign: 'middle' as const,
+    },
+  });
+
+  // Function to fetch stock data via Supabase Edge Function proxy
+  const fetchChartData = async (ticker: string) => {
+    try {
+      setChartLoading(true);
+      setChartError(null);
+      
+      const normalizedSymbol = normalizeSymbol(ticker);
+      const apiUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/yahoo-proxy?symbol=${encodeURIComponent(normalizedSymbol)}&range=1y&interval=1d`;
+      
+      const response = await fetch(apiUrl);
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          setChartError(`Chart data not found for ${normalizedSymbol}`);
+        } else if (response.status >= 500) {
+          setChartError('Server error. Chart temporarily unavailable.');
+        } else {
+          setChartError(`Failed to load chart data`);
+        }
+        return;
+      }
+
+      const data = await response.json();
+      
+      if (data.chart?.error || !data.chart?.result?.[0]) {
+        setChartError('Chart data unavailable for this symbol');
+        return;
+      }
+
+      const result = data.chart.result[0];
+      const closePrices = result.indicators?.quote?.[0]?.close ?? [];
+      const timestamps = result.timestamp ?? [];
+
+      // Process data - map timestamps and prices
+      const mapped = timestamps.map((ts: number, i: number) => ({ 
+        date: ts * 1000,
+        price: closePrices[i] 
+      }));
+      
+      // Filter out invalid data
+      const filtered = mapped.filter((pt: { date: number, price: number }) => 
+        pt.price != null && !isNaN(pt.price) && 
+        pt.date != null && !isNaN(pt.date) && pt.date > 0
+      );
+
+      // Sort by timestamp ascending
+      const sortedData = filtered.sort((a: { date: number }, b: { date: number }) => a.date - b.date);
+      
+      // Remove duplicate timestamps
+      const uniqueData = [];
+      const seenTimestamps = new Set();
+      for (const point of sortedData) {
+        if (!seenTimestamps.has(point.date)) {
+          seenTimestamps.add(point.date);
+          uniqueData.push(point);
+        }
+      }
+
+      const seriesData = uniqueData.map(pt => [pt.date, pt.price] as [number, number]);
+      setChartSeries(seriesData);
+
+    } catch (err) {
+      console.error('Chart fetch error:', err);
+      setChartError('Failed to load chart');
+    } finally {
+      setChartLoading(false);
+    }
+  };
 
   useEffect(() => {
     async function getParams() {
@@ -861,6 +1045,13 @@ useEffect(() => {
     fetchUserActions();
   }, [currentUser?.access_token]);
 
+  // Fetch chart data when ticker is available
+  useEffect(() => {
+    if (idea?.data?.ticker) {
+      fetchChartData(idea.data.ticker);
+    }
+  }, [idea?.data?.ticker]);
+
   const handleIdeaUpdate = (updatedIdea: Idea) => {
     setIdea(updatedIdea);
   };
@@ -868,7 +1059,7 @@ useEffect(() => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
         {/* Back button */}
         <div className="mb-6">
           <Link
@@ -891,267 +1082,199 @@ useEffect(() => {
             Idea not found
           </div>
         ) : (
-          <div className="max-w-7xl mx-auto">
-            {/* Company Details Card - Top */}
-            {organizedMetrics?.companyDetails && (
-              <div className="mb-8">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                  <div className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Company Details</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-600 mb-2">Business Summary</h4>
-                        <p className="text-sm text-gray-900 leading-relaxed">
-                          {organizedMetrics.companyDetails.businessSummary || 'No business summary available.'}
-                        </p>
+          <div>
+            {/* Compact Company Overview Card - Top */}
+            {organizedMetrics?.companyOverview && (
+              <div className="mb-6">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                  {/* Header */}
+                  <div className="border-b border-gray-200 pb-3 mb-3">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {idea?.data?.ticker?.replace('.NS', '')} - {financialData?.data?.company_info?.["Short Name"] || idea?.data?.company_name || 'Company Overview'}
+                    </h3>
+                  </div>
+
+                  {/* First Row - Key Metrics */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">Industry</div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {organizedMetrics.companyOverview.industry || 'N/A'}
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-600 mb-1">Location</h4>
-                          <p className="text-sm text-gray-900">
-                            {organizedMetrics.companyDetails.location || 'N/A'}
-                          </p>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">P/E Ratio</div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {organizedMetrics.companyOverview.peRatio || 'N/A'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">Dividend Yield</div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {getDividendYieldDisplay(organizedMetrics.companyOverview.dividendYield, false)}
+                      </div>
+                    </div>
+                    {organizedMetrics.growthReturns?.weekRange && (
+                      <div>
+                        <div className="text-xs text-gray-500 mb-1">52-Week Range</div>
+                        <div className="text-sm font-semibold text-gray-900">
+                          ₹{organizedMetrics.growthReturns.weekRange.split(' - ').map(price => 
+                            Math.round(parseFloat(price))
+                          ).filter(Boolean).join(' - ₹') || 'N/A'}
                         </div>
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-600 mb-1">Employees</h4>
-                          <p className="text-sm text-gray-900">
-                            {organizedMetrics.companyDetails.employees || 'N/A'}
-                          </p>
-                        </div>
-                        {organizedMetrics.companyDetails.website && (
-                          <div>
-                            <h4 className="text-sm font-medium text-gray-600 mb-1">Website</h4>
-                            <a 
-                              href={organizedMetrics.companyDetails.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                            >
-                              {organizedMetrics.companyDetails.website}
-                            </a>
-                          </div>
-                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Market Cap - Second Line */}
+                  <div className="grid grid-cols-1 gap-4 mb-3">
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">Market Cap</div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {organizedMetrics.companyOverview.marketCap || 'N/A'}
                       </div>
                     </div>
                   </div>
+
+                  {/* Valuation & Growth Row */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3 pt-3 border-t border-gray-100">
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">Price to Book</div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {organizedMetrics.valuation?.priceToBook || 'N/A'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">Price to Sales</div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {organizedMetrics.valuation?.priceToSales || 'N/A'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">Debt to Equity</div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {organizedMetrics.financialHealth?.debtToEquity || 'N/A'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">Total Cash</div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {organizedMetrics.financialHealth?.totalCash || 'N/A'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">EBITDA Margin</div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {organizedMetrics.profitability?.ebitdaMargin || 'N/A'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">Net Profit Margin</div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {organizedMetrics.profitability?.netProfitMargin || 'N/A'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">3-Year Return</div>
+                      <div className={`text-sm font-semibold ${
+                        organizedMetrics.growthReturns?.threeYearReturn && 
+                        parseFloat(organizedMetrics.growthReturns.threeYearReturn.replace('%', '')) >= 0 
+                          ? 'text-green-600' 
+                          : 'text-red-600'
+                      }`}>
+                        {organizedMetrics.growthReturns?.threeYearReturn || 'N/A'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">1-Year Return</div>
+                      <div className={`text-sm font-semibold ${
+                        organizedMetrics.growthReturns?.oneYearReturn && 
+                        parseFloat(organizedMetrics.growthReturns.oneYearReturn.replace('%', '')) >= 0 
+                          ? 'text-green-600' 
+                          : 'text-red-600'
+                      }`}>
+                        {organizedMetrics.growthReturns?.oneYearReturn || 'N/A'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Business Model - Separate Section */}
+                  {organizedMetrics?.companyDetails?.businessSummary && (
+                    <div className="pt-3 mt-3 border-t border-gray-200">
+                      <details className="group">
+                        <summary className="cursor-pointer text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors flex items-center justify-between">
+                          <span>Business Model</span>
+                          <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+                        </summary>
+                        <p className="mt-2 text-sm text-gray-700 leading-relaxed">
+                          {organizedMetrics.companyDetails.businessSummary}
+                        </p>
+                      </details>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
-            {/* Split Column Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-              {/* Left Column - Investment Thesis (60% width) */}
-              <div className="lg:col-span-3">
-          <IdeaCard 
-            idea={idea} 
-            showBreadcrumb={false} 
-            onIdeaUpdate={handleIdeaUpdate}
-          />
-              </div>
+            {/* Single Column Layout - Full width components */}
+            <div className="space-y-6">
+              {/* Investment Thesis - Full Width */}
+              <IdeaCard 
+                idea={idea} 
+                showBreadcrumb={false}
+                disabledNavigate={true}
+                onIdeaUpdate={handleIdeaUpdate}
+              />
 
-              {/* Right Column - Financial Data (40% width) */}
-              <div className="lg:col-span-2">
-                {idea?.data?.ticker && (
-                  <div className="space-y-4">
-                    {(() => {
-                      console.log("Debug - idea.data:", idea.data);
-                      console.log("Debug - financialData state:", financialData);
-                      console.log("Debug - company_info:", financialData?.data?.company_info);
-                      console.log("Debug - organizedMetrics:", organizedMetrics);
-                      const companyShortName = financialData?.data?.company_info?.["Short Name"];
-                      const companyNameFromOrganized = organizedMetrics?.companyDetails?.businessSummary ? 
-                        organizedMetrics.companyDetails.businessSummary.split('.')[0] : null;
-                      console.log("Debug - companyShortName:", companyShortName);
-                      console.log("Debug - companyNameFromOrganized:", companyNameFromOrganized);
-                      console.log("Debug - ticker:", idea.data.ticker);
-                      return (
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                          Financial Data for {companyShortName || companyNameFromOrganized || idea.data.ticker}
-                        </h3>
-                      );
-                    })()}
-                
-                {financialLoading ? (
-                  <div className="text-center text-gray-500 py-4">
-                    Loading financial data...
-                  </div>
-                ) : financialData?.error ? (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <h4 className="font-medium text-red-900 mb-2">
-                      {financialData.envError ? 'Environment Configuration Error' : 'API Error'}
+              {/* Stock Chart Section */}
+              {idea?.data?.ticker && (
+                <div className="mt-6">
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                      Price Chart - {idea.data.ticker.replace('.NS', '')}
                     </h4>
-                    <p className="text-red-700 text-sm">{financialData.error}</p>
-                    {financialData.envError && (
-                      <div className="mt-3 p-3 bg-red-100 rounded">
-                        <p className="text-red-800 text-xs font-medium mb-2">Missing Environment Variables:</p>
-                        <ul className="text-red-700 text-xs space-y-1">
-                          {financialData.missingVars?.supabaseUrl && <li>• NEXT_PUBLIC_SUPABASE_URL</li>}
-                          {financialData.missingVars?.supabaseAnonKey && <li>• NEXT_PUBLIC_SUPABASE_ANON_KEY</li>}
-                        </ul>
-                        <p className="text-red-800 text-xs mt-2">
-                          💡 <strong>Reminder:</strong> If using Vercel/Render/Netlify, always remember to set all process.env.* keys as protected environment variables and redeploy when updating them.
-                        </p>
+                    
+                    {chartLoading ? (
+                      <div className="bg-gray-50 rounded-lg p-4" style={{ height: '420px' }}>
+                        <div className="flex items-center justify-center h-full">
+                          <div className="text-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                            <p className="text-sm text-gray-600">Loading chart...</p>
+                          </div>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                ) : organizedMetrics ? (
-                      <div className="space-y-4">
-                        {/* Compact Company Overview Card */}
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                          <h4 className="text-md font-semibold text-gray-900 mb-3">Company Overview</h4>
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1">
-                              <p className="text-xs text-gray-600">Market Cap</p>
-                              <p className="text-sm font-medium text-gray-900">
-                                {organizedMetrics.companyOverview?.marketCap || 'N/A'}
-                              </p>
-                            </div>
-                            <div className="space-y-1">
-                              <p className="text-xs text-gray-600">Industry</p>
-                              <p className="text-sm font-medium text-gray-900">
-                                {organizedMetrics.companyOverview?.industry || 'N/A'}
-                              </p>
-                            </div>
-                            <div className="space-y-1">
-                              <p className="text-xs text-gray-600">Dividend Yield</p>
-                              <p className="text-sm font-medium text-gray-900">
-                                {getDividendYieldDisplay(organizedMetrics.companyOverview?.dividendYield, false)}
-                              </p>
-                            </div>
-                            <div className="space-y-1">
-                              <p className="text-xs text-gray-600">P/E Ratio</p>
-                              <p className="text-sm font-medium text-gray-900">
-                                {organizedMetrics.companyOverview?.peRatio || 'N/A'}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Financial Metrics Cards - Vertical Stack */}
-                        <div className="space-y-4">
-                          {/* Profitability Card */}
-                          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                            <h4 className="text-md font-semibold text-gray-900 mb-3">Profitability</h4>
-                            <div className="space-y-2">
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs text-gray-600">EBITDA Margin</span>
-                                <span className="text-xs font-medium text-gray-900">
-                                  {organizedMetrics.profitability?.ebitdaMargin || 'N/A'}
-                                </span>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs text-gray-600">Net Profit Margin</span>
-                                <span className="text-xs font-medium text-gray-900">
-                                  {organizedMetrics.profitability?.netProfitMargin || 'N/A'}
-                                </span>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs text-gray-600">Gross Margin</span>
-                                <span className="text-xs font-medium text-gray-900">
-                                  {organizedMetrics.profitability?.grossMargin || 'N/A'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Valuation Card */}
-                          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                            <h4 className="text-md font-semibold text-gray-900 mb-3">Valuation</h4>
-                            <div className="space-y-2">
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs text-gray-600">Price to Book</span>
-                                <span className="text-xs font-medium text-gray-900">
-                                  {organizedMetrics.valuation?.priceToBook || 'N/A'}
-                                </span>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs text-gray-600">Price to Sales</span>
-                                <span className="text-xs font-medium text-gray-900">
-                                  {organizedMetrics.valuation?.priceToSales || 'N/A'}
-                                </span>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs text-gray-600">Trailing P/E</span>
-                                <span className="text-xs font-medium text-gray-900">
-                                  {organizedMetrics.valuation?.trailingPE || 'N/A'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Growth & Returns Card */}
-                          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                            <h4 className="text-md font-semibold text-gray-900 mb-3">Growth & Returns</h4>
-                            <div className="space-y-2">
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs text-gray-600">3-Year Return</span>
-                                <span className={`text-xs font-medium ${
-                                  organizedMetrics.growthReturns?.threeYearReturn && 
-                                  parseFloat(organizedMetrics.growthReturns.threeYearReturn.replace('%', '')) >= 0 
-                                    ? 'text-green-600' 
-                                    : 'text-red-600'
-                                }`}>
-                                  {organizedMetrics.growthReturns?.threeYearReturn || 'N/A'}
-                                </span>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs text-gray-600">1-Year Return</span>
-                                <span className={`text-xs font-medium ${
-                                  organizedMetrics.growthReturns?.oneYearReturn && 
-                                  parseFloat(organizedMetrics.growthReturns.oneYearReturn.replace('%', '')) >= 0 
-                                    ? 'text-green-600' 
-                                    : 'text-red-600'
-                                }`}>
-                                  {organizedMetrics.growthReturns?.oneYearReturn || 'N/A'}
-                                </span>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs text-gray-600">52-Week Range</span>
-                                <span className="text-xs font-medium text-gray-900">
-                                  {organizedMetrics.growthReturns?.weekRange || 'N/A'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Financial Health Card */}
-                          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                            <h4 className="text-md font-semibold text-gray-900 mb-3">Financial Health</h4>
-                            <div className="space-y-2">
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs text-gray-600">Debt to Equity</span>
-                                <span className="text-xs font-medium text-gray-900">
-                                  {organizedMetrics.financialHealth?.debtToEquity || 'N/A'}
-                                </span>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs text-gray-600">Total Cash</span>
-                                <span className="text-xs font-medium text-gray-900">
-                                  {organizedMetrics.financialHealth?.totalCash || 'N/A'}
-                                </span>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs text-gray-600">Cash per Share</span>
-                                <span className="text-xs font-medium text-gray-900">
-                                  {organizedMetrics.financialHealth?.cashPerShare || 'N/A'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                        </div>
+                    ) : chartError ? (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <p className="text-sm text-yellow-800">{chartError}</p>
+                      </div>
+                    ) : chartSeries.length > 0 ? (
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <Chart
+                          options={getChartOptions(normalizeSymbol(idea.data.ticker))}
+                          series={[{
+                            name: 'Closing Price',
+                            data: chartSeries
+                          }]}
+                          type="line"
+                          height={420}
+                        />
                       </div>
                     ) : (
-                      <div className="text-center text-gray-500 py-4">
-                        No financial data available for {idea.data.ticker}
+                      <div className="bg-gray-50 rounded-lg p-4" style={{ height: '420px' }}>
+                        <div className="flex items-center justify-center h-full">
+                          <div className="text-center">
+                            <p className="text-sm text-gray-600">No chart data available</p>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+
             </div>
           </div>
-        )}
+          )}
       </main>
       <Toaster
       position="top-center"
