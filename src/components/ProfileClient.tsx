@@ -47,11 +47,9 @@ export default function ProfileClient() {
     
     try {
       setIsLoading(true);
-      console.log('Fetching profile for user:', currentUser.user.id);
       
 
       const apiUrl = `https://acsobefarzmetevcseal.supabase.co/functions/v1/app-user/me`;
-      console.log('API URL:', apiUrl);
 
       // Fetch profile from API
       const response = await fetch(apiUrl, {
@@ -69,11 +67,9 @@ export default function ProfileClient() {
       }
 
       const responseData = await response.json();
-      console.log('API response received:', responseData);
       
       // Extract profile data from nested structure
       const profileData = responseData.profile || responseData;
-      console.log('Extracted profile data:', profileData);
       
       // Create full profile object with all required fields
       const fullProfileData = {
@@ -101,7 +97,6 @@ export default function ProfileClient() {
         investor_bio: profileData.investor_bio || ''
       };
       
-      console.log('Setting form data:', newFormData);
       setFormData(newFormData);
       
     } catch (error) {
@@ -166,7 +161,6 @@ export default function ProfileClient() {
         return;
       }
 
-      console.log('Updating fields:', updateFields);
 
       // Update profile via API
       const response = await fetch(`https://acsobefarzmetevcseal.supabase.co/functions/v1/app-user/me`, {

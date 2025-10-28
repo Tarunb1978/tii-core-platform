@@ -178,15 +178,12 @@ async function fetchFinancialData(ticker: string, currentUser?: any, forceRefres
     const cacheAge = now - financeDataCache.timestamp;
     
     if (cacheAge < CACHE_DURATION) {
-      console.log(`Using cached finance data for ${ticker} (age: ${Math.round(cacheAge / 1000)}s)`);
       return financeDataCache.data;
     } else {
-      console.log(`Cache expired for ${ticker} (age: ${Math.round(cacheAge / 1000)}s), fetching fresh data`);
       financeDataCache = null; // Clear expired cache
     }
   }
   
-  console.log(`Fetching fresh finance data for ${ticker}${forceRefresh ? ' (forced refresh)' : ''}`);
   // Fetching financial data for ticker
   
   // Debug auth state
@@ -289,8 +286,6 @@ async function fetchFinancialData(ticker: string, currentUser?: any, forceRefres
     
     const result = await response.json();
     // API Response received successfully
-    console.log("Raw API response after fetch:", result);
-    console.log("result.data:", result.data);
     
     const financialData = result.data || result || null;
     
@@ -301,7 +296,6 @@ async function fetchFinancialData(ticker: string, currentUser?: any, forceRefres
         timestamp: Date.now(),
         ticker: ticker
       };
-      console.log(`Cached finance data for ${ticker}`);
     }
     
     return financialData;
@@ -340,7 +334,6 @@ function parseInvestIndiaData(rawData: any) {
   // Extract from new structure: financial_data.data
   const data = rawData.financial_data?.data || {};
   
-  console.log('Parsing financial data:', data);
   
   // Parse sectors - already an array in API response
   const parsedSectors: Sector[] = (data.sectors || []).map((sector: any) => ({
@@ -381,9 +374,6 @@ function parseInvestIndiaData(rawData: any) {
     }
   }));
 
-  console.log('Parsed sectors:', parsedSectors);
-  console.log('Parsed ETFs:', parsedETFs);
-  console.log('Parsed indices:', parsedIndices);
 
   return {
     sectors: parsedSectors,
@@ -658,33 +648,15 @@ export default function IdeasForumPage() {
         if (!res.ok) throw new Error('Failed to fetch ideas');
 
         const json = await res.json();
-        console.log('📥 Full API Response (JSON):', JSON.stringify(json, null, 2));
-        console.log('📊 Ideas array:', json.ideas);
-        console.log('🔢 Number of ideas:', Array.isArray(json.ideas) ? json.ideas.length : 0);
         
         const fetchedIdeas = Array.isArray(json.ideas) ? json.ideas : [];
         
-        // Log each idea's structure
-        fetchedIdeas.forEach((idea, index) => {
-          console.log(`💡 Idea ${index + 1}:`, {
-            id: idea.id,
-            user_id: idea.user_id,
-            data: idea.data,
-            likes_count: idea.likes_count,
-            bookmarks_count: idea.bookmarks_count,
-            discussions_count: idea.discussions_count,
-            status: idea.status,
-            created_at: idea.created_at,
-            idea_discussion: idea.idea_discussion
-          });
-        });
 
         setIdeas(fetchedIdeas);
         setFilteredIdeas(fetchedIdeas);
 
         // Optional: show a friendly hint for guests
         if (!token && fetchedIdeas.length > 0) {
-          console.log('Showing public ideas. Sign in to see more!');
         }
 
       } catch (err) {

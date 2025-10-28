@@ -95,8 +95,6 @@ getSession();
 const { data: { subscription } } = supabase.auth.onAuthStateChange(
   async (event, session) => {
 //Please remove in production
-    console.log("Auth state changed:", event, session);
-    console.log("Current user:", currentUser);
     
     // Force a small delay to ensure session is fully established
     if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {

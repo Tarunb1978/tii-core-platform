@@ -57,25 +57,17 @@ export default function Navbar() {
 
   // Handle sign out
   const handleSignOut = async () => {
-    console.log("🔥 handleSignOut function called!");
     try {
-      console.log("Navbar: Starting sign out process");
-      console.log("Navbar: Current user before sign out:", currentUser);
       setIsUserDropdownOpen(false);
       
-      console.log("Navbar: About to call supabase.auth.signOut()");
       const { error } = await supabase.auth.signOut();
-      console.log('Sign out result:', error);
       
       if (error) {
         console.error('Sign out error:', error);
         return;
       }
       
-      console.log("Navbar: Sign out successful, about to redirect");
-      console.log("Navbar: Using window.location.href for full reload");
       window.location.href = "/";
-      console.log("Navbar: Redirect initiated");
       
     } catch (error) {
       console.error('Error signing out:', error);
@@ -96,22 +88,6 @@ export default function Navbar() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-
-  // Log currentUser changes for debugging
-  useEffect(() => {
-    console.log("🔄 Navbar: currentUser changed");
-    console.log("🔄 Navbar: currentUser value:", currentUser);
-    console.log("🔄 Navbar: currentUser is null?", currentUser === null);
-    console.log("🔄 Navbar: currentUser is undefined?", currentUser === undefined);
-    console.log("🔄 Navbar: submitted_idea value:", currentUser?.submitted_idea);
-    console.log("🔄 Navbar: hasSubmittedIdea normalized:", hasSubmittedIdea);
-    console.log("🔄 Navbar: User initials data:", {
-      first_name: currentUser?.first_name,
-      last_name: currentUser?.last_name,
-      full_name: currentUser?.user?.user_metadata?.full_name
-    });
-    console.log("🔄 Navbar: Will show user dropdown?", !!currentUser);
-  }, [currentUser, hasSubmittedIdea]);
 
   return (
     <nav className="fixed top-0 left-0 right-0 w-full bg-white shadow-sm border-b border-gray-200 font-sans z-50">

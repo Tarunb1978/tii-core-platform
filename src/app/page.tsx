@@ -11,7 +11,6 @@ export default function Home() {
   const { currentUser } = useAuth();
   const [showOnboarding, setShowOnboarding] = useState(false);
   
-  console.log(currentUser,'user NOice');
 
   // Check if user should see onboarding modal
   useEffect(() => {

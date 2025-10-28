@@ -39,11 +39,10 @@ export default function SignUp() {
     return;
   }
 
-  toast.success('Account created successfully 🎉');
-  window.location.href = '/';
+  toast.success('Account created successfully 🎉 Please Confirm your email to continue',{
+    duration: 7000
+  });
 };
-
-
 
   return (
     <div className="min-h-screen bg-white">
@@ -53,7 +52,6 @@ export default function SignUp() {
       {/* Main Content */}
       <div className="flex flex-col items-center justify-center px-4 py-8 pt-24 min-h-[calc(100vh-4rem)]">
         {/* Avatar */}
-        <div className="w-10 h-10 bg-black rounded-full mb-8"></div>
 
         {/* Main Heading */}
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Create an account</h1>

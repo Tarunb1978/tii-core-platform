@@ -128,13 +128,10 @@ const FINANCIAL_DATA_API_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(
 
 // Enhanced Environment verification function with color-coded output
 function verifyEnvironment() {
-  console.log('🔍 Environment Verification:');
-  console.log('='.repeat(50));
   
   // Check Supabase URL
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (supabaseUrl) {
-    console.log('✅ NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl);
   } else {
     console.error('❌ NEXT_PUBLIC_SUPABASE_URL is missing');
   }
@@ -142,27 +139,14 @@ function verifyEnvironment() {
   // Check anon key with detailed validation
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (supabaseAnonKey && supabaseAnonKey.trim() !== '') {
-    console.log('✅ NEXT_PUBLIC_SUPABASE_ANON_KEY: present (length:', supabaseAnonKey.length, ')');
-    console.log('✅ Anon key starts with "eyJ":', supabaseAnonKey.startsWith('eyJ'));
   } else {
-    console.error('❌ NEXT_PUBLIC_SUPABASE_ANON_KEY is missing or empty');
-    console.error('❌ This will cause 401/404/CORS errors on API calls');
   }
   
   // Construct and verify API URL
   if (supabaseUrl) {
     const apiUrl = `${supabaseUrl.replace(/\/$/, '')}/functions/v1/finance-data`;
-    console.log('🔗 Constructed API URL:', apiUrl);
-    console.log('🔗 URL validation:');
-    console.log('  - Contains functions.supabase.co:', apiUrl.includes('functions.supabase.co'));
-    console.log('  - Contains /functions/v1/:', apiUrl.includes('/functions/v1/'));
-    console.log('  - Contains /v1/ (required):', apiUrl.includes('/v1/'));
-    console.log('  - Ends with /finance-data:', apiUrl.endsWith('/finance-data'));
   }
   
-  console.log('🌍 NODE_ENV:', process.env.NODE_ENV);
-  console.log('🌐 Current URL:', typeof window !== 'undefined' ? window.location.href : 'server-side');
-  console.log('='.repeat(50));
   
   // Return validation results
   return {
@@ -243,7 +227,6 @@ function organizeFinancialData(rawFinancialData: any) {
 
   // Proceed as before - mapping fields as per your UI's expectation
   const dividendYieldFormatted = formatDividendYield(growthmetrics["Dividend Yield"]);
-  console.log("Formatted Dividend Yield in organizeFinancialData:", dividendYieldFormatted);
   
   const organized = {
     companyOverview: {
@@ -293,7 +276,6 @@ function organizeFinancialData(rawFinancialData: any) {
   };
 
   // Add logging for debug
-  console.log("organizeFinancialData output", organized);
   return organized;
 }
 
@@ -371,18 +353,11 @@ async function fetchFinancialData(ticker: string, currentUser?: any) {
   
   // Supabase Edge Functions require '/v1/' in the functions endpoint path (see official docs)
   const FINANCIALDATAAPIURL = `${baseSupabaseUrl?.replace(/\/$/, '')}/functions/v1/finance-data`;
-  console.log("Finance Data API URL:", FINANCIALDATAAPIURL);
   
   const fullFetchUrl = `${FINANCIALDATAAPIURL}?ticker=${ticker}`;
   console.debug("Full financial data fetch URL:", fullFetchUrl);
   
   // Verify URL format against Supabase docs
-  console.debug("URL format verification:");
-  console.debug("- Contains 'functions.supabase.co'?", fullFetchUrl.includes('functions.supabase.co'));
-  console.debug("- Contains '/functions/v1/' (correct path)?", fullFetchUrl.includes('/functions/v1/'));
-  console.debug("- Contains '/v1/' (required)?", fullFetchUrl.includes('/v1/'));
-  console.debug("- Ends with '/finance-data'?", fullFetchUrl.includes('/finance-data'));
-  console.debug("- Has query parameter?", fullFetchUrl.includes('?ticker='));
   
   // Get Supabase anon key from environment
   const apiKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -425,15 +400,6 @@ async function fetchFinancialData(ticker: string, currentUser?: any) {
     throw new Error('Authorization header is missing or empty');
   }
   
-  // Log full headers object with security truncation
-  console.log("📤 Headers being sent in fetch:");
-  console.log("📤 Full headers object:", {
-    apikey: headers.apikey ? `${headers.apikey.substring(0, 20)}...` : 'missing',
-    Authorization: headers.Authorization ? `${headers.Authorization.substring(0, 30)}...` : 'missing',
-    'Content-Type': headers['Content-Type']
-  });
-  console.debug("Authorization header present:", !!headers.Authorization);
-  console.debug("Apikey header present:", !!headers.apikey);
   
   // Document the authentication strategy being used
   if (accessToken) {
@@ -443,30 +409,11 @@ async function fetchFinancialData(ticker: string, currentUser?: any) {
   }
   
   try {
-    // Debug log for Supabase API headers
-    console.log("Supabase API headers:", {
-      apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? `${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.substring(0, 20)}...` : 'missing',
-      Authorization: headers.Authorization ? `${headers.Authorization.substring(0, 30)}...` : 'missing'
-    });
-    
-    // Log API URL and headers before fetch
-    console.log("🚀 Making fetch request to:", fullFetchUrl);
-    console.log("📤 Headers being sent:", {
-      apikey: headers.apikey ? `${headers.apikey.substring(0, 20)}...` : 'missing',
-      Authorization: headers.Authorization ? `${headers.Authorization.substring(0, 30)}...` : 'missing',
-      'Content-Type': headers['Content-Type']
-    });
-    console.log("🔗 Full fetch URL:", fullFetchUrl);
-    console.log("📋 Full headers object:", headers);
-    
+
     const response = await fetch(fullFetchUrl, {
       method: 'GET',
       headers
     });
-    
-    console.log("Fetched API response:", response);
-    console.debug('Financial data fetch response status:', response.status);
-    console.debug('Financial data fetch response headers:', Object.fromEntries(response.headers.entries()));
     
     if (!response.ok) {
       const errorText = await response.text();
@@ -505,11 +452,6 @@ async function fetchFinancialData(ticker: string, currentUser?: any) {
     }
     
     const result = await response.json();
-    console.log("✅ API Response received successfully");
-    console.log("📊 Full API response:", result);
-    console.log("📊 Response data type:", typeof result);
-    console.log("📊 Response keys:", Object.keys(result || {}));
-    console.debug('Financial data received:', result);
     return result.financial_data || result || null;
   } catch (error) {
     const err = error as Error;
@@ -791,7 +733,6 @@ useEffect(() => {
   
   // Clear console for clean debugging
   console.clear();
-  console.log('🚀 Starting idea fetch process for ID:', id);
 
   async function getIdea() {
     console.debug('Starting to fetch idea with ID:', id);
@@ -802,7 +743,6 @@ useEffect(() => {
       
       if (!id) {
       console.error('Missing idea ID');
-      setError('Missing idea ID');
       setLoading(false);
       return;
     }
@@ -854,7 +794,6 @@ useEffect(() => {
         console.debug('Session expires in:', session?.expires_at ? new Date(session.expires_at * 1000) : 'N/A');
         
         // Runtime Environment Check - Critical validation before any fetch
-        console.log('🔍 Runtime Environment Check - Validating Supabase credentials...');
         
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
         const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -863,12 +802,8 @@ useEffect(() => {
         const isSupabaseUrlValid = supabaseUrl && supabaseUrl.trim() !== '';
         const isAnonKeyValid = supabaseAnonKey && supabaseAnonKey.trim() !== '';
         
-        console.log('🔍 Environment Check Results:');
-        console.log('  - NEXT_PUBLIC_SUPABASE_URL:', isSupabaseUrlValid ? '✅ Present' : '❌ Missing/Empty');
-        console.log('  - NEXT_PUBLIC_SUPABASE_ANON_KEY:', isAnonKeyValid ? '✅ Present' : '❌ Missing/Empty');
         
         if (!isSupabaseUrlValid || !isAnonKeyValid) {
-          console.error('❌ CRITICAL: Supabase credentials missing - aborting fetch');
           console.error('❌ Missing variables:', {
             supabaseUrl: !isSupabaseUrlValid,
             supabaseAnonKey: !isAnonKeyValid
@@ -886,20 +821,11 @@ useEffect(() => {
           setFinancialLoading(false);
           return;
         }
-        
-        console.log('✅ Environment validation passed - both credentials present');
-        
-        console.log('✅ Environment validation passed - proceeding with fetch');
-        
-        // Use robust token extraction - pass entire currentUser object
-        console.debug('Proceeding with financial data fetch using robust token extraction');
         setFinancialLoading(true);
         
         try {
           const financialData = await fetchFinancialData(ideaData.data.ticker, currentUser);
           if (financialData) {
-            console.log('✅ Financial data fetched successfully');
-            console.log('Raw API Response:', financialData);
             setFinancialData(financialData);
             
             // COMPREHENSIVE DEBUGGING: Log raw API response
@@ -926,37 +852,10 @@ useEffect(() => {
             }
             
             // Organize the raw financial data into structured metrics
-            console.log('🔍 TRANSFORMATION DEBUG: Starting organizeFinancialData...');
-            console.log('Input to organizeFinancialData:', financialData);
             const organized = organizeFinancialData(financialData);
             
             if (organized) {
-              console.log('🔍 TRANSFORMATION SUCCESS: Financial data organized successfully');
-              console.log('🔍 FINAL ORGANIZED METRICS:', organized);
-              
-              // Log each section with detailed field analysis
-              console.log('🔍 COMPANY OVERVIEW DEBUG:', {
-                marketCap: organized.companyOverview?.marketCap,
-                industry: organized.companyOverview?.industry,
-                dividendYield: organized.companyOverview?.dividendYield,
-                peRatio: organized.companyOverview?.peRatio
-              });
-              
-              console.log('🔍 PROFITABILITY DEBUG:', {
-                ebitdaMargin: organized.profitability?.ebitdaMargin,
-                netProfitMargin: organized.profitability?.netProfitMargin,
-                grossMargin: organized.profitability?.grossMargin
-              });
-              
-              console.log('🔍 VALUATION DEBUG:', {
-                priceToBook: organized.valuation?.priceToBook,
-                priceToSales: organized.valuation?.priceToSales,
-                trailingPE: organized.valuation?.trailingPE
-              });
-              
-              console.log('organizedMetrics set to:', organized);
               setOrganizedMetrics(organized);
-              console.log("Set organizedMetrics:", organized);
             } else {
               console.error('❌ TRANSFORMATION FAILED: Failed to organize financial data');
               setOrganizedMetrics(null);
@@ -1063,240 +962,307 @@ useEffect(() => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
-        {/* Back button */}
-        <div className="mb-6">
-          <Link
-            href="/ideas-forum"
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <div className="w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors">
-              <ArrowLeft className="w-4 h-4 text-gray-700" />
-            </div>
-            <span className="text-sm font-medium">Back to Ideas Forum</span>
-          </Link>
+  <div className="min-h-screen bg-gray-50">
+    <Navbar />
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
+      {/* Back button */}
+      <div className="mb-6">
+        <Link
+          href="/ideas-forum"
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          <div className="w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors">
+            <ArrowLeft className="w-4 h-4 text-gray-700" />
+          </div>
+          <span className="text-sm font-medium">Back to Ideas Forum</span>
+        </Link>
+      </div>
+
+      {loading ? (
+        <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-gray-500">
+          Loading idea...
         </div>
+      ) : !idea ? (
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-8 text-center">
+          Idea not found
+        </div>
+      ) : (
+        <div>
+          {organizedMetrics?.companyOverview && (
+            <div className="mb-6">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                {/* Header */}
+                <div className="border-b border-gray-200 pb-3 mb-3">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {idea?.data?.ticker?.replace('.NS', '')} -{' '}
+                    {financialData?.data?.company_info?.['Short Name'] ||
+                      idea?.data?.company_name ||
+                      'Company Overview'}
+                  </h3>
+                </div>
 
-        {loading ? (
-          <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-gray-500">
-            Loading idea...
-          </div>
-        ) : !idea ? (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-8 text-center">
-            Idea not found
-          </div>
-        ) : (
-          <div>
-            {/* Compact Company Overview Card - Top */}
-            {organizedMetrics?.companyOverview && (
-              <div className="mb-6">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                  {/* Header */}
-                  <div className="border-b border-gray-200 pb-3 mb-3">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {idea?.data?.ticker?.replace('.NS', '')} - {financialData?.data?.company_info?.["Short Name"] || idea?.data?.company_name || 'Company Overview'}
-                    </h3>
+                {/* First Row - Key Metrics */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">Industry</div>
+                    <div className="text-sm font-semibold text-gray-900">
+                      {organizedMetrics.companyOverview.industry || 'N/A'}
+                    </div>
                   </div>
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">P/E Ratio</div>
+                    <div className="text-sm font-semibold text-gray-900">
+                      {organizedMetrics.companyOverview.peRatio || 'N/A'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">Dividend Yield</div>
+                    <div className="text-sm font-semibold text-gray-900">
+                      {getDividendYieldDisplay(
+                        organizedMetrics.companyOverview.dividendYield,
+                        false
+                      )}
+                    </div>
+                  </div>
+                  {organizedMetrics.growthReturns?.weekRange && (
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">52-Week Range</div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        ₹
+                        {organizedMetrics.growthReturns.weekRange
+                          .split(' - ')
+                          .map((price) => Math.round(parseFloat(price)))
+                          .filter(Boolean)
+                          .join(' - ₹') || 'N/A'}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-                  {/* First Row - Key Metrics */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Industry</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {organizedMetrics.companyOverview.industry || 'N/A'}
-                      </div>
+                {/* Right Column - Financial Data (40% width) */}
+                <div className="lg:col-span-2">
+                  {idea?.data?.ticker && (
+                    <div className="space-y-4">
+                      {(() => {
+                        const companyShortName =
+                          financialData?.data?.company_info?.['Short Name'];
+                        const companyNameFromOrganized =
+                          organizedMetrics?.companyDetails?.businessSummary
+                            ? organizedMetrics.companyDetails.businessSummary.split('.')[0]
+                            : null;
+                        return (
+                          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                            Financial Data for{' '}
+                            {companyShortName ||
+                              companyNameFromOrganized ||
+                              idea.data.ticker}
+                          </h3>
+                        );
+                      })()}
+
+                      {financialLoading ? (
+                        <div className="text-center text-gray-500 py-4">
+                          Loading financial data...
+                        </div>
+                      ) : financialData?.error ? (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                          <h4 className="font-medium text-red-900 mb-2">
+                            {financialData.envError
+                              ? 'Environment Configuration Error'
+                              : 'API Error'}
+                          </h4>
+                          <p className="text-red-700 text-sm">{financialData.error}</p>
+                          {financialData.envError && (
+                            <div className="mt-3 p-3 bg-red-100 rounded">
+                              <p className="text-red-800 text-xs font-medium mb-2">
+                                Missing Environment Variables:
+                              </p>
+                              <ul className="text-red-700 text-xs space-y-1">
+                                {financialData.missingVars?.supabaseUrl && (
+                                  <li>• NEXT_PUBLIC_SUPABASE_URL</li>
+                                )}
+                                {financialData.missingVars?.supabaseAnonKey && (
+                                  <li>• NEXT_PUBLIC_SUPABASE_ANON_KEY</li>
+                                )}
+                              </ul>
+                              <p className="text-red-800 text-xs mt-2">
+                                💡 <strong>Reminder:</strong> If using Vercel/Render/Netlify,
+                                always remember to set all process.env.* keys as protected
+                                environment variables and redeploy when updating them.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3 pt-3 border-t border-gray-100">
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">Price to Book</div>
+                            <div className="text-sm font-semibold text-gray-900">
+                              {organizedMetrics.valuation?.priceToBook || 'N/A'}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">Price to Sales</div>
+                            <div className="text-sm font-semibold text-gray-900">
+                              {organizedMetrics.valuation?.priceToSales || 'N/A'}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">Debt to Equity</div>
+                            <div className="text-sm font-semibold text-gray-900">
+                              {organizedMetrics.financialHealth?.debtToEquity || 'N/A'}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">Total Cash</div>
+                            <div className="text-sm font-semibold text-gray-900">
+                              {organizedMetrics.financialHealth?.totalCash || 'N/A'}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">EBITDA Margin</div>
+                            <div className="text-sm font-semibold text-gray-900">
+                              {organizedMetrics.profitability?.ebitdaMargin || 'N/A'}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">Net Profit Margin</div>
+                            <div className="text-sm font-semibold text-gray-900">
+                              {organizedMetrics.profitability?.netProfitMargin || 'N/A'}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">3-Year Return</div>
+                            <div
+                              className={`text-sm font-semibold ${
+                                organizedMetrics.growthReturns?.threeYearReturn &&
+                                parseFloat(
+                                  organizedMetrics.growthReturns.threeYearReturn.replace('%', '')
+                                ) >= 0
+                                  ? 'text-green-600'
+                                  : 'text-red-600'
+                              }`}
+                            >
+                              {organizedMetrics.growthReturns?.threeYearReturn || 'N/A'}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">1-Year Return</div>
+                            <div
+                              className={`text-sm font-semibold ${
+                                organizedMetrics.growthReturns?.oneYearReturn &&
+                                parseFloat(
+                                  organizedMetrics.growthReturns.oneYearReturn.replace('%', '')
+                                ) >= 0
+                                  ? 'text-green-600'
+                                  : 'text-red-600'
+                              }`}
+                            >
+                              {organizedMetrics.growthReturns?.oneYearReturn || 'N/A'}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Business Model */}
+                      {organizedMetrics?.companyDetails?.businessSummary && (
+                        <div className="pt-3 mt-3 border-t border-gray-200">
+                          <details open className="group">
+                            <summary className="cursor-pointer text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors flex items-center justify-between">
+                              <span>Business Model</span>
+                              <span className="text-gray-400 group-open:rotate-180 transition-transform">
+                                ▼
+                              </span>
+                            </summary>
+                            <p className="mt-2 text-sm text-gray-700 leading-relaxed">
+                              {organizedMetrics.companyDetails.businessSummary}
+                            </p>
+                          </details>
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">P/E Ratio</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {organizedMetrics.companyOverview.peRatio || 'N/A'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Dividend Yield</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {getDividendYieldDisplay(organizedMetrics.companyOverview.dividendYield, false)}
-                      </div>
-                    </div>
-                    {organizedMetrics.growthReturns?.weekRange && (
-                      <div>
-                        <div className="text-xs text-gray-500 mb-1">52-Week Range</div>
-                        <div className="text-sm font-semibold text-gray-900">
-                          ₹{organizedMetrics.growthReturns.weekRange.split(' - ').map(price => 
-                            Math.round(parseFloat(price))
-                          ).filter(Boolean).join(' - ₹') || 'N/A'}
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Single Column Layout - Full width components */}
+          <div className="space-y-6">
+            {/* Investment Thesis */}
+            <IdeaCard
+              idea={idea}
+              showBreadcrumb={false}
+              disabledNavigate={true}
+              onIdeaUpdate={handleIdeaUpdate}
+            />
+
+            {/* Stock Chart Section */}
+            {idea?.data?.ticker && (
+              <div className="mt-6">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                    Price Chart - {idea.data.ticker.replace('.NS', '')}
+                  </h4>
+
+                  {chartLoading ? (
+                    <div className="bg-gray-50 rounded-lg p-4" style={{ height: '420px' }}>
+                      <div className="flex items-center justify-center h-full">
+                        <div className="text-center">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                          <p className="text-sm text-gray-600">Loading chart...</p>
                         </div>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Market Cap - Second Line */}
-                  <div className="grid grid-cols-1 gap-4 mb-3">
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Market Cap</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {organizedMetrics.companyOverview.marketCap || 'N/A'}
-                      </div>
                     </div>
-                  </div>
-
-                  {/* Valuation & Growth Row */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3 pt-3 border-t border-gray-100">
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Price to Book</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {organizedMetrics.valuation?.priceToBook || 'N/A'}
-                      </div>
+                  ) : chartError ? (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <p className="text-sm text-yellow-800">{chartError}</p>
                     </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Price to Sales</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {organizedMetrics.valuation?.priceToSales || 'N/A'}
-                      </div>
+                  ) : chartSeries.length > 0 ? (
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <Chart
+                        options={getChartOptions(normalizeSymbol(idea.data.ticker))}
+                        series={[
+                          {
+                            name: 'Closing Price',
+                            data: chartSeries,
+                          },
+                        ]}
+                        type="line"
+                        height={420}
+                      />
                     </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Debt to Equity</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {organizedMetrics.financialHealth?.debtToEquity || 'N/A'}
+                  ) : (
+                    <div className="bg-gray-50 rounded-lg p-4" style={{ height: '420px' }}>
+                      <div className="flex items-center justify-center h-full">
+                        <div className="text-center">
+                          <p className="text-sm text-gray-600">No chart data available</p>
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Total Cash</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {organizedMetrics.financialHealth?.totalCash || 'N/A'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">EBITDA Margin</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {organizedMetrics.profitability?.ebitdaMargin || 'N/A'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Net Profit Margin</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {organizedMetrics.profitability?.netProfitMargin || 'N/A'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">3-Year Return</div>
-                      <div className={`text-sm font-semibold ${
-                        organizedMetrics.growthReturns?.threeYearReturn && 
-                        parseFloat(organizedMetrics.growthReturns.threeYearReturn.replace('%', '')) >= 0 
-                          ? 'text-green-600' 
-                          : 'text-red-600'
-                      }`}>
-                        {organizedMetrics.growthReturns?.threeYearReturn || 'N/A'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">1-Year Return</div>
-                      <div className={`text-sm font-semibold ${
-                        organizedMetrics.growthReturns?.oneYearReturn && 
-                        parseFloat(organizedMetrics.growthReturns.oneYearReturn.replace('%', '')) >= 0 
-                          ? 'text-green-600' 
-                          : 'text-red-600'
-                      }`}>
-                        {organizedMetrics.growthReturns?.oneYearReturn || 'N/A'}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Business Model - Separate Section */}
-                  {organizedMetrics?.companyDetails?.businessSummary && (
-                    <div className="pt-3 mt-3 border-t border-gray-200">
-                      <details className="group">
-                        <summary className="cursor-pointer text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors flex items-center justify-between">
-                          <span>Business Model</span>
-                          <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
-                        </summary>
-                        <p className="mt-2 text-sm text-gray-700 leading-relaxed">
-                          {organizedMetrics.companyDetails.businessSummary}
-                        </p>
-                      </details>
                     </div>
                   )}
                 </div>
               </div>
             )}
-
-            {/* Single Column Layout - Full width components */}
-            <div className="space-y-6">
-              {/* Investment Thesis - Full Width */}
-              <IdeaCard 
-                idea={idea} 
-                showBreadcrumb={false}
-                disabledNavigate={true}
-                onIdeaUpdate={handleIdeaUpdate}
-              />
-
-              {/* Stock Chart Section */}
-              {idea?.data?.ticker && (
-                <div className="mt-6">
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                    <h4 className="text-lg font-semibold text-gray-900 mb-3">
-                      Price Chart - {idea.data.ticker.replace('.NS', '')}
-                    </h4>
-                    
-                    {chartLoading ? (
-                      <div className="bg-gray-50 rounded-lg p-4" style={{ height: '420px' }}>
-                        <div className="flex items-center justify-center h-full">
-                          <div className="text-center">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                            <p className="text-sm text-gray-600">Loading chart...</p>
-                          </div>
-                        </div>
-                      </div>
-                    ) : chartError ? (
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                        <p className="text-sm text-yellow-800">{chartError}</p>
-                      </div>
-                    ) : chartSeries.length > 0 ? (
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <Chart
-                          options={getChartOptions(normalizeSymbol(idea.data.ticker))}
-                          series={[{
-                            name: 'Closing Price',
-                            data: chartSeries
-                          }]}
-                          type="line"
-                          height={420}
-                        />
-                      </div>
-                    ) : (
-                      <div className="bg-gray-50 rounded-lg p-4" style={{ height: '420px' }}>
-                        <div className="flex items-center justify-center h-full">
-                          <div className="text-center">
-                            <p className="text-sm text-gray-600">No chart data available</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-            </div>
           </div>
-          )}
-      </main>
-      <Toaster
+        </div>
+      )}
+    </main>
+
+    <Toaster
       position="top-center"
       toastOptions={{
         duration: 3000,
         className:
-          "bg-transparent border border-blue-200 backdrop-blur-md text-white font-medium shadow-lg rounded-2xl px-4 py-3 flex items-center justify-center",
+          'bg-transparent border border-blue-200 backdrop-blur-md text-white font-medium shadow-lg rounded-2xl px-4 py-3 flex items-center justify-center',
         style: {
-          background: "transparent",
+          background: 'transparent',
         },
       }}
     />
-    </div>
-  );
-}
+  </div>
+);
 
-function setError(arg0: string) {
-  throw new Error('Function not implemented.');
+
+  
 }

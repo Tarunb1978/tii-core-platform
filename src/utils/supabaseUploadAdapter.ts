@@ -16,7 +16,6 @@ export class SupabaseUploadAdapter {
 
   return this.loader.file.then(async (file: File) => {
     if (!file) throw new Error("No file from loader");
-    console.log("Uploading file:", file);
 
     try {
       // Upload file to Supabase
@@ -68,7 +67,6 @@ export class SupabaseUploadAdapter {
   return filePath
 }
 async deleteImage(filePath: string) {
-   console.log('delete');
     console.log(this.filePath);
   const { error } = await this.supabase.storage
     .from('user-uploads')

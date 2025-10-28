@@ -81,6 +81,22 @@ export async function signUpWithEmail(formData: FormData) {
 
   const supabase = await createSupabaseServerClient()
 
+   const { data: existingUser, error: checkError } = await supabase
+    .from('app_user')
+    .select('id')
+    .eq('email', email)
+    .maybeSingle()
+
+  if (checkError) {
+    return { error: 'Something went wrong while checking your email. Please try again.' }
+  }
+
+  if (existingUser) {
+    // ❌ Email already registered
+    return { error: 'An account with this email already exists. Please sign in instead.' }
+  }
+
+  // 1️⃣ Create auth user
   const { data: user, error } = await supabase.auth.signUp({
     email,
     password,
@@ -96,12 +112,23 @@ export async function signUpWithEmail(formData: FormData) {
 
   if (error) {
     console.error('Sign up error:', error.message)
-    // 🔹 Return the actual error to client instead of redirecting
     return { error: error.message }
   }
 
-  // Insert into app_user
-  const { error: insertError } = await supabase
+  // 2️⃣ Use a Supabase service role client for DB insert
+  // (bypasses RLS safely, only on the server)
+  const serviceClient = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!, // 👈 safe only in server env
+    {
+      cookies: {
+        getAll: () => [],
+        setAll: () => {},
+      },
+    }
+  )
+
+  const { error: insertError } = await serviceClient
     .from('app_user')
     .upsert(
       {
@@ -124,6 +151,7 @@ export async function signUpWithEmail(formData: FormData) {
 
   return { success: true }
 }
+
 
 
 export async function signInWithOAuth(provider: Provider) {

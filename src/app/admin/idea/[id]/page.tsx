@@ -129,12 +129,6 @@ async function fetchIdeaByIdServer(
     cache: 'no-store',
   })
 
-  console.log('[idea-detail][server-fetch] Response received:', { 
-    status: response.status, 
-    ok: response.ok, 
-    ms: Date.now() - start 
-  })
-
   if (response.status === 401) {
     throw new Error('Authentication required')
   }
