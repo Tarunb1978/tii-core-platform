@@ -1043,22 +1043,6 @@ useEffect(() => {
                 <div className="lg:col-span-2">
                   {idea?.data?.ticker && (
                     <div className="space-y-4">
-                      {(() => {
-                        const companyShortName =
-                          financialData?.data?.company_info?.['Short Name'];
-                        const companyNameFromOrganized =
-                          organizedMetrics?.companyDetails?.businessSummary
-                            ? organizedMetrics.companyDetails.businessSummary.split('.')[0]
-                            : null;
-                        return (
-                          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                            Financial Data for{' '}
-                            {companyShortName ||
-                              companyNameFromOrganized ||
-                              idea.data.ticker}
-                          </h3>
-                        );
-                      })()}
 
                       {financialLoading ? (
                         <div className="text-center text-gray-500 py-4">
