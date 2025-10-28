@@ -100,8 +100,8 @@ const getChartOptions = (symbol: string, chartData?: { series: [number, number][
   },
   noData: {
     text: 'No data available',
-    align: 'center',
-    verticalAlign: 'middle',
+    align: "center" as const, // Fixed: Use string literal type for ApexCharts compatibility
+    verticalAlign: "middle" as const, // Fixed: Use string literal type for ApexCharts compatibility
   },
 });
 
