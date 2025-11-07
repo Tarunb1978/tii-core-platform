@@ -126,7 +126,7 @@ useEffect(() => {
     const fetchDraft = async () => {
       try {
         if(!user?.currentUser?.access_token) return
-        const res = await fetch('https://acsobefarzmetevcseal.supabase.co/functions/v1/rest-idea-submitted/draft', {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/rest-idea-submitted/draft`, {
           headers: {
             Authorization: `Bearer ${user?.currentUser?.access_token}`,
           }
@@ -404,7 +404,7 @@ useEffect(() => {
         },
         status: 'pending',
       };
-      const response = await fetch('https://acsobefarzmetevcseal.supabase.co/functions/v1/rest-idea-submitted', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/rest-idea-submitted`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -512,7 +512,7 @@ useEffect(() => {
         },
       };
 
-      const response = await fetch('https://acsobefarzmetevcseal.supabase.co/functions/v1/rest-idea-submitted/draft', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/rest-idea-submitted/draft`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
