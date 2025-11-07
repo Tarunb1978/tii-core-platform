@@ -34,7 +34,7 @@ function parseMarketCapValue(value: string | number | null | undefined): number 
   // If string, extract numeric value
   if (typeof value === 'string') {
     // Remove common suffixes (Crs, Crores, Cr)
-    let cleaned = value.trim()
+    const cleaned = value.trim()
       .replace(/Crs|Crores|Cr|₹|,/gi, '')
       .replace(/\s+/g, '');
     
@@ -184,4 +184,5 @@ describe('classifyMarketCap', () => {
   });
 });
 */
+
 

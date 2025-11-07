@@ -441,7 +441,6 @@ export default function Home() {
               <h4 className="text-lg font-semibold mb-6" style={{ color: 'white' }}>Quick Links</h4>
               <ul className="space-y-3" style={{ color: '#888' }}>
                 <li><Link href="/about-us" className="text-sm transition-colors hover:text-white">Our Philosophy</Link></li>
-                <li><Link href="/topic-of-the-week" className="text-sm transition-colors hover:text-white">Trending Topics</Link></li>
                 <li><Link href="/ideas-forum" className="text-sm transition-colors hover:text-white">Ideas Forum</Link></li>
               </ul>
             </div>

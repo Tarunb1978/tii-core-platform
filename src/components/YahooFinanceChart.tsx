@@ -27,6 +27,7 @@ interface YahooFinanceResponse {
     }>;
     error: any;
   };
+  error?: any; // Added: Root level error property for API errors
 }
 
 interface YahooFinanceChartProps {
@@ -135,8 +136,8 @@ const getChartOptions = (symbol: string, chartData?: { series: [number, number][
   },
   noData: {
     text: 'No data available',
-    align: 'center',
-    verticalAlign: 'middle',
+    align: "center" as const, // Fixed: Use string literal type for ApexCharts compatibility
+    verticalAlign: "middle" as const, // Fixed: Use string literal type for ApexCharts compatibility
   },
   events: {
     mounted: (chartContext: any, config: any) => {
@@ -262,7 +263,7 @@ export default function YahooFinanceChart({
         return;
       }
 
-      const seriesData = uniqueData.map(pt => [pt.date, pt.price]);
+      const seriesData = uniqueData.map(pt => [pt.date, pt.price] as [number, number]);
       setChartData({ series: seriesData });
 
     } catch (err) {

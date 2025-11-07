@@ -453,41 +453,63 @@ export default function IdeaCard({
             
             {/* Right: Financial Highlights Pill Badges + Bookmark in same container */}
             <div className="flex items-center gap-3">
-              {/* Financial Highlights Pill Badges */}
-              {!disabledNavigate && (d["52 High"] || d["52W Low"] || d["P/E Ratio"] || d["Industry"]) && (
+              {/* Financial Highlights Pill Badges - visible on both ideas forum and details pages */}
+              {(() => {
+                // Debug logging to see what data is available
+                console.log('🔍 Badge Debug - Idea data:', {
+                  week52_high: d.week52_high,
+                  week52_low: d.week52_low,
+                  pe_ratio: idea.stock_details?.pe_ratio,
+                  market_cap: d.market_cap,
+                  '52 High': d["52 High"],
+                  '52W Low': d["52W Low"],
+                  'P/E Ratio': d["P/E Ratio"],
+                  'Market Cap': d["Market Cap"],
+                  fullData: d,
+                  stockDetails: idea.stock_details
+                });
+                
+                // Check multiple possible field names for the same data
+                const hasWeek52High = d.week52_high || d["52 High"];
+                const hasWeek52Low = d.week52_low || d["52W Low"];
+                const hasPeRatio = idea.stock_details?.pe_ratio || d["P/E Ratio"];
+                const hasMarketCap = d.market_cap || d["Market Cap"];
+                
+                return (hasWeek52High || hasWeek52Low || hasPeRatio || hasMarketCap);
+              })() && (
                 <div className="flex items-center gap-1.5 flex-wrap">
-                {/* 52W High */}
-                {d["52 High"] && (
-                  <div className="flex items-center justify-center gap-1 px-2 py-0.5 bg-gray-50 text-gray-700 rounded-full text-xs font-medium border border-gray-200">
-                    <TrendingUp className="w-2.5 h-2.5 text-gray-500" />
-                    <span className="font-semibold">High:</span>
-                    <span className="font-bold">{formatCurrency(d["52 High"])}</span>
+                {/* 52 Weeks High */}
+                {(d.week52_high || d["52 High"]) && (
+                  <div className="flex items-center justify-center gap-1 px-2 py-0.5 bg-gray-50 text-gray-700 rounded-full text-xs font-medium border border-indigo-500 shadow-sm" style={{ borderWidth: '1.5px' }}>
+                    <TrendingUp className="w-2.5 h-2.5 text-blue-600" />
+                    <span className="font-semibold">52W High:</span>
+                    <span className="font-bold">₹{d.week52_high || d["52 High"]}</span>
                   </div>
                 )}
 
-                {/* 52W Low */}
-                {d["52W Low"] && (
-                  <div className="flex items-center justify-center gap-1 px-2 py-0.5 bg-gray-50 text-gray-700 rounded-full text-xs font-medium border border-gray-200">
-                    <TrendingDown className="w-2.5 h-2.5 text-gray-500" />
-                    <span className="font-semibold">Low:</span>
-                    <span className="font-bold">{formatCurrency(d["52W Low"])}</span>
+                {/* 52 Weeks Low */}
+                {(d.week52_low || d["52W Low"]) && (
+                  <div className="flex items-center justify-center gap-1 px-2 py-0.5 bg-gray-50 text-gray-700 rounded-full text-xs font-medium border border-indigo-500 shadow-sm" style={{ borderWidth: '1.5px' }}>
+                    <TrendingDown className="w-2.5 h-2.5 text-gray-600" />
+                    <span className="font-semibold">52W Low:</span>
+                    <span className="font-bold">₹{d.week52_low || d["52W Low"]}</span>
                   </div>
                 )}
 
                 {/* P/E Ratio */}
-                {d["P/E Ratio"] && (
-                  <div className="flex items-center justify-center gap-1 px-2 py-0.5 bg-gray-50 text-gray-700 rounded-full text-xs font-medium border border-gray-200">
-                    <Calculator className="w-2.5 h-2.5 text-gray-500" />
+                {(idea.stock_details?.pe_ratio || d["P/E Ratio"]) && (
+                  <div className="flex items-center justify-center gap-1 px-2 py-0.5 bg-gray-50 text-gray-700 rounded-full text-xs font-medium border border-indigo-500 shadow-sm" style={{ borderWidth: '1.5px' }}>
+                    <Calculator className="w-2.5 h-2.5 text-blue-600" />
                     <span className="font-semibold">P/E:</span>
-                    <span className="font-bold">{d["P/E Ratio"]}</span>
+                    <span className="font-bold">{idea.stock_details?.pe_ratio || d["P/E Ratio"]}</span>
                   </div>
                 )}
 
-                {/* Industry */}
-                {d["Industry"] && (
-                  <div className="flex items-center justify-center gap-1 px-2 py-0.5 bg-gray-50 text-gray-700 rounded-full text-xs font-medium border border-gray-200">
-                    <Building2 className="w-2.5 h-2.5 text-gray-500" />
-                    <span className="font-bold truncate max-w-[120px]">{d["Industry"]}</span>
+                {/* Market Cap */}
+                {(d.market_cap || d["Market Cap"]) && (
+                  <div className="flex items-center justify-center gap-1 px-2 py-0.5 bg-gray-50 text-gray-700 rounded-full text-xs font-medium border border-indigo-500 shadow-sm" style={{ borderWidth: '1.5px' }}>
+                    <Building2 className="w-2.5 h-2.5 text-gray-600" />
+                    <span className="font-bold truncate max-w-[120px]">{d.market_cap || d["Market Cap"]}</span>
                   </div>
                 )}
                 </div>
@@ -536,21 +558,30 @@ export default function IdeaCard({
             // eslint-disable-next-line react-hooks/rules-of-hooks
             const [expanded, setExpanded] = useState(false);
             const isLong = plainText.length > 300;
+            const forceFull = disabledNavigate; // On IdeaDetails, show full content
 
             // Use the improved truncation function for better word-based truncation
             const truncatedContent = truncateHTMLContent(d.description || '');
-            const shouldShowTruncated = !expanded && isLong;
+            const shouldShowTruncated = !expanded && isLong && !forceFull;
 
             return (
               <>
                 <div
-                  className="prose max-w-none prose-img:rounded-lg prose-img:border prose-img:border-gray-100 transition-all duration-300"
-                  onClick={(e) => e.stopPropagation()}
+                  className={`prose max-w-none prose-img:rounded-lg prose-img:border prose-img:border-gray-100 transition-all duration-300 ${!disabledNavigate ? 'cursor-pointer' : ''}`}
+                  onClick={(e) => {
+                    if (!disabledNavigate) {
+                      // On ideas forum list - navigate to details
+                      handleCardClick();
+                    } else {
+                      // On details page - prevent navigation
+                      e.stopPropagation();
+                    }
+                  }}
                   dangerouslySetInnerHTML={{ 
                     __html: shouldShowTruncated ? truncatedContent : (d.description || '') 
                   }}
                 />
-                {isLong && (
+                {isLong && !forceFull && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -628,7 +659,7 @@ export default function IdeaCard({
           {!disabledNavigate && !showBackButton && (
             <div className="text-right">
               <button
-                className="text-blue-600 hover:text-blue-800 text-xs font-medium underline hover:no-underline transition-all duration-200 flex items-center gap-1 ml-auto"
+                className="text-blue-600 hover:text-blue-800 text-xs font-medium underline hover:no-underline transition-all duration-200 flex items-center gap-1 ml-auto cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleCardClick();

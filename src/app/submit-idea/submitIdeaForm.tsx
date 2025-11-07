@@ -163,7 +163,7 @@ useEffect(() => {
   
 
   const [wordCount, setWordCount] = useState(0);
-  const maxWords = 600;
+  const maxWords = 700;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
