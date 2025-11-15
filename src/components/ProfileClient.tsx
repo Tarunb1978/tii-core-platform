@@ -49,7 +49,7 @@ export default function ProfileClient() {
       setIsLoading(true);
       
 
-      const apiUrl = `https://acsobefarzmetevcseal.supabase.co/functions/v1/app-user/me`;
+      const apiUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/app-user/me`;
 
       // Fetch profile from API
       const response = await fetch(apiUrl, {
@@ -163,7 +163,7 @@ export default function ProfileClient() {
 
 
       // Update profile via API
-      const response = await fetch(`https://acsobefarzmetevcseal.supabase.co/functions/v1/app-user/me`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/app-user/me`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
