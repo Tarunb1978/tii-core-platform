@@ -120,7 +120,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
         {/* Blog Header */}
         <article className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           {/* Blog Image */}
-          <div className="relative w-full h-72 md:h-88">
+          <div className="relative w-full h-72 md:h-80 lg:h-96">
             <Image
               src={imageSrc}
               alt={blog.title}
