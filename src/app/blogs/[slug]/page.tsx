@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import { transformImageUrlsInHTML } from '@/utils/blogImageUtils';
 
 // TypeScript interfaces for Blog data
 interface BlogContent {
@@ -24,9 +25,9 @@ interface BlogResponse {
 }
 
 interface BlogPageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 // Fetch blog data from API
@@ -68,14 +69,19 @@ function formatDate(dateString: string): string {
 }
 
 export default async function BlogPage({ params }: BlogPageProps) {
+  // Await params before using (Next.js 15 requirement)
+  const { slug } = await params;
   let blog: Blog;
 
   try {
-    blog = await getBlog(params.slug);
+    blog = await getBlog(slug);
   } catch (error) {
     console.error('Error fetching blog:', error);
     notFound();
   }
+
+  // Transform HTML content images (Snap 1, Snap 2, etc.) to use IMAGE_BASE
+  const transformedHtml = transformImageUrlsInHTML(blog.blog_content.html);
 
   // Construct image source with environment variable
   const IMAGE_BASE = process.env.NEXT_PUBLIC_SUPABASE_IMAGE_BASE;
@@ -163,7 +169,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
             {/* Blog Content */}
             <div className="prose max-w-none prose prose-headings:text-gray-900 prose-headings:font-bold prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-ul:text-gray-700 prose-ol:text-gray-700 prose-li:text-gray-700 prose-blockquote:text-gray-600 prose-blockquote:border-blue-200 prose-code:text-gray-800 prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-gray-100 prose-pre:text-gray-800">
               <div 
-                dangerouslySetInnerHTML={{ __html: blog.blog_content.html }}
+                dangerouslySetInnerHTML={{ __html: transformedHtml }}
               />
             </div>
           </div>

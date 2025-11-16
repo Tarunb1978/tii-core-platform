@@ -38,15 +38,20 @@ export default function BlogsPage() {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
 
-        if (!res.ok) throw new Error('Failed to fetch blogs');
-
         const json = await res.json();
+
+        if (!res.ok) {
+          console.error('Failed to fetch blogs:', res.status, json);
+          throw new Error(json.error || json.details || `Failed to fetch blogs: ${res.status}`);
+        }
+
         const fetchedBlogs = Array.isArray(json.blogs) ? json.blogs : [];
         setBlogs(fetchedBlogs);
 
       } catch (err) {
         console.error('Error fetching blogs:', err);
-        setError('Failed to load blogs');
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load blogs';
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
