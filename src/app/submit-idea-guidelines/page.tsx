@@ -119,7 +119,7 @@ export default function SubmitIdeaGuidelines() {
                 <span className="flex-shrink-0 w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center text-sm font-semibold mr-4" style={{ backgroundColor: '#F0F7FF', color: '#4A90E2' }}>6</span>
                 <div>
                   <p className="font-semibold text-lg mb-2" style={{ color: '#222' }}>Concise and Action Oriented</p>
-                  <p style={{ color: '#444' }}>Keep submissions focused and practical, with a word limit of approximately 700 words. Present at least three actionable takeaways or investment recommendations that avoid speculation and rely on robust evidence.</p>
+                  <p style={{ color: '#444' }}>Keep submissions focused and practical, with a word limit of approximately 1500 words. Present at least three actionable takeaways or investment recommendations that avoid speculation and rely on robust evidence.</p>
                 </div>
               </li>
 
