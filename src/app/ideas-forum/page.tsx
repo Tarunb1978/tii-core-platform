@@ -649,6 +649,20 @@ export default function IdeasForumPage() {
 
         const json = await res.json();
         
+        // Print the full structure
+        console.log('=== Investment Ideas List Structure ===');
+        console.log('Full response:', json);
+        console.log('Response keys:', Object.keys(json));
+        console.log('Number of ideas:', json.ideas?.length || 0);
+
+        // Print structure of first idea if available
+        if (json.ideas && json.ideas.length > 0) {
+          console.log('=== First Idea Structure ===');
+          console.log('First idea:', json.ideas[0]);
+          console.log('First idea keys:', Object.keys(json.ideas[0]));
+          console.log('First idea (formatted):', JSON.stringify(json.ideas[0], null, 2));
+        }
+        
         const fetchedIdeas = Array.isArray(json.ideas) ? json.ideas : [];
         
 

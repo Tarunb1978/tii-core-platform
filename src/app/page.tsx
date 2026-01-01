@@ -477,7 +477,7 @@ export default function Home() {
           </div>
 
           <div className="mt-12 pt-8 text-center" style={{ borderTop: '1px solid #444' }}>
-            <p className="text-sm" style={{ color: '#888' }}>&copy; 2024 Indian Investors Community. All rights reserved.</p>
+            <p className="text-sm" style={{ color: '#888' }}>&copy; 2025 Indian Investors Community. All rights reserved.</p>
           </div>
         </div>
       </footer>

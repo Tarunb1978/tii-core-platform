@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { transformImageUrlsInHTML } from '@/utils/blogImageUtils';
+import BlogContentClient from './BlogContentClient';
 
 // TypeScript interfaces for Blog data
 interface BlogContent {
@@ -167,11 +168,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
             )}
 
             {/* Blog Content */}
-            <div className="prose max-w-none prose prose-headings:text-gray-900 prose-headings:font-bold prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-ul:text-gray-700 prose-ol:text-gray-700 prose-li:text-gray-700 prose-blockquote:text-gray-600 prose-blockquote:border-blue-200 prose-code:text-gray-800 prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-gray-100 prose-pre:text-gray-800">
-              <div 
-                dangerouslySetInnerHTML={{ __html: transformedHtml }}
-              />
-            </div>
+            <BlogContentClient html={transformedHtml} />
           </div>
         </article>
 
